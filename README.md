@@ -21,4 +21,4 @@ Aplicación multiplataforma desenvolvida con Flutter para a xestión de hortas e
 
 A documentación técnica atópase no directorio:
 
-docs/
+docs/  
