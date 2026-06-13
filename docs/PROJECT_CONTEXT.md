@@ -384,11 +384,17 @@ Planificación técnica do desenvolvemento.
 
 ## Development
 
-⬜ Creación proxecto Flutter
+✅ Creación proxecto Flutter
 
-⬜ Configuración Provider
+✅ Configuración inicial Git/GitHub
+
+✅ Estrutura de carpetas da arquitectura
+
+⬜ Creación pantallas principais
 
 ⬜ Navegación
+
+⬜ Provider
 
 ⬜ SQLite
 
@@ -416,21 +422,21 @@ Planificación técnica do desenvolvemento.
 
 ## Current Objective
 
-Completar a Fase 1 do ROADMAP.
+Completar a primeira iteración da interface Flutter.
 
 ### Tasks
 
-- Crear proxecto Flutter.
-- Configurar Git.
-- Configurar GitHub.
-- Crear estrutura de carpetas.
-- Configurar Provider.
-- Crear navegación básica.
-- Crear pantallas baleiras.
+- Crear HomeScreen.
+- Crear GardensScreen.
+- Crear GardenDetailScreen.
+- Crear PlantDetailScreen.
+- Crear LayoutDesignerScreen.
+- Configurar MaterialApp.
+- Mostrar HomeScreen ao iniciar a aplicación.
 
 ## Deliverable
 
-Aplicación Flutter funcional con navegación entre as pantallas principais.
+Primeira versión funcional de MARTOLA executándose en Flutter cunha pantalla propia e estrutura de vistas preparada para a navegación.
 
 ---
 
