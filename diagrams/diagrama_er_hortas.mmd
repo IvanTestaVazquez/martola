@@ -1,0 +1,89 @@
+erDiagram
+    USERS ||--o{ GARDENS : "ten"
+    GARDENS ||--o{ GARDEN_PLANTS : "contén"
+    PLANT_SPECIES ||--o{ GARDEN_PLANTS : "clasifica"
+    GARDEN_PLANTS ||--o{ PLANT_EVOLUTION_RECORDS : "rexistra"
+    GARDENS ||--o{ WEATHER_RECORDS : "almacena"
+    GARDENS ||--o{ GARDEN_LAYOUT_ITEMS : "deseña"
+    GARDEN_PLANTS ||--o| GARDEN_LAYOUT_ITEMS : "sitúase en"
+
+    USERS {
+        INTEGER id PK
+        TEXT name
+        TEXT email
+        TEXT password_hash
+        TEXT created_at
+    }
+
+    GARDENS {
+        INTEGER id PK
+        INTEGER user_id FK
+        TEXT name
+        TEXT description
+        TEXT location
+        REAL latitude
+        REAL longitude
+        TEXT created_at
+    }
+
+    PLANT_SPECIES {
+        INTEGER id PK
+        TEXT common_name
+        TEXT scientific_name
+        TEXT plant_type
+        TEXT watering_frequency
+        TEXT sunlight
+        TEXT soil_type
+        REAL ideal_temperature_min
+        REAL ideal_temperature_max
+        TEXT notes
+    }
+
+    GARDEN_PLANTS {
+        INTEGER id PK
+        INTEGER garden_id FK
+        INTEGER species_id FK
+        TEXT custom_name
+        TEXT planting_date
+        TEXT status
+        TEXT notes
+        TEXT created_at
+    }
+
+    PLANT_EVOLUTION_RECORDS {
+        INTEGER id PK
+        INTEGER garden_plant_id FK
+        TEXT record_date
+        REAL height_cm
+        TEXT growth_stage
+        TEXT health_status
+        INTEGER has_flowers
+        INTEGER has_fruits
+        TEXT notes
+        TEXT photo_path
+    }
+
+    WEATHER_RECORDS {
+        INTEGER id PK
+        INTEGER garden_id FK
+        TEXT record_date
+        REAL temperature
+        REAL humidity
+        REAL rainfall
+        REAL wind_speed
+        TEXT weather_description
+        TEXT source
+    }
+
+    GARDEN_LAYOUT_ITEMS {
+        INTEGER id PK
+        INTEGER garden_id FK
+        INTEGER garden_plant_id FK
+        REAL x_position
+        REAL y_position
+        REAL width
+        REAL height
+        REAL rotation
+        TEXT color
+        TEXT icon
+    }
