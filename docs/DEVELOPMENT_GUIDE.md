@@ -113,7 +113,7 @@ Flutter Fundamentals
 
 Status:
 
-⬜ Pending
+🟡 In Progress
 
 ### Concepts
 
@@ -474,23 +474,42 @@ Esta sección actualizarase ao finalizar cada sesión.
 
 Status:
 
-⬜ Pending
+✅ Completed
 
-Concepts:
+### Concepts Learned
 
--
+- Estrutura xeral dunha aplicación Flutter.
+- Función `main()`.
+- Función `runApp()`.
+- Widget raíz da aplicación.
+- Que é un Widget.
+- Diferenza entre `StatelessWidget` e `StatefulWidget`.
+- Uso de `const`.
+- Filosofía de composición mediante widgets.
 
-Implemented:
+### Practical Work
 
--
+- Análise conceptual do ficheiro `main.dart`.
+- Comprensión da árbore de widgets.
+- Definición dos criterios para distinguir widgets con estado e sen estado.
 
-Commit:
+### Code Implemented
 
--
+Ningún.
 
-Notes:
+A sesión centrouse exclusivamente na comprensión da arquitectura básica de Flutter.
 
--
+### Documentation Updated
+
+- DEVELOPMENT_GUIDE.md
+
+### Commit
+
+Non necesario.
+
+### Notes
+
+A comprensión dos fundamentos foi satisfactoria. Antes de implementar código considérase importante consolidar o funcionamento interno dunha aplicación Flutter para facilitar as seguintes fases do desenvolvemento.
 
 ---
 
