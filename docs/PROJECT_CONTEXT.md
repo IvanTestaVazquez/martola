@@ -318,6 +318,10 @@ Modelo de datos e estrutura SQLite.
 
 Planificación técnica do desenvolvemento.
 
+## DEVELOPMENT_GUIDE.md
+
+Plan de aprendizaxe e desenvolvemento progresivo de Flutter e Dart aplicado a MARTOLA.
+
 ---
 
 # Current Progress
@@ -380,6 +384,8 @@ Planificación técnica do desenvolvemento.
 
 ✅ ROADMAP.md
 
+✅ DEVELOPMENT_GUIDE.md
+
 ---
 
 ## Development
@@ -390,7 +396,9 @@ Planificación técnica do desenvolvemento.
 
 ✅ Estrutura de carpetas da arquitectura
 
-⬜ Creación pantallas principais
+⬜ Creación de HomeScreen
+
+⬜ Creación das pantallas principais
 
 ⬜ Navegación
 
@@ -422,21 +430,28 @@ Planificación técnica do desenvolvemento.
 
 ## Current Objective
 
-Completar a primeira iteración da interface Flutter.
+Completar a primeira fase do DEVELOPMENT_GUIDE: fundamentos de Flutter.
 
-### Tasks
+### Learning Goals
 
-- Crear HomeScreen.
-- Crear GardensScreen.
-- Crear GardenDetailScreen.
-- Crear PlantDetailScreen.
-- Crear LayoutDesignerScreen.
-- Configurar MaterialApp.
-- Mostrar HomeScreen ao iniciar a aplicación.
+- Comprender a estrutura básica dunha aplicación Flutter.
+- Entender `main.dart` e `runApp()`.
+- Diferenciar `StatelessWidget` e `StatefulWidget`.
+- Comprender `MaterialApp`, `Scaffold` e `BuildContext`.
+- Utilizar Hot Reload durante o desenvolvemento.
+
+### Implementation Tasks
+
+- Revisar o proxecto Flutter xerado.
+- Simplificar o ficheiro `main.dart`.
+- Crear `HomeScreen`.
+- Configurar `MaterialApp`.
+- Mostrar `HomeScreen` como pantalla inicial.
+- Executar MARTOLA en Windows ou Android.
 
 ## Deliverable
 
-Primeira versión funcional de MARTOLA executándose en Flutter cunha pantalla propia e estrutura de vistas preparada para a navegación.
+Primeira pantalla propia de MARTOLA funcionando e comprensión básica da estrutura dunha aplicación Flutter.
 
 ---
 

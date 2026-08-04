@@ -28,15 +28,20 @@ O seu obxectivo é:
 - Fluxo de navegación
 - Estrutura Figma
 - Documentación técnica inicial
+- Creación do repositorio GitHub
+- Creación do proxecto Flutter
+- Estrutura inicial de carpetas
 
 ## In Progress
 
+- Aprendizaxe de Flutter e Dart
+- Primeira iteración da interface
 - Design System
-- Wireframes
 
 ## Pending
 
-- Implementación Flutter
+- Navegación entre pantallas
+- Provider
 - SQLite
 - API meteorolóxica
 
@@ -50,13 +55,13 @@ Preparar o proxecto Flutter e a súa estrutura.
 
 ## Tasks
 
-- Crear proxecto Flutter.
-- Configurar Git.
-- Crear repositorio GitHub.
-- Definir estrutura de carpetas.
-- Configurar Provider.
-- Crear rutas básicas.
-- Crear tema básico da aplicación.
+- [x] Crear proxecto Flutter.
+- [x] Configurar Git.
+- [x] Crear repositorio GitHub.
+- [x] Definir estrutura de carpetas.
+- [ ] Configurar Provider.
+- [ ] Crear rutas básicas.
+- [ ] Crear tema básico da aplicación.
 
 ## Deliverable
 
