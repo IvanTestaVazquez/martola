@@ -113,7 +113,7 @@ Flutter Fundamentals
 
 Status:
 
-🟡 In Progress
+🟡 In Progress (75%)
 
 ### Concepts
 
@@ -513,20 +513,46 @@ A comprensión dos fundamentos foi satisfactoria. Antes de implementar código c
 
 ---
 
-# Next Session
+## Session 2
 
-Phase:
+Status:
 
-Flutter Fundamentals
+✅ Completed
 
-Objectives:
+### Concepts Learned
 
-- Comprender como nace unha aplicación Flutter.
-- Crear a primeira HomeScreen.
-- Entender o papel de MaterialApp.
-- Comprender a estrutura dun Widget.
-- Executar a primeira pantalla propia de MARTOLA.
+- Estrutura dun Widget.
+- Filosofía de composición en Flutter.
+- Relación entre Framework e Engine.
+- Función do método build().
+- Widget como descrición da interface.
+- BuildContext (introdución).
+- MaterialApp.
+- Scaffold.
+- Composición mediante widgets pequenos.
+- Principio de responsabilidade única aplicado aos widgets.
 
-Estimated Duration:
+### Practical Work
 
-2 horas
+- Análise completa de main.dart.
+- Análise de HomeScreen.
+- Comprensión da árbore de widgets dunha aplicación Flutter.
+- Introdución á arquitectura baseada en composición.
+
+### Code Implemented
+
+Ningún.
+
+A sesión estivo centrada na comprensión profunda do código xerado por Flutter e na filosofía do framework.
+
+### Documentation Updated
+
+- DEVELOPMENT_GUIDE.md
+
+### Commit
+
+Non necesario.
+
+### Notes
+
+Comeza a consolidarse o modelo mental de Flutter. Compréndese que os widgets describen a interface e que Flutter reconstrúe unicamente as partes necesarias da árbore cando cambia o estado.
