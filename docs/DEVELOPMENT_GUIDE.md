@@ -655,3 +655,63 @@ Non necesario.
 ### Notes
 
 A partir desta sesión o enfoque cambia progresivamente cara ao desenvolvemento práctico. Os fundamentos de composición de widgets considéranse suficientemente consolidados para comezar a implementar a interface da aplicación.
+
+---
+
+## Session 5
+
+Status:
+
+✅ Completed
+
+### Objective
+
+Construír a primeira interface funcional de MARTOLA aplicando os conceptos aprendidos nas sesións anteriores.
+
+### Concepts Learned
+
+- AppBar
+- SafeArea
+- ElevatedButton
+- Icon
+- Composición de widgets aplicada a un caso real
+- Lectura e construción dunha árbore de widgets
+- Relación entre responsabilidade e composición
+
+### Practical Work
+
+- Deseño da arquitectura da primeira HomeScreen.
+- Implementación da primeira pantalla funcional da aplicación.
+- Primeira revisión de código (Code Review).
+- Corrección de erros de sintaxe relacionados con `child`, `children` e propiedades nomeadas.
+
+### Skills Acquired
+
+- Construír unha pantalla Flutter desde cero sen recorrer a un exemplo.
+- Traducir un wireframe nunha árbore de widgets.
+- Comprender a diferenza entre erros conceptuais e erros de sintaxe.
+- Aplicar os principios de responsabilidade única e composición durante a implementación.
+
+### Code Implemented
+
+- HomeScreen inicial.
+- AppBar.
+- SafeArea.
+- Center.
+- Padding.
+- Column.
+- Icon.
+- ElevatedButton.
+
+### Documentation Updated
+
+- DEVELOPMENT_GUIDE.md
+- LEARNING_NOTES.md
+
+### Commit
+
+Create initial HomeScreen layout
+
+### Notes
+
+Primeira pantalla funcional de MARTOLA. Nesta sesión produciuse a transición desde o estudo dos fundamentos de Flutter á implementación práctica da aplicación.

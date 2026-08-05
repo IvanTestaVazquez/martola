@@ -608,3 +608,119 @@ En Flutter non memorices primeiro a API.
 Comprende primeiro a responsabilidade do widget.
 
 Na maioría dos casos, a API poderá deducirse de forma natural.
+
+---
+
+## Regra da composición
+
+En Flutter é preferible combinar varios widgets pequenos cunha única responsabilidade antes que utilizar un widget grande con múltiples opcións.
+
+Vantaxes:
+
+- Reutilización.
+- Mantemento.
+- Lexibilidade.
+- Flexibilidade.
+- Testabilidade.
+
+A composición é un dos principios fundamentais de Flutter.
+
+---
+
+# Lesson 5 - First Real Screen
+
+## AppBar
+
+Widget que representa a barra superior dunha pantalla Material.
+
+Pode conter:
+
+- título
+- accións
+- botón de navegación
+- menú
+
+Forma parte da estrutura proporcionada por Scaffold.
+
+---
+
+## SafeArea
+
+Widget que garante que o seu contido permaneza dentro da zona segura do dispositivo.
+
+Evita que outros widgets queden ocultos por:
+
+- notch
+- cámara frontal
+- barra de estado
+- xestos do sistema
+
+---
+
+## ElevatedButton
+
+Botón Material con elevación.
+
+A súa responsabilidade é ofrecer unha acción principal ao usuario.
+
+Se `onPressed` é:
+
+```dart
+null
+```
+
+o botón queda automaticamente desactivado.
+
+---
+
+## Arquitectura dunha pantalla
+
+Antes de implementar unha pantalla é recomendable definir a súa árbore de widgets.
+
+Exemplo:
+
+HomeScreen
+
+↓
+
+Scaffold
+
+↓
+
+AppBar
+
+↓
+
+SafeArea
+
+↓
+
+Center
+
+↓
+
+Padding
+
+↓
+
+Column
+
+↓
+
+Widgets da interface
+
+---
+
+## Regra da arquitectura
+
+Primeiro deseña a estrutura.
+
+Despois escribe o código.
+
+É moito máis sinxelo corrixir unha arquitectura que unha implementación xa rematada.
+
+---
+
+## Concepto da sesión
+
+Construír unha pantalla Flutter consiste en combinar widgets pequenos, cada un cunha responsabilidade concreta, ata formar unha interface completa.

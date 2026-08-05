@@ -323,6 +323,25 @@ Planificación técnica do desenvolvemento.
 Plan de aprendizaxe e desenvolvemento progresivo de Flutter e Dart aplicado a MARTOLA.
 
 ---
+# Current Version
+
+## Version
+
+0.1.0-alpha
+
+## Status
+
+🟢 En desenvolvemento activo
+
+## Last Updated
+
+2026-08-05
+
+## Current Phase
+
+Desenvolvemento da interface de usuario (UI Foundation)
+
+---
 
 # Current Progress
 
@@ -396,7 +415,11 @@ Plan de aprendizaxe e desenvolvemento progresivo de Flutter e Dart aplicado a MA
 
 ✅ Estrutura de carpetas da arquitectura
 
-⬜ Creación de HomeScreen
+✅ Creación da primeira HomeScreen funcional
+
+✅ Primeira interface funcional implementada
+
+⬜ Refactorización en widgets reutilizables
 
 ⬜ Creación das pantallas principais
 
@@ -430,28 +453,27 @@ Plan de aprendizaxe e desenvolvemento progresivo de Flutter e Dart aplicado a MA
 
 ## Current Objective
 
-Completar a primeira fase do DEVELOPMENT_GUIDE: fundamentos de Flutter.
+Comezar o desenvolvemento funcional da aplicación.
 
 ### Learning Goals
 
-- Comprender a estrutura básica dunha aplicación Flutter.
-- Entender `main.dart` e `runApp()`.
-- Diferenciar `StatelessWidget` e `StatefulWidget`.
-- Comprender `MaterialApp`, `Scaffold` e `BuildContext`.
-- Utilizar Hot Reload durante o desenvolvemento.
+- Dominar o sistema de layout de Flutter.
+- Aprender a crear interfaces reutilizables.
+- Comprender o uso de Theme e TextStyle.
+- Introducir a separación entre datos e interface.
 
 ### Implementation Tasks
 
-- Revisar o proxecto Flutter xerado.
-- Simplificar o ficheiro `main.dart`.
-- Crear `HomeScreen`.
-- Configurar `MaterialApp`.
-- Mostrar `HomeScreen` como pantalla inicial.
-- Executar MARTOLA en Windows ou Android.
+- Mellorar HomeScreen.
+- Crear widgets reutilizables.
+- Definir o Theme da aplicación.
+- Crear GardenCard.
+- Crear PlantCard.
+- Preparar a navegación entre pantallas.
 
 ## Deliverable
 
-Primeira pantalla propia de MARTOLA funcionando e comprensión básica da estrutura dunha aplicación Flutter.
+Primeira versión navegable da interface principal de MARTOLA.
 
 ---
 
@@ -475,3 +497,13 @@ Este documento considérase a fonte principal de contexto do proxecto MARTOLA.
 Calquera cambio relevante na arquitectura, navegación, base de datos ou planificación deberá reflectirse neste ficheiro e na documentación asociada.
 
 O obxectivo principal actual é construír unha primeira versión funcional antes de introducir funcionalidades avanzadas ou melloras estéticas.
+
+## Current Development Strategy
+
+O desenvolvemento de MARTOLA realízase seguindo unha aprendizaxe progresiva de Flutter.
+
+Cada funcionalidade impleméntase unha vez comprendidos os principios técnicos que a sustentan.
+
+A prioridade actual non é a cantidade de código, senón construír unha arquitectura sólida, reutilizable e facilmente mantible.
+
+A documentación mantense sincronizada co estado real do proxecto e constitúe a principal referencia durante o desenvolvemento.
