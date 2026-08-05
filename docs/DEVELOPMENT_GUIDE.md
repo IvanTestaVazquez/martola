@@ -601,3 +601,57 @@ Non necesario.
 ### Notes
 
 A comprensión do sistema de layout foi moi satisfactoria. O alumno xa é capaz de deducir o comportamento de widgets novos a partir da súa responsabilidade, sen depender da memorización da API.
+
+---
+
+## Session 4
+
+Status:
+
+✅ Completed
+
+### Concepts Learned
+
+- Column
+- Row
+- Main Axis
+- Cross Axis
+- MainAxisAlignment
+- CrossAxisAlignment
+- SizedBox
+- Padding
+- Composición de widgets
+- Lectura dunha árbore de widgets
+
+### Practical Work
+
+- Comprensión do sistema de layout de Flutter.
+- Análise das responsabilidades de Column, Row, Padding e SizedBox.
+- Comprensión da distribución mediante Main Axis e Cross Axis.
+- Interpretación visual dunha interface a partir da súa árbore de widgets.
+
+### Skills Acquired
+
+- Deducir o funcionamento dunha API a partir da responsabilidade dun widget.
+- Identificar o eixe principal e secundario sen necesidade de memorización.
+- Ler mentalmente unha interface Flutter antes de executala.
+- Comprender a filosofía de composición mediante widgets pequenos.
+
+### Code Implemented
+
+Ningún.
+
+A sesión estivo dedicada á comprensión do sistema de composición e layout antes de construír a primeira interface de MARTOLA.
+
+### Documentation Updated
+
+- DEVELOPMENT_GUIDE.md
+- LEARNING_NOTES.md
+
+### Commit
+
+Non necesario.
+
+### Notes
+
+A partir desta sesión o enfoque cambia progresivamente cara ao desenvolvemento práctico. Os fundamentos de composición de widgets considéranse suficientemente consolidados para comezar a implementar a interface da aplicación.

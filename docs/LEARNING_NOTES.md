@@ -10,6 +10,60 @@ Non pretende substituír a documentación oficial de Flutter, senón servir como
 
 ---
 
+# Filosofía de Flutter
+
+Flutter está baseado na composición de widgets.
+
+Unha interface non se constrúe modificando elementos existentes, senón combinando widgets pequenos, cada un cunha responsabilidade concreta.
+
+Os widgets describen como debe verse a interface.
+
+O Flutter Engine é o encargado de debuxala na pantalla.
+
+Principios fundamentais:
+
+- Todo é un Widget.
+- Cada Widget ten unha única responsabilidade.
+- A interface constrúese mediante composición.
+- O estado determina a interface.
+- Flutter reconstrúe só o necesario cando cambia o estado.
+
+---
+
+# Patróns de pensamento
+
+## Antes de aprender un widget
+
+Pregunta sempre:
+
+> Cal é a responsabilidade deste widget?
+
+---
+
+## Antes de aprender unha propiedade
+
+Pregunta:
+
+> Que problema intenta resolver?
+
+---
+
+## Antes de memorizar unha API
+
+Pregunta:
+
+> Podo deducila a partir da responsabilidade do widget?
+
+---
+
+## Antes de engadir un widget novo
+
+Pregunta:
+
+> Xa existe outro widget que resolva este problema dunha forma máis simple?
+
+---
+
 # Lesson 1 - Flutter Fundamentals
 
 ## Flutter
@@ -508,3 +562,49 @@ Isto permite:
 Antes de aprender unha propiedade dun widget, identifica primeiro a súa responsabilidade.
 
 A maior parte da API de Flutter pode deducirse a partir desa responsabilidade.
+
+---
+
+# Erros frecuentes
+
+## Confundir Widget con elemento visual
+
+Un Widget non sempre representa un elemento visible.
+
+Exemplos:
+
+- Padding
+- Center
+- SizedBox
+
+Tamén son Widgets.
+
+---
+
+## Pensar que build() debuxa a pantalla
+
+Incorrecto.
+
+build() describe a interface.
+
+É o Engine quen a debuxa.
+
+---
+
+## Memorizar MainAxisAlignment
+
+Non é necesario.
+
+Primeiro identifica o Main Axis.
+
+O resto dedúcese automaticamente.
+
+---
+
+# Regra de ouro
+
+En Flutter non memorices primeiro a API.
+
+Comprende primeiro a responsabilidade do widget.
+
+Na maioría dos casos, a API poderá deducirse de forma natural.
