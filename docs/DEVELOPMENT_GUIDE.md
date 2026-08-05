@@ -556,3 +556,48 @@ Non necesario.
 ### Notes
 
 Comeza a consolidarse o modelo mental de Flutter. Compréndese que os widgets describen a interface e que Flutter reconstrúe unicamente as partes necesarias da árbore cando cambia o estado.
+
+---
+
+## Session 3
+
+Status:
+
+✅ Completed
+
+### Concepts Learned
+
+- Column
+- Row
+- Eixe principal (Main Axis)
+- Eixe secundario (Cross Axis)
+- MainAxisAlignment
+- CrossAxisAlignment
+- Filosofía de composición de Flutter
+- Organización dunha pantalla mediante widgets
+
+### Practical Work
+
+- Comprensión do funcionamento de Column e Row.
+- Dedución do comportamento de mainAxisAlignment e crossAxisAlignment sen recorrer á documentación.
+- Introdución ao sistema de layout de Flutter.
+- Análise da responsabilidade dos widgets de organización.
+
+### Code Implemented
+
+Ningún.
+
+A sesión centrouse na comprensión do sistema de composición e distribución dos widgets antes de comezar a construír a primeira interface de MARTOLA.
+
+### Documentation Updated
+
+- DEVELOPMENT_GUIDE.md
+- LEARNING_NOTES.md
+
+### Commit
+
+Non necesario.
+
+### Notes
+
+A comprensión do sistema de layout foi moi satisfactoria. O alumno xa é capaz de deducir o comportamento de widgets novos a partir da súa responsabilidade, sen depender da memorización da API.
