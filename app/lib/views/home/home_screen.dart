@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/martola_logo.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -18,18 +19,8 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                    Icon(Icons.eco, size: 64.0),
-                    SizedBox(
-                      height: 16.0,
-                    ),
-                    Text("MARTOLA"),
-                    SizedBox(
-                      height: 16.0,
-                    ),
-                    Text("Xestión Intelixente de hortas e xardíns",
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(
+                    const MartolaLogo(),
+                    const SizedBox(
                       height: 24.0,
                     ),
                     ElevatedButton(

@@ -724,3 +724,90 @@ Despois escribe o código.
 ## Concepto da sesión
 
 Construír unha pantalla Flutter consiste en combinar widgets pequenos, cada un cunha responsabilidade concreta, ata formar unha interface completa.
+
+---
+
+# Lesson 6 - Refactoring & Theme
+
+## Refactorización
+
+Refactorizar consiste en mellorar a estrutura interna do código sen modificar o seu comportamento.
+
+Unha boa refactorización:
+
+- Reduce duplicación.
+- Mellora a lexibilidade.
+- Facilita o mantemento.
+- Non modifica o resultado visible da aplicación.
+
+---
+
+## Widgets reutilizables
+
+Un widget debe extraerse cando representa unha responsabilidade propia que pode utilizarse en máis dun lugar.
+
+Exemplo:
+
+MartolaLogo
+
+Responsabilidade:
+
+Mostrar a identidade visual da aplicación.
+
+Non debe incluír botóns nin accións porque pertencen a responsabilidades diferentes.
+
+---
+
+## ThemeData
+
+`ThemeData` centraliza a configuración visual da aplicación.
+
+Permite definir:
+
+- cores
+- tipografías
+- botóns
+- AppBar
+- formularios
+- iconografía
+
+Todos os widgets poden acceder ao tema mediante:
+
+```dart
+Theme.of(context)
+```
+
+---
+
+## ColorScheme
+
+`ColorScheme` define os diferentes roles de cor da aplicación.
+
+Exemplo:
+
+- primary
+- secondary
+- surface
+- error
+
+Os widgets deben utilizar estes roles en lugar de cores fixas.
+
+Incorrecto:
+
+```dart
+color: Colors.green
+```
+
+Correcto:
+
+```dart
+color: Theme.of(context).colorScheme.primary
+```
+
+---
+
+## Concepto da sesión
+
+Primeiro conseguimos que unha aplicación funcione.
+
+Despois organizamos o código para que sexa fácil de manter.

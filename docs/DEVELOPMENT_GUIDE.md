@@ -715,3 +715,59 @@ Create initial HomeScreen layout
 ### Notes
 
 Primeira pantalla funcional de MARTOLA. Nesta sesión produciuse a transición desde o estudo dos fundamentos de Flutter á implementación práctica da aplicación.
+
+---
+
+## Session 6
+
+Status:
+
+✅ Completed
+
+### Objective
+
+Introducir a reutilización de compoñentes e a configuración visual global da aplicación.
+
+### Concepts Learned
+
+- Refactorización
+- Widgets reutilizables
+- ThemeData
+- ColorScheme
+- Theme.of(context)
+- Separación entre lóxica e presentación
+
+### Practical Work
+
+- Creación do widget reutilizable `MartolaLogo`.
+- Eliminación de código duplicado na `HomeScreen`.
+- Configuración do primeiro `ThemeData`.
+- Uso de `ColorScheme.fromSeed()`.
+- Aplicación de `Theme.of(context).colorScheme.primary`.
+
+### Skills Acquired
+
+- Identificar cando un widget merece ser extraído.
+- Comprender a diferenza entre reutilización e duplicación.
+- Entender o papel de `ThemeData` como configuración global.
+- Comprender a relación entre `MaterialApp`, `ThemeData` e os widgets da aplicación.
+
+### Code Implemented
+
+- `MartolaLogo`
+- Primeira configuración global do tema.
+- Refactorización da `HomeScreen`.
+
+### Documentation Updated
+
+- DEVELOPMENT_GUIDE.md
+- LEARNING_NOTES.md
+- PROJECT_CONTEXT.md
+
+### Commit
+
+Refactor HomeScreen and introduce reusable MartolaLogo widget
+
+### Notes
+
+Primeira sesión centrada na mellora da arquitectura do código. A interface permanece visualmente igual, pero o código gaña en reutilización, mantemento e escalabilidade.

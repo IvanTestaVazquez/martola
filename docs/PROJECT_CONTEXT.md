@@ -419,6 +419,10 @@ Desenvolvemento da interface de usuario (UI Foundation)
 
 ✅ Primeira interface funcional implementada
 
+✅ Primeiro widget reutilizable (MartolaLogo)
+
+✅ Configuración inicial do Theme global
+
 ⬜ Refactorización en widgets reutilizables
 
 ⬜ Creación das pantallas principais
@@ -453,23 +457,22 @@ Desenvolvemento da interface de usuario (UI Foundation)
 
 ## Current Objective
 
-Comezar o desenvolvemento funcional da aplicación.
+Continuar coa construción da interface de usuario.
 
 ### Learning Goals
 
-- Dominar o sistema de layout de Flutter.
-- Aprender a crear interfaces reutilizables.
-- Comprender o uso de Theme e TextStyle.
-- Introducir a separación entre datos e interface.
+- Comprender o sistema de temas de Flutter.
+- Continuar a creación de widgets reutilizables.
+- Introducir navegación entre pantallas.
+- Consolidar a arquitectura da interface.
 
 ### Implementation Tasks
 
 - Mellorar HomeScreen.
-- Crear widgets reutilizables.
-- Definir o Theme da aplicación.
 - Crear GardenCard.
 - Crear PlantCard.
-- Preparar a navegación entre pantallas.
+- Introducir navegación.
+- Preparar o Theme definitivo.
 
 ## Deliverable
 

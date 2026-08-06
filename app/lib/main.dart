@@ -13,6 +13,22 @@ class MartolaApp extends StatelessWidget {
     return MaterialApp(
       title: 'MARTOLA',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.green,
+        ),
+        appBarTheme: const AppBarTheme(
+          centerTitle: true,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 32,
+              vertical: 16,
+            ),
+          ),
+        ),
+      ),
       home: const HomeScreen(),
     );
   }
