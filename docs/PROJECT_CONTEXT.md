@@ -419,15 +419,19 @@ Desenvolvemento da interface de usuario (UI Foundation)
 
 ✅ Primeira interface funcional implementada
 
-✅ Primeiro widget reutilizable (MartolaLogo)
+✅ Primeiro widget reutilizable (`MartolaLogo`)
 
 ✅ Configuración inicial do Theme global
 
-⬜ Refactorización en widgets reutilizables
+✅ Creación de `DashboardScreen`
 
-⬜ Creación das pantallas principais
+✅ Navegación funcional entre `HomeScreen` e `DashboardScreen`
 
-⬜ Navegación
+⏳ Refactorización progresiva en widgets reutilizables
+
+⏳ Creación das pantallas principais
+
+⏳ Navegación entre pantallas principais
 
 ⬜ Provider
 
@@ -455,24 +459,17 @@ Desenvolvemento da interface de usuario (UI Foundation)
 
 # Next Milestone
 
-## Current Objective
+### Current Objective
 
-Continuar coa construción da interface de usuario.
-
-### Learning Goals
-
-- Comprender o sistema de temas de Flutter.
-- Continuar a creación de widgets reutilizables.
-- Introducir navegación entre pantallas.
-- Consolidar a arquitectura da interface.
+Construír os primeiros compoñentes reutilizables da interface.
 
 ### Implementation Tasks
 
-- Mellorar HomeScreen.
-- Crear GardenCard.
-- Crear PlantCard.
-- Introducir navegación.
-- Preparar o Theme definitivo.
+- WeatherCard
+- GardenCard
+- TasksCard
+- QuickActionsCard
+- Dashboard inicial
 
 ## Deliverable
 

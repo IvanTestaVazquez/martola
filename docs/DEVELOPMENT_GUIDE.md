@@ -771,3 +771,62 @@ Refactor HomeScreen and introduce reusable MartolaLogo widget
 ### Notes
 
 Primeira sesión centrada na mellora da arquitectura do código. A interface permanece visualmente igual, pero o código gaña en reutilización, mantemento e escalabilidade.
+
+---
+
+## Session 7
+
+Status:
+
+✅ Completed
+
+### Objective
+
+Introducir o sistema de navegación entre pantallas e comprender o funcionamento do Navigator.
+
+### Concepts Learned
+
+- Navigator
+- Routes
+- Stack de navegación
+- push()
+- pop()
+- MaterialPageRoute
+- Organización de pantallas por responsabilidade
+- SingleChildScrollView
+- Diferenzas entre Column, SingleChildScrollView e ListView
+
+### Practical Work
+
+- Creación de DashboardScreen.
+- Navegación desde HomeScreen.
+- Retorno mediante Navigator.pop().
+- Estruturación das vistas.
+- Deseño conceptual do Dashboard.
+
+### Skills Acquired
+
+- Comprender a navegación baseada nunha pila.
+- Identificar cando crear unha nova pantalla.
+- Organizar vistas segundo a súa responsabilidade.
+- Escoller o widget adecuado segundo o comportamento esperado da interface.
+
+### Code Implemented
+
+- DashboardScreen.
+- Navegación Home → Dashboard.
+- Botón Entrar funcional.
+
+### Documentation Updated
+
+- DEVELOPMENT_GUIDE.md
+- LEARNING_NOTES.md
+- PROJECT_CONTEXT.md
+
+### Commit
+
+Add DashboardScreen and navigation flow
+
+### Notes
+
+Primeira navegación funcional da aplicación. A arquitectura pasa dunha aplicación dunha única pantalla a unha estrutura preparada para crecer con múltiples vistas.

@@ -811,3 +811,117 @@ color: Theme.of(context).colorScheme.primary
 Primeiro conseguimos que unha aplicación funcione.
 
 Despois organizamos o código para que sexa fácil de manter.
+
+---
+
+# Regra do Navigator
+
+push()
+
+→ Engade unha pantalla enriba da pila.
+
+pop()
+
+→ Elimina a pantalla superior da pila.
+
+A pantalla anterior nunca desaparece mentres permaneza na pila.
+
+---
+
+## Navigator e a pila de rutas
+
+O `Navigator` mantén unha pila (stack) de rutas.
+
+- `push()` engade unha nova ruta enriba da pila.
+- `pop()` elimina a ruta superior.
+
+Cada chamada a `push()` crea unha nova ruta, aínda que xa exista outra pantalla do mesmo tipo na pila.
+
+As rutas inferiores permanecen na pila ata que son eliminadas explicitamente.
+
+---
+
+# Lesson 7 - Navigation
+
+## Navigator
+
+O Navigator xestiona a navegación mediante unha pila (stack) de rutas.
+
+Cada pantalla normalmente corresponde a unha ruta.
+
+---
+
+## push()
+
+Engade unha nova ruta enriba da pila.
+
+A pantalla anterior permanece na pila.
+
+---
+
+## pop()
+
+Elimina a ruta superior da pila.
+
+A pantalla anterior volve mostrarse.
+
+---
+
+## MaterialPageRoute
+
+Representa unha ruta Material que sabe como construír unha pantalla.
+
+---
+
+## Organización das pantallas
+
+Cada pantalla debe ter unha responsabilidade clara.
+
+As vistas organízanse por funcionalidade:
+
+views/
+
+├── home/
+
+├── dashboard/
+
+├── gardens/
+
+├── plants/
+
+├── weather/
+
+└── settings/
+
+---
+
+## SingleChildScrollView
+
+Permite desprazar vertical ou horizontalmente un único widget fillo.
+
+Habitualmente utilízase xunto cunha Column para pantallas cun número reducido de elementos que poden exceder o tamaño da pantalla.
+
+---
+
+## Column vs SingleChildScrollView vs ListView
+
+Column
+
+- Sen scroll.
+- Poucos elementos.
+
+SingleChildScrollView + Column
+
+- Poucos elementos.
+- Scroll completo.
+
+ListView
+
+- Moitos elementos.
+- Construción eficiente dos elementos visibles.
+
+---
+
+## Concepto da sesión
+
+A navegación en Flutter baséase nunha pila de rutas, non nun cambio directo dunha pantalla a outra.

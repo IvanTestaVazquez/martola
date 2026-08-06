@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/martola_logo.dart';
+import '../dashboard/dashboard_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -24,11 +25,16 @@ class HomeScreen extends StatelessWidget {
                       height: 24.0,
                     ),
                     ElevatedButton(
-                      onPressed: (){},
-                      child: Text("Entrar"),
+                      onPressed: (){
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const DashboardScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text("Entrar"),
                     )
-                ]            
-             
+                ]      
               )
             )
           )
