@@ -55,22 +55,205 @@ Tarxetas e elementos principais:
 
 # Reusable Widgets
 
+Os widgets reutilizables poden ser globais ou específicos dunha funcionalidade.
+
+Os widgets específicos dun módulo permanecerán dentro do directorio dese módulo mentres non exista unha necesidade real de reutilización global.
+
+---
+
+## MartolaLogo
+
+### Descrición
+
+Representa o elemento visual de identidade de MARTOLA.
+
+### Uso actual
+
+- HomeScreen
+
+### Estado
+
+✅ Implementado
+
+---
+
 ## WeatherCard
 
 ### Descrición
 
-Mostra información meteorolóxica resumida.
+Mostra un resumo da información meteorolóxica.
 
-### Información
+### Información actual
 
 - Temperatura
 - Estado meteorolóxico
-- Humidade
+- Localización
 
-### Uso
+### Uso actual
 
-- HomeScreen
-- GardenDetailScreen
+- DashboardScreen
+
+### Estado
+
+✅ Implementado con datos ficticios.
+
+A información será substituída posteriormente por datos procedentes do módulo meteorolóxico.
+
+---
+
+## GardenCard
+
+### Descrición
+
+Mostra un resumo da información relacionada coas hortas do usuario.
+
+### Información actual
+
+- Número de hortas dispoñibles.
+- Acción para acceder ao módulo de hortas.
+
+### Uso actual
+
+- DashboardScreen
+
+### Estado
+
+✅ Implementado
+
+---
+
+## TasksCard
+
+### Descrición
+
+Mostra un resumo das tarefas pendentes.
+
+### Información actual
+
+- Número de tarefas pendentes.
+- Acción para acceder á lista de tarefas.
+
+### Uso actual
+
+- DashboardScreen
+
+### Estado
+
+✅ Implementado con datos ficticios.
+
+---
+
+## QuickActionsCard
+
+### Descrición
+
+Agrupa accesos directos ás accións máis frecuentes desde o Dashboard.
+
+### Accións actuais
+
+- Crear nova horta.
+- Engadir nova tarefa.
+
+### Uso actual
+
+- DashboardScreen
+
+### Estado
+
+✅ Implementado
+
+As accións dependentes dunha horta concreta, como engadir unha planta, non se mostrarán neste widget global e estarán dispoñibles dentro do contexto da horta correspondente.
+
+---
+
+## GardenListItem
+
+### Descrición
+
+Representa unha horta individual dentro do listado de hortas.
+
+### Información
+
+- Nome.
+- Localización.
+- Superficie.
+
+### Interacción
+
+Permite seleccionar a horta mediante `InkWell`.
+
+A interacción comunícase mediante:
+
+```dart
+final void Function(Garden) onTap;
+```
+
+### Uso actual
+
+- GardensScreen
+
+### Estado
+
+✅ Implementado
+
+---
+
+## PlantCard
+
+### Descrición
+
+Representará unha planta concreta.
+
+### Información prevista
+
+- Nome.
+- Estado.
+- Data de plantación.
+
+### Uso previsto
+
+- Listado de plantas dunha horta.
+
+### Estado
+
+⬜ Pendente
+
+---
+
+## ActionCard
+
+### Descrición
+
+Tarxeta prevista para proporcionar acceso rápido ás funcionalidades dunha horta.
+
+### Uso previsto
+
+- GardenDetailsScreen
+
+### Accións previstas
+
+- Plantas.
+- Evolución.
+- Meteoroloxía.
+- Deseño visual.
+
+### Estado
+
+⬜ Pendente
+
+---
+
+## MainBottomNavigation
+
+### Descrición
+
+Posible barra principal de navegación para dispositivos móbiles.
+
+### Estado
+
+⬜ Pendente de validación durante a evolución da navegación.
+
+A navegación actual utiliza `Navigator` estándar entre pantallas.
 
 ---
 
@@ -150,21 +333,77 @@ Barra principal de navegación.
 
 ### Propósito
 
-Pantalla principal da aplicación.
+Pantalla inicial de entrada á aplicación.
 
-### Seccións
+### Seccións actuais
 
-- Header
-- WeatherCard
-- Lista de hortas
-- Actividade recente
-- Bottom Navigation
+- Identidade visual de MARTOLA.
+- Nome da aplicación.
+- Descrición breve.
+- Botón de entrada.
+
+### Widgets utilizados
+
+- MartolaLogo
+- Text
+- ElevatedButton
+
+### Navegación
+
+```text
+HomeScreen
+    ↓
+  Entrar
+    ↓
+DashboardScreen
+```
+
+### Estado
+
+✅ Implementada
+
+---
+
+## DashboardScreen
+
+### Propósito
+
+Panel principal da aplicación e punto central de acceso aos diferentes módulos.
+
+### Seccións actuais
+
+- Resumo meteorolóxico.
+- Resumo de hortas.
+- Resumo de tarefas.
+- Accións rápidas.
 
 ### Widgets utilizados
 
 - WeatherCard
 - GardenCard
-- MainBottomNavigation
+- TasksCard
+- QuickActionsCard
+
+### Navegación actual
+
+```text
+DashboardScreen
+├── GardenCard
+│      └── GardensScreen
+│
+├── TasksCard
+│      └── TasksScreen
+│
+└── QuickActionsCard
+       ├── CreateGardenScreen
+       └── CreateTaskScreen
+```
+
+### Estado
+
+✅ Primeira versión funcional implementada.
+
+Os datos mostrados actualmente son ficticios e serán substituídos progresivamente por estado real da aplicación.
 
 ---
 
@@ -172,45 +411,158 @@ Pantalla principal da aplicación.
 
 ### Propósito
 
-Visualización e xestión das hortas.
+Mostrar as hortas dispoñibles e permitir seleccionar unha delas.
 
-### Seccións
+### Seccións actuais
 
-- Header
-- Botón Nova Horta
-- Lista de GardenCards
+- AppBar.
+- Lista dinámica de hortas.
 
 ### Widgets utilizados
 
-- GardenCard
-- PrimaryButton
+- ListView.builder
+- GardenListItem
+
+### Datos actuais
+
+Utilízase temporalmente unha colección local de obxectos `Garden`.
+
+### Interacción
+
+Ao seleccionar un `GardenListItem`, a pantalla recibe o modelo seleccionado mediante callback e realiza a navegación.
+
+```text
+GardensScreen
+      ↓
+GardenListItem
+      ↓
+ onTap(garden)
+      ↓
+GardenDetailsScreen
+```
+
+### Estado
+
+✅ Primeira versión funcional implementada.
+
+⏳ Pendente de substituír os datos ficticios por estado compartido.
 
 ---
 
-## GardenDetailScreen
+## GardenDetailsScreen
 
 ### Propósito
 
-Centro de control dunha horta.
+Mostrar a información dunha horta concreta e actuar progresivamente como centro de control desa horta.
 
-### Seccións
+### Información actual
 
-- Header
-- Resumo meteorolóxico
-- Estatísticas
-- Accións rápidas
+- Nome.
+- Localización.
+- Superficie.
 
-### Widgets utilizados
+### Entrada
 
-- WeatherCard
-- ActionCard
+Recibe unha instancia de:
 
-### Accesos
+```dart
+Garden
+```
 
-- Plantas
-- Evolución
-- Meteoroloxía
-- Deseño da Horta
+mediante o constructor.
+
+### Funcionalidades previstas
+
+- Plantas.
+- Evolución.
+- Meteoroloxía.
+- Deseño da horta.
+- Accións relacionadas coa horta.
+
+### Estado
+
+✅ Visualización básica implementada.
+
+⏳ Funcionalidades específicas da horta pendentes.
+
+---
+
+## CreateGardenScreen
+
+### Propósito
+
+Permitir introducir e validar os datos necesarios para crear unha nova horta.
+
+### Tipo
+
+StatefulWidget
+
+### Campos actuais
+
+- Nome.
+- Localización.
+- Superficie.
+
+### Xestión do formulario
+
+Utiliza:
+
+- Form.
+- GlobalKey<FormState>.
+- TextFormField.
+- TextEditingController.
+- Validators.
+
+### Validación
+
+Compróbase que:
+
+- O nome sexa válido.
+- A localización sexa válida.
+- A superficie poida converterse correctamente a `double`.
+- A superficie cumpra as condicións definidas polo formulario.
+
+### Resultado
+
+Cando os datos son válidos:
+
+1. Convértense os valores necesarios.
+2. Créase unha instancia de `Garden`.
+3. A instancia devólvese á ruta anterior mediante `Navigator.pop()`.
+
+### Estado
+
+✅ Formulario funcional.
+
+⏳ Pendente de conectar coa xestión de estado e persistencia.
+
+---
+
+## TasksScreen
+
+### Propósito
+
+Mostrar as tarefas pendentes do usuario.
+
+### Estado
+
+🟡 Pantalla provisional creada.
+
+A implementación funcional realizarase nunha fase posterior.
+
+---
+
+## CreateTaskScreen
+
+### Propósito
+
+Permitir crear unha nova tarefa.
+
+### Estado
+
+🟡 Pantalla provisional creada.
+
+O formulario funcional implementarase nunha fase posterior.
 
 ---
 
@@ -233,6 +585,10 @@ Seguemento dunha planta.
 - InfoRow
 - EvolutionRecordCard
 
+### Estado
+
+⬜ Pendente
+
 ---
 
 ## LayoutDesignerScreen
@@ -253,6 +609,44 @@ Representación visual da horta.
 - ToolButton
 - LayoutCanvas
 - PlantLayoutItem
+
+### Estado
+
+⬜ Pendente
+
+---
+
+# Current UI Flow
+
+O fluxo actualmente implementado é:
+
+```text
+HomeScreen
+    ↓
+DashboardScreen
+    │
+    ├── GardensScreen
+    │       ↓
+    │  GardenListItem
+    │       ↓
+    │  GardenDetailsScreen
+    │
+    ├── TasksScreen
+    │
+    ├── CreateGardenScreen
+    │       ↓
+    │    Garden
+    │       ↓
+    │  retorno á ruta anterior
+    │
+    └── CreateTaskScreen
+```
+
+Este fluxo representa a primeira versión navegable da aplicación.
+
+A navegación utiliza actualmente `Navigator` estándar e `MaterialPageRoute`.
+
+Os módulos irán adquirindo funcionalidade progresivamente sen modificar innecesariamente este fluxo base.
 
 ---
 

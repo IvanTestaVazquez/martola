@@ -1,4 +1,12 @@
 import 'package:flutter/material.dart';
+
+import '../../models/garden.dart';
+
+import '../gardens/gardens_screen.dart';
+import '../gardens/create_garden_screen.dart';
+import '../tasks/tasks_screen.dart';
+import '../tasks/create_task_screen.dart';
+
 import './widgets/weather_card.dart';
 import './widgets/garden_card.dart';
 import './widgets/tasks_card.dart';
@@ -29,19 +37,41 @@ class DashboardScreen extends StatelessWidget {
                 GardenCard(
                   gardenCount: 2,
                   onViewGardens: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const GardensScreen(),
+                      ),
+                    );
                   },
                 ),
                 const SizedBox(height: 16),
                 TasksCard(
                   tasksCount: 2,
                   onViewTasks: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const TasksScreen(),
+                      ),
+                    );
                   },
                 ),
                 const SizedBox(height: 16),
                 QuickActionsCard(
                   onAddTask: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const CreateTaskScreen(),
+                      ),
+                    );
                   },
-                  onCreateGarden: () {
+                  onCreateGarden: () async {
+                    final garden = await Navigator.of(context).push<Garden>(
+                      MaterialPageRoute(
+                        builder: (context) => const CreateGardenScreen(),
+                      ),
+                    );
+
+                    debugPrint('Resultado: ${garden?.name}');
                   },
                 ),
               ],

@@ -149,6 +149,24 @@ Arquitectura MVVM simplificada orientada a:
 - Escalabilidade futura.
 - Curva de aprendizaxe moderada.
 
+## Current Implementation State
+
+A arquitectura completa aínda non está implementada.
+
+O desenvolvemento actual chegou aproximadamente a:
+
+```text
+View
+ ↓
+Modelos de dominio
+ ↓
+Datos temporais locais
+```
+
+Xa existen modelos independentes da interface, como `Garden`, pero os datos de hortas continúan definidos temporalmente nas Views.
+
+O seguinte paso será introducir Provider e os primeiros ViewModels para evolucionar cara á arquitectura prevista sen acoplar a interface directamente á futura persistencia.
+
 ---
 
 # Database Design
@@ -323,6 +341,7 @@ Planificación técnica do desenvolvemento.
 Plan de aprendizaxe e desenvolvemento progresivo de Flutter e Dart aplicado a MARTOLA.
 
 ---
+
 # Current Version
 
 ## Version
@@ -335,11 +354,11 @@ Plan de aprendizaxe e desenvolvemento progresivo de Flutter e Dart aplicado a MA
 
 ## Last Updated
 
-2026-08-05
+2026-08-10
 
 ## Current Phase
 
-Desenvolvemento da interface de usuario (UI Foundation)
+Desenvolvemento funcional do módulo de hortas e preparación da xestión de estado.
 
 ---
 
@@ -425,17 +444,63 @@ Desenvolvemento da interface de usuario (UI Foundation)
 
 ✅ Creación de `DashboardScreen`
 
-✅ Navegación funcional entre `HomeScreen` e `DashboardScreen`
+✅ Creación dos widgets principais do Dashboard:
+- `WeatherCard`
+- `GardenCard`
+- `TasksCard`
+- `QuickActionsCard`
 
-⏳ Refactorización progresiva en widgets reutilizables
+✅ Navegación do Dashboard aos módulos de hortas e tarefas
 
-⏳ Creación das pantallas principais
+✅ Pantallas provisionais `TasksScreen` e `CreateTaskScreen`
 
-⏳ Navegación entre pantallas principais
+✅ Callbacks desacoplados da navegación nos widgets do Dashboard
 
-⬜ Provider
+✅ Creación do modelo de dominio `Garden`
+
+✅ Implementación inicial de `GardensScreen`
+
+✅ Listado dinámico de hortas mediante `ListView.builder`
+
+✅ Creación do widget reutilizable `GardenListItem`
+
+✅ Selección dunha horta mediante `InkWell`
+
+✅ Navegación desde a lista ao detalle dunha horta
+
+✅ Creación de `GardenDetailsScreen`
+
+✅ Paso dun obxecto `Garden` entre pantallas
+
+✅ Conversión de `CreateGardenScreen` a `StatefulWidget`
+
+✅ Implementación do formulario de creación de hortas
+
+✅ Xestión dos campos mediante `TextEditingController`
+
+✅ Validación do formulario mediante `Form` e `GlobalKey<FormState>`
+
+✅ Validación de nome, localización e superficie
+
+✅ Conversión da superficie de `String` a `double`
+
+✅ Creación dun obxecto `Garden` a partir dos datos do formulario
+
+✅ Devolución dun `Garden` entre rutas mediante `Navigator.pop(garden)`
+
+✅ Recepción de resultados mediante `await Navigator.push<Garden>()`
+
+⏳ Desenvolvemento funcional do módulo de hortas
+
+⬜ Xestión de estado mediante Provider
+
+⬜ ViewModels
+
+⬜ Repository
 
 ⬜ SQLite
+
+⬜ Módulo funcional de plantas
 
 ⬜ API meteorolóxica
 
@@ -454,6 +519,24 @@ Desenvolvemento da interface de usuario (UI Foundation)
 - Flutter terá prioridade fronte ao deseño visual.
 - Os wireframes actuarán como referencia funcional para o desenvolvemento.
 - A documentación técnica converterase na principal fonte de contexto do proxecto.
+- Os widgets específicos dunha funcionalidade manteranse dentro da propia funcionalidade ata que exista unha necesidade real de reutilización.
+- Os widgets de presentación recibirán accións externas mediante callbacks para evitar acoplamento coa navegación.
+- O Dashboard estrutúrase mediante compoñentes independentes: WeatherCard, GardenCard, TasksCard e QuickActionsCard.
+- Durante a fase inicial da interface utilizaranse mock data antes da integración con SQLite e APIs.
+- As accións dependentes dunha horta concreta, como engadir unha planta, situaranse dentro do contexto desa horta.
+- Os widgets de presentación comunicarán as interaccións mediante callbacks; a navegación será responsabilidade das pantallas que coñecen o fluxo da aplicación.
+- O desenvolvemento das novas funcionalidades seguirá unha estratexia incremental: primeiro establecerase o fluxo mediante pantallas provisionais e posteriormente implementarase o seu contido funcional.
+- Os datos de dominio representaranse mediante modelos independentes da interface, comezando polo modelo `Garden`.
+- As pantallas de detalle recibirán o obxecto do modelo que deben representar en lugar de depender de datos globais ou valores fixos.
+- Os elementos das listas recibirán o modelo completo cando os seus datos pertenzan conceptualmente á mesma entidade.
+- A interacción dun widget non implica por si mesma a necesidade dun `StatefulWidget`; utilizarase estado local só cando exista estado ou recursos que deban ser xestionados polo widget.
+- Os recursos asociados ao ciclo de vida dun `State`, como os `TextEditingController`, serán creados e liberados polo propio `State`.
+- Os formularios utilizarán `Form`, `GlobalKey<FormState>` e validadores para comprobar os datos antes de construír os modelos de dominio.
+- Os datos procedentes de campos de texto serán convertidos explicitamente ao tipo requirido polo modelo antes da creación do obxecto.
+- O identificador de `Garden` poderá ser `null` antes da persistencia, xa que unha entidade pode existir temporalmente antes de recibir un identificador da capa de datos.
+- `Navigator` poderá utilizarse para devolver resultados entre rutas cando o fluxo o requira.
+- Non se implementarán solucións temporais para manter sincronizados datos locais entre pantallas cando esa responsabilidade corresponda posteriormente á xestión de estado.
+- A integración de Provider será o seguinte paso para separar progresivamente os datos das Views e permitir estado compartido.
 
 ---
 
@@ -461,20 +544,34 @@ Desenvolvemento da interface de usuario (UI Foundation)
 
 ### Current Objective
 
-Construír os primeiros compoñentes reutilizables da interface.
+Introducir a xestión de estado da aplicación e continuar a evolución do módulo de hortas cara á arquitectura MVVM simplificada prevista para MARTOLA.
+
+### Starting Point
+
+Actualmente o módulo de hortas xa permite:
+
+- Representar unha horta mediante o modelo `Garden`.
+- Mostrar unha colección temporal de hortas.
+- Navegar desde a lista ao detalle dunha horta.
+- Crear e validar unha nova horta mediante un formulario.
+- Construír un obxecto `Garden` cos datos introducidos.
+- Devolver ese obxecto entre rutas.
+
+Os datos continúan sendo locais e temporais.
 
 ### Implementation Tasks
 
-- WeatherCard
-- GardenCard
-- TasksCard
-- QuickActionsCard
-- Dashboard inicial
+- Introducir Provider.
+- Comprender a diferenza entre estado local e estado compartido.
+- Crear o primeiro ViewModel.
+- Extraer progresivamente os datos de hortas das Views.
+- Permitir que o estado das hortas sexa compartido entre pantallas.
+- Preparar a futura integración do Repository.
+- Preparar a posterior persistencia mediante SQLite.
 
 ## Deliverable
 
-Primeira versión navegable da interface principal de MARTOLA.
-
+Primeira versión do módulo de hortas cun estado separado da interface e preparado para conectarse posteriormente á capa de persistencia.
 ---
 
 # Future Improvements

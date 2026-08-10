@@ -830,3 +830,407 @@ Add DashboardScreen and navigation flow
 ### Notes
 
 Primeira navegación funcional da aplicación. A arquitectura pasa dunha aplicación dunha única pantalla a unha estrutura preparada para crecer con múltiples vistas.
+
+---
+
+## Session 8
+
+Status:
+
+✅ Completed
+
+### Objective
+
+Construír o primeiro Dashboard funcional de MARTOLA mediante compoñentes independentes e reutilizables.
+
+### Concepts Learned
+
+- Deseño de widgets a partir da súa responsabilidade.
+- Interface pública dun widget.
+- Paso de datos mediante o construtor.
+- Mock data.
+- Callbacks mediante `VoidCallback`.
+- Separación entre presentación e comportamento.
+- `Card`.
+- `SingleChildScrollView`.
+- `CrossAxisAlignment.stretch`.
+- `TextButton`.
+- `OutlinedButton.icon`.
+- Uso do `Theme` dentro de widgets reutilizables.
+- Xerarquía visual da información.
+
+### Practical Work
+
+- Creación de `WeatherCard`.
+- Creación de `GardenCard`.
+- Creación de `TasksCard`.
+- Creación de `QuickActionsCard`.
+- Integración dos catro compoñentes en `DashboardScreen`.
+- Uso de datos ficticios para construír a interface antes de dispoñer de datos reais.
+- Introdución de callbacks para delegar accións no widget pai.
+- Preparación do Dashboard para contido con scroll.
+
+### Components Implemented
+
+DashboardScreen
+├── WeatherCard
+├── GardenCard
+├── TasksCard
+└── QuickActionsCard
+
+### Architecture Decisions
+
+- Os widgets específicos do Dashboard permanecen en `views/dashboard/widgets/`.
+- Un widget só se moverá a `lib/widgets/` cando exista unha necesidade real de reutilización fóra da funcionalidade.
+- Os widgets de presentación non deben controlar directamente a navegación.
+- As accións externas expóñense mediante callbacks.
+- `Engadir planta` non se inclúe nas accións rápidas do Dashboard, xa que require o contexto dunha horta concreta.
+
+### Skills Acquired
+
+- Deseñar un widget antes de implementar o seu `build()`.
+- Identificar os datos mínimos que necesita un compoñente.
+- Pasar datos dun widget pai a un widget fillo.
+- Pasar comportamento mediante callbacks.
+- Compoñer unha pantalla a partir de widgets especializados.
+- Diferenciar responsabilidades de presentación, navegación e lóxica.
+
+### Next Step
+
+Comezar a conectar as accións do Dashboard coas pantallas correspondentes e continuar o fluxo funcional de MARTOLA.
+
+---
+
+## Session 9
+
+Status:
+
+✅ Completed
+
+### Objective
+
+Conectar os callbacks dos compoñentes do Dashboard coa navegación real entre os distintos módulos de MARTOLA.
+
+### Concepts Practiced
+
+- Reutilización de `Navigator`.
+- Uso de `Navigator.of(context).push()`.
+- Uso de `MaterialPageRoute`.
+- Integración entre callbacks e navegación.
+- Separación entre widgets de presentación e control do fluxo.
+- Organización das pantallas por funcionalidade.
+
+### Practical Work
+
+- Creación de `GardensScreen`.
+- Creación de `CreateGardenScreen`.
+- Creación de `TasksScreen`.
+- Creación de `CreateTaskScreen`.
+- Conexión de `GardenCard` con `GardensScreen`.
+- Conexión de `TasksCard` con `TasksScreen`.
+- Conexión da acción `Crear horta` con `CreateGardenScreen`.
+- Conexión da acción `Engadir tarefa` con `CreateTaskScreen`.
+- Comprobación da navegación de ida e volta mediante a pila de `Navigator`.
+
+### Navigation Implemented
+
+```text
+HomeScreen
+    ↓
+DashboardScreen
+    ├── GardenCard
+    │      └── GardensScreen
+    │
+    ├── TasksCard
+    │      └── TasksScreen
+    │
+    └── QuickActionsCard
+           ├── CreateGardenScreen
+           └── CreateTaskScreen
+```
+
+### Architecture Decisions
+
+- `DashboardScreen` coñece o fluxo de navegación desde o panel principal.
+- Os widgets `GardenCard`, `TasksCard` e `QuickActionsCard` non realizan navegación directamente.
+- Os widgets de presentación comunican as interaccións mediante callbacks.
+- As pantallas relacionadas coas hortas almacénanse en `views/gardens/`.
+- As pantallas relacionadas coas tarefas almacénanse en `views/tasks/`.
+- As pantallas de creación créanse inicialmente como estruturas provisionais antes de implementar os formularios reais.
+
+### Skills Acquired
+
+- Conectar un callback cunha acción de navegación.
+- Aplicar o mesmo patrón de navegación a diferentes módulos.
+- Manter separados presentación e fluxo da aplicación.
+- Crear pantallas provisionais para desenvolver incrementalmente un fluxo.
+- Organizar novas funcionalidades dentro da estrutura do proxecto.
+
+### Next Step
+
+Comezar o desenvolvemento funcional do módulo de hortas, substituíndo as pantallas provisionais por interfaces capaces de representar e posteriormente xestionar os datos dunha horta.
+
+---
+
+## Estado de desenvolvemento — Sesión 10
+
+### Módulo de hortas
+
+Iniciouse a implementación funcional do módulo de xestión de hortas.
+
+A aplicación dispón actualmente dun modelo de dominio `Garden`:
+
+```dart
+class Garden {
+  final String? id;
+  final String name;
+  final String location;
+  final double area;
+
+  const Garden({
+    this.id,
+    required this.name,
+    required this.location,
+    required this.area,
+  });
+}
+```
+
+O identificador é nullable porque unha nova horta pode existir como obxecto antes de ser persistida e recibir un identificador definitivo.
+
+---
+
+### Estrutura actual do módulo
+
+A estrutura principal implementada é:
+
+```text
+lib/
+├── models/
+│   └── garden.dart
+│
+└── views/
+    ├── dashboard/
+    │   └── ...
+    │
+    └── gardens/
+        ├── gardens_screen.dart
+        ├── garden_details_screen.dart
+        ├── create_garden_screen.dart
+        │
+        └── widgets/
+            └── garden_list_item.dart
+```
+
+Responsabilidades actuais:
+
+- `Garden`: representa os datos dunha horta.
+- `GardensScreen`: mostra a colección de hortas e xestiona a navegación desde a lista.
+- `GardenListItem`: representa visualmente unha horta dentro da lista e comunica a selección.
+- `GardenDetailsScreen`: mostra a información da horta seleccionada.
+- `CreateGardenScreen`: permite introducir e validar os datos necesarios para crear unha nova horta.
+
+---
+
+### Listado de hortas
+
+`GardensScreen` utiliza actualmente unha colección local de datos ficticios:
+
+```dart
+const List<Garden> gardens = [
+  // Datos temporais
+];
+```
+
+A representación da colección realízase mediante:
+
+```dart
+ListView.builder(...)
+```
+
+Cada elemento é representado por:
+
+```dart
+GardenListItem
+```
+
+Esta implementación é temporal.
+
+A colección local será substituída posteriormente por datos proporcionados pola capa de estado e persistencia.
+
+---
+
+### Fluxo de consulta dunha horta
+
+O fluxo actualmente implementado é:
+
+```text
+DashboardScreen
+      ↓
+GardensScreen
+      ↓
+List<Garden>
+      ↓
+ListView.builder
+      ↓
+GardenListItem
+      ↓
+selección do usuario
+      ↓
+GardenDetailsScreen
+```
+
+`GardenDetailsScreen` recibe directamente o modelo seleccionado:
+
+```dart
+GardenDetailsScreen(
+  garden: garden,
+)
+```
+
+Deste modo a pantalla de detalle é independente da horta concreta que se queira representar.
+
+---
+
+### Creación dunha horta
+
+`CreateGardenScreen` está implementada como `StatefulWidget`.
+
+Actualmente dispón de:
+
+- Campo de nome.
+- Campo de localización.
+- Campo de superficie.
+- `TextEditingController` para cada campo.
+- `Form`.
+- `GlobalKey<FormState>`.
+- Validación dos campos.
+- Conversión da superficie de `String` a `double`.
+- Creación dunha instancia de `Garden`.
+
+Fluxo:
+
+```text
+CreateGardenScreen
+      ↓
+TextFormField
+      ↓
+TextEditingController
+      ↓
+Form / validators
+      ↓
+conversión de tipos
+      ↓
+Garden
+```
+
+Os `TextEditingController` son creados e destruídos polo estado de `CreateGardenScreen`.
+
+---
+
+### Devolución da nova horta
+
+Unha vez creado o modelo, o formulario pode devolvelo mediante:
+
+```dart
+Navigator.of(context).pop(garden);
+```
+
+A ruta que abriu o formulario pode recibir o resultado:
+
+```dart
+final garden = await Navigator.of(context).push<Garden>(
+  MaterialPageRoute(
+    builder: (context) => const CreateGardenScreen(),
+  ),
+);
+```
+
+O resultado é nullable porque o usuario pode abandonar o formulario sen crear unha horta.
+
+Esta implementación utilízase actualmente para comprobar o fluxo de datos entre rutas.
+
+---
+
+### Limitación actual
+
+A nova horta creada aínda non se incorpora á colección mostrada en `GardensScreen`.
+
+Actualmente:
+
+```text
+Formulario
+    ↓
+Garden creado
+    ↓
+Garden devolto
+    ↓
+NON persistido
+```
+
+Isto é intencionado.
+
+Non se implementará unha solución temporal baseada en modificar manualmente a lista local, xa que a xestión dos datos deberá integrarse coa arquitectura prevista para MARTOLA.
+
+---
+
+### Evolución prevista
+
+O fluxo actual:
+
+```text
+View
+ ↓
+datos locais ficticios
+```
+
+deberá evolucionar progresivamente cara á arquitectura prevista:
+
+```text
+View
+ ↓
+ViewModel / Provider
+ ↓
+Repository
+ ↓
+SQLite
+```
+
+Isto permitirá que:
+
+- As hortas non dependan dunha lista local dentro dunha pantalla.
+- Varias pantallas compartan o mesmo estado.
+- Crear unha horta actualice a interface.
+- Os datos permanezan dispoñibles ao pechar e volver abrir a aplicación.
+- A interface permaneza desacoplada da implementación concreta da persistencia.
+
+---
+
+### Estado actual do módulo
+
+Implementado:
+
+- Modelo `Garden`.
+- Listado dinámico de hortas.
+- Widget reutilizable `GardenListItem`.
+- Selección dunha horta.
+- Pantalla de detalle.
+- Paso de modelos entre pantallas.
+- Formulario de creación.
+- Validación de datos.
+- Conversión de tipos.
+- Creación dun novo `Garden`.
+- Devolución do resultado entre rutas.
+
+Pendente:
+
+- Estado compartido das hortas.
+- Integración con `Provider`.
+- ViewModel do módulo.
+- Repository.
+- Persistencia mediante SQLite.
+- Inserción real de hortas.
+- Recuperación das hortas almacenadas.
+- Edición de hortas.
+- Eliminación de hortas.
+- Asociación de plantas ás hortas.
