@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../viewmodels/gardens_viewmodel.dart';
 import '../../models/garden.dart';
 
 import '../gardens/gardens_screen.dart';
@@ -17,6 +19,10 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final gardensViewModel = context.watch<GardensViewModel>();
+    final gardenCount = context.select<GardensViewModel, int>((viewModel) => viewModel.gardens.length);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Panel principal'),
@@ -35,7 +41,7 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 GardenCard(
-                  gardenCount: 2,
+                  gardenCount: gardenCount,
                   onViewGardens: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(

@@ -38,6 +38,15 @@ O seu obxectivo é:
 - Listado inicial de hortas con datos ficticios.
 - Pantalla de detalle dunha horta.
 - Formulario validado para creación dunha horta.
+- Integración de Provider.
+- Primeiro ViewModel funcional (`GardensViewModel`).
+- Estado compartido das hortas.
+- Identificadores temporais para as hortas en memoria.
+- Consulta de hortas mediante identificador.
+- Edición de hortas.
+- Eliminación de hortas con confirmación.
+- CRUD completo de hortas en memoria.
+- Sincronización automática das Views mediante Provider.
 
 ## In Progress
 
@@ -46,10 +55,11 @@ O seu obxectivo é:
 - Design System.
 - Navegación entre pantallas.
 - Módulo de hortas.
+- Preparación da capa Repository e persistencia local.
 
 ## Pending
 
-- Xestión de estado mediante Provider.
+- Capa Repository.
 - Persistencia con SQLite.
 - Módulo de plantas.
 - Seguemento da evolución das plantas.
@@ -72,13 +82,13 @@ Preparar o proxecto Flutter e a súa estrutura.
 - [x] Definir estrutura de carpetas.
 - [x] Crear tema básico da aplicación.
 - [x] Crear navegación básica mediante `Navigator`.
-- [ ] Configurar Provider.
+- [x] Configurar Provider.
 
 ## Deliverable
 
 Aplicación Flutter funcional cunha estrutura inicial organizada, tema global e navegación básica.
 
-**Estado:** practicamente completada. Queda pendente a integración de Provider.
+**Estado:** completada.
 
 ---
 
@@ -121,19 +131,60 @@ Introducir unha xestión de estado organizada e desacoplar os datos das pantalla
 
 ## Tasks
 
-- [ ] Configurar Provider.
-- [ ] Crear os primeiros ViewModels.
-- [ ] Mover o estado dos módulos fóra das Views cando corresponda.
-- [ ] Permitir que varias pantallas compartan o mesmo estado.
-- [ ] Actualizar automaticamente a interface cando cambien os datos.
+- [x] Configurar Provider.
+- [x] Crear o primeiro ViewModel (`GardensViewModel`).
+- [x] Mover o estado das hortas fóra das Views.
+- [x] Permitir que varias pantallas compartan o mesmo estado.
+- [x] Actualizar automaticamente a interface cando cambian os datos.
+- [x] Utilizar `ChangeNotifier` e `notifyListeners()`.
+- [x] Diferenciar o uso de `context.read`, `context.watch` e `context.select`.
+- [x] Encapsular a colección de hortas.
+- [x] Establecer `GardensViewModel` como fonte de verdade do módulo de hortas.
 
 ## Deliverable
 
 Xestión de estado funcional mediante Provider seguindo o enfoque MVVM simplificado previsto para MARTOLA.
 
+**Estado:** completada para a infraestrutura inicial. Poderán engadirse novos ViewModels segundo se desenvolvan os restantes módulos.
+
 ---
 
-# Phase 4 - Database Foundation
+# Phase 4 - Repository Foundation
+
+## Objective
+
+Introducir a capa Repository e separar a xestión do estado do acceso aos datos.
+
+## Tasks
+
+- [ ] Comprender a responsabilidade do Repository.
+- [ ] Crear `GardenRepository`.
+- [ ] Definir as operacións necesarias para o módulo de hortas.
+- [ ] Conectar `GardensViewModel` con `GardenRepository`.
+- [ ] Evitar que o ViewModel dependa directamente da futura implementación SQLite.
+- [ ] Preparar o Repository para substituír o almacenamento temporal en memoria pola persistencia local.
+
+## Deliverable
+
+Separación funcional entre a xestión do estado e o acceso aos datos.
+
+Fluxo esperado:
+
+```text
+View
+ ↓
+GardensViewModel
+ ↓
+GardenRepository
+ ↓
+Fonte de datos
+```
+
+**Estado:** seguinte fase de desenvolvemento.
+
+---
+
+# Phase 5 - Database Foundation
 
 ## Objective
 
@@ -154,7 +205,7 @@ Base de datos local funcional e accesible mediante unha capa de persistencia org
 
 ---
 
-# Phase 5 - Gardens Module
+# Phase 6 - Gardens Module
 
 ## Objective
 
@@ -163,34 +214,48 @@ Implementar a xestión completa de hortas.
 ## Implemented
 
 - [x] Crear modelo `Garden`.
-- [x] Mostrar unha lista de hortas con datos ficticios.
+- [x] Mostrar unha lista inicial de hortas con datos ficticios.
 - [x] Crear `GardenListItem`.
 - [x] Seleccionar unha horta.
 - [x] Mostrar o detalle dunha horta.
 - [x] Crear formulario de nova horta.
 - [x] Validar os datos do formulario.
 - [x] Construír un obxecto `Garden` desde o formulario.
-- [x] Devolver un `Garden` entre rutas.
+- [x] Devolver un `Garden` entre rutas como primeira aproximación ao fluxo de creación.
+- [x] Integrar o módulo con `GardensViewModel`.
+- [x] Incorporar novas hortas ao estado compartido.
+- [x] Substituír os datos ficticios do listado polo estado real en memoria.
+- [x] Actualizar automaticamente o listado mediante Provider.
+- [x] Asignar identificadores temporais ás hortas.
+- [x] Recuperar unha horta mediante `getGardenById()`.
+- [x] Consultar o detalle mediante a identidade da horta.
+- [x] Crear `EditGardenScreen`.
+- [x] Editar unha horta.
+- [x] Conservar a identidade durante unha actualización.
+- [x] Eliminar unha horta.
+- [x] Solicitar confirmación antes da eliminación.
+- [x] Completar o CRUD de hortas en memoria.
 
 ## Pending
 
-- [ ] Incorporar a nova horta ao estado da aplicación.
+- [ ] Crear `GardenRepository`.
+- [ ] Integrar `GardensViewModel` con `GardenRepository`.
 - [ ] Gardar unha horta en SQLite.
 - [ ] Recuperar hortas desde SQLite.
-- [ ] Editar horta.
-- [ ] Eliminar horta.
-- [ ] Actualizar automaticamente o listado.
-- [ ] Integrar o módulo co ViewModel e Repository correspondentes.
+- [ ] Actualizar hortas en SQLite.
+- [ ] Eliminar hortas de SQLite.
+- [ ] Substituír os identificadores temporais polos identificadores da capa de persistencia.
+- [ ] Revisar e refinar a interface do módulo.
 
 ## Deliverable
 
 Módulo de hortas completo con operacións de creación, consulta, edición e eliminación persistidas localmente.
 
-**Estado:** en progreso.
+**Estado:** en progreso. CRUD funcional en memoria; persistencia pendente.
 
 ---
 
-# Phase 6 - Plants Module
+# Phase 7 - Plants Module
 
 ## Objective
 
@@ -213,7 +278,7 @@ Módulo de plantas funcional e integrado co módulo de hortas.
 
 ---
 
-# Phase 7 - Plant Evolution Module
+# Phase 8 - Plant Evolution Module
 
 ## Objective
 
@@ -233,7 +298,7 @@ Seguemento da evolución dunha planta ao longo do tempo.
 
 ---
 
-# Phase 8 - Weather Module
+# Phase 9 - Weather Module
 
 ## Objective
 
@@ -254,7 +319,7 @@ Sistema meteorolóxico funcional e integrado coas hortas.
 
 ---
 
-# Phase 9 - Layout Designer
+# Phase 10 - Layout Designer
 
 ## Objective
 
@@ -274,7 +339,7 @@ Primeira versión funcional do deseñador visual.
 
 ---
 
-# Phase 10 - UI Improvement
+# Phase 11 - UI Improvement
 
 ## Objective
 
@@ -297,7 +362,7 @@ Interface consistente, usable e responsive.
 
 ---
 
-# Phase 11 - Testing
+# Phase 12 - Testing
 
 ## Objective
 
@@ -320,7 +385,7 @@ Versión candidata á entrega.
 
 ---
 
-# Phase 12 - Documentation
+# Phase 13 - Documentation
 
 ## Objective
 
@@ -345,12 +410,12 @@ Documentación final do TFC.
 
 A primeira versión mínima viable de MARTOLA debe incluír:
 
-- Navegación funcional.
-- Xestión de estado.
-- SQLite.
-- Xestión de hortas.
-- Xestión de plantas.
-- Rexistros de evolución.
+- [x] Navegación funcional.
+- [x] Xestión de estado.
+- [ ] SQLite.
+- [ ] Xestión de hortas persistente.
+- [ ] Xestión de plantas.
+- [ ] Rexistros de evolución.
 
 O resto considerarase ampliación ou funcionalidade adicional segundo o tempo dispoñible.
 

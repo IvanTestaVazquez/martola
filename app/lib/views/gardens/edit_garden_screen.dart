@@ -5,28 +5,43 @@ import '../../viewmodels/gardens_viewmodel.dart';
 
 import '../../models/garden.dart';
 
-class CreateGardenScreen extends StatefulWidget {
-  const CreateGardenScreen({super.key});
+class EditGardenScreen extends StatefulWidget {
+
+  const EditGardenScreen({
+    super.key,
+    required this.garden,
+  });
+
+  final Garden garden;
 
   @override
-  State<CreateGardenScreen> createState() {
-    return _CreateGardenScreenState();
+  State<EditGardenScreen> createState(){
+    return _EditGardenScreenState();
   }
 }
 
-class _CreateGardenScreenState extends State<CreateGardenScreen> {
+class _EditGardenScreenState extends State<EditGardenScreen>{
 
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController locationController = TextEditingController();
-  final TextEditingController areaController = TextEditingController();
+  late final TextEditingController nameController;
+  late final TextEditingController locationController;
+  late final TextEditingController areaController;
 
   @override
+  initState(){
+    super.initState();
+    nameController = TextEditingController(text: widget.garden.name);
+    locationController = TextEditingController(text: widget.garden.location);
+    areaController = TextEditingController(text: widget.garden.area.toString());
+  }
+  
+  @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Formulario nova horta'),
+        title: const Text('Editar horta'),
       ),
       body: SafeArea(
         child: Padding(
@@ -94,17 +109,18 @@ class _CreateGardenScreenState extends State<CreateGardenScreen> {
 
                         final area = double.parse(areaController.text);
 
-                        final garden = Garden(
+                        final updatedGarden = Garden(
+                          id: widget.garden.id,
                           name: nameController.text.trim(),
                           location: locationController.text.trim(),
                           area: area,
                         );
 
-                        context.read<GardensViewModel>().addGarden(garden);
+                        context.read<GardensViewModel>().updateGarden(widget.garden, updatedGarden);
 
                         Navigator.of(context).pop();
                       },
-                      child: const Text('Crear horta'),
+                      child: const Text('Gardar cambios'),
                     )
                   ],
                 ),

@@ -82,16 +82,17 @@ Representa unha horta ou xardín.
 
 ### Fields
 
-| Field | Type |
-|---------|---------|
-| id | INTEGER |
-| user_id | INTEGER |
-| name | TEXT |
-| description | TEXT |
-| location | TEXT |
-| latitude | REAL |
-| longitude | REAL |
-| created_at | TEXT |
+| Field       | Type    | Description |
+| ----------- | ------- | ----------- |
+| id          | INTEGER | Primary Key |
+| user_id     | INTEGER | User owner |
+| name        | TEXT    | Garden name |
+| description | TEXT    | Optional description |
+| location    | TEXT    | Location name |
+| area        | REAL    | Surface area in square metres |
+| latitude    | REAL    | Geographic latitude |
+| longitude   | REAL    | Geographic longitude |
+| created_at  | TEXT    | Creation date |
 
 ### Relationships
 
@@ -290,3 +291,13 @@ Posibles ampliacións futuras:
 O deseño da base de datos segue un enfoque modular e escalable.
 
 A estrutura proposta permite implementar unha primeira versión completamente funcional utilizando SQLite e facilita futuras ampliacións sen modificar significativamente o modelo de datos.
+
+---
+
+## Current Implementation Note
+
+A base de datos SQLite aínda non está implementada.
+
+Durante a fase actual de desenvolvemento, `GardensViewModel` mantén temporalmente as hortas en memoria e asigna identificadores provisionais.
+
+Este mecanismo non forma parte do deseño definitivo da base de datos e será substituído cando se implemente a capa de persistencia.

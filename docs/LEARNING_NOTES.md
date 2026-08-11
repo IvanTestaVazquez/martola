@@ -2386,3 +2386,595 @@ A persistencia da nova horta e a actualización compartida da interface quedan d
 - `Future`.
 - `async`.
 - `await`.
+
+---
+
+# Sesión 11 - Estado compartido con Provider
+
+## Obxectivo
+
+Introducir a xestión de estado compartido en MARTOLA mediante Provider e aplicar os conceptos ao módulo de hortas.
+
+Durante esta sesión substituíronse os datos temporais almacenados directamente nas Views por un estado centralizado nun `GardensViewModel`.
+
+---
+
+## Estado local e estado compartido
+
+Non todo o estado dunha aplicación debe almacenarse no mesmo lugar.
+
+### Estado local
+
+É aquel que só afecta a un widget ou pantalla concreta.
+
+Exemplo:
+
+```dart
+final TextEditingController nameController =
+    TextEditingController();
+```
+
+O contido dun campo dun formulario é responsabilidade da propia pantalla.
+
+### Estado compartido
+
+É información que debe ser utilizada ou modificada por diferentes partes da aplicación.
+
+Exemplo:
+
+```dart
+List<Garden> gardens
+```
+
+A colección de hortas é utilizada por diferentes pantallas:
+
+- `DashboardScreen`
+- `GardensScreen`
+- `GardenDetailsScreen`
+- `CreateGardenScreen`
+- `EditGardenScreen`
+
+Por este motivo non debe pertencer exclusivamente a ningunha delas.
+
+---
+
+## GardensViewModel
+
+Creouse:
+
+```text
+lib/
+└── viewmodels/
+    └── gardens_viewmodel.dart
+```
+
+O `GardensViewModel` é responsable de manter e modificar o estado relacionado coas hortas.
+
+A colección interna mantense privada:
+
+```dart
+final List<Garden> _gardens = [];
+```
+
+e exponse mediante un getter:
+
+```dart
+List<Garden> get gardens =>
+    List.unmodifiable(_gardens);
+```
+
+`List.unmodifiable()` evita que as Views poidan modificar directamente a colección.
+
+As modificacións deben realizarse mediante métodos do ViewModel.
+
+---
+
+## Encapsulación do estado
+
+Evítase:
+
+```dart
+viewModel.gardens.add(garden);
+```
+
+e utilízase:
+
+```dart
+viewModel.addGarden(garden);
+```
+
+Deste xeito, a responsabilidade de modificar o estado permanece no ViewModel.
+
+---
+
+## ChangeNotifier
+
+`GardensViewModel` estende:
+
+```dart
+ChangeNotifier
+```
+
+Isto permite que o ViewModel notifique ás Views cando o estado cambia.
+
+Exemplo:
+
+```dart
+void addGarden(Garden garden) {
+    // modificar estado
+
+    notifyListeners();
+}
+```
+
+O fluxo é:
+
+```text
+modificación do estado
+        ↓
+notifyListeners()
+        ↓
+widgets subscritos
+        ↓
+rebuild
+```
+
+---
+
+## Provider
+
+Engadiuse o paquete `provider` ao proxecto.
+
+O `GardensViewModel` proporciónase por enriba de `MaterialApp`:
+
+```text
+MartolaApp
+└── ChangeNotifierProvider
+    └── MaterialApp
+        └── resto da aplicación
+```
+
+Isto permite compartir unha única instancia de `GardensViewModel` entre as diferentes pantallas.
+
+---
+
+## context.watch
+
+Utilízase cando unha View necesita acceder ao estado e reaccionar aos seus cambios.
+
+Exemplo:
+
+```dart
+final gardensViewModel =
+    context.watch<GardensViewModel>();
+
+final gardens = gardensViewModel.gardens;
+```
+
+Aplicado en:
+
+```text
+GardensScreen
+```
+
+Cando `GardensViewModel` executa `notifyListeners()`, a pantalla reconstrúese.
+
+---
+
+## context.read
+
+Utilízase cando unha View necesita acceder ao ViewModel para executar unha acción pero non necesita subscribirse aos seus cambios.
+
+Exemplo:
+
+```dart
+context
+    .read<GardensViewModel>()
+    .addGarden(garden);
+```
+
+Aplicado en:
+
+```text
+CreateGardenScreen
+```
+
+---
+
+## context.select
+
+Utilízase cando unha View só necesita reaccionar aos cambios dunha parte concreta do estado.
+
+Exemplo:
+
+```dart
+final gardenCount =
+    context.select<GardensViewModel, int>(
+        (viewModel) => viewModel.gardens.length,
+    );
+```
+
+Aplicado no Dashboard para mostrar o número de hortas.
+
+Isto permite evitar reconstrucións innecesarias cando cambia outra información do ViewModel.
+
+---
+
+## Regra práctica
+
+```text
+read
+→ acceder ao ViewModel sen escoitar cambios
+
+watch
+→ escoitar os cambios do ViewModel
+
+select
+→ escoitar un valor concreto do ViewModel
+```
+
+---
+
+## Provider non é persistencia
+
+Provider permite manter estado compartido mentres a aplicación está en execución.
+
+Non almacena os datos de forma permanente.
+
+Actualmente:
+
+```text
+GardensViewModel
+      ↓
+estado en memoria
+```
+
+Ao pechar completamente a aplicación, as hortas desaparecen.
+
+A persistencia implementarase posteriormente mediante:
+
+```text
+View
+ ↓
+ViewModel
+ ↓
+Repository
+ ↓
+SQLite
+```
+
+---
+
+## CRUD en memoria
+
+Durante a sesión implementouse un primeiro CRUD completo sobre as hortas.
+
+### CREATE
+
+```dart
+addGarden()
+```
+
+### READ
+
+```dart
+gardens
+```
+
+e:
+
+```dart
+getGardenById()
+```
+
+### UPDATE
+
+```dart
+updateGarden()
+```
+
+### DELETE
+
+```dart
+removeGarden()
+```
+
+Todo o estado está centralizado en:
+
+```text
+GardensViewModel
+```
+
+---
+
+## Identidade temporal das hortas
+
+Antes de SQLite, as hortas creadas desde o formulario non dispoñían dun identificador.
+
+Engadiuse temporalmente un contador ao ViewModel:
+
+```dart
+int _nextId = 1;
+```
+
+Ao engadir unha horta, o ViewModel crea unha nova instancia cun identificador:
+
+```text
+Garden sen ID
+     ↓
+addGarden()
+     ↓
+asignación de ID temporal
+     ↓
+Garden almacenado
+```
+
+Exemplo:
+
+```text
+1
+2
+3
+...
+```
+
+Os IDs almacénanse como `String`.
+
+Este mecanismo é provisional e será substituído pola estratexia de identificación utilizada pola capa de persistencia.
+
+---
+
+## Modelos inmutables
+
+`Garden` utiliza propiedades `final`.
+
+Por este motivo unha edición non modifica directamente a instancia existente.
+
+Evítase:
+
+```dart
+garden.name = 'Novo nome';
+```
+
+En cambio créase unha nova instancia:
+
+```dart
+final updatedGarden = Garden(
+    id: widget.garden.id,
+    name: nameController.text.trim(),
+    location: locationController.text.trim(),
+    area: area,
+);
+```
+
+e o ViewModel substitúe a instancia anterior:
+
+```dart
+_gardens[index] = updatedGarden;
+```
+
+---
+
+## updateGarden
+
+A actualización localiza primeiro a instancia existente:
+
+```dart
+final index = _gardens.indexOf(oldGarden);
+```
+
+Se non existe:
+
+```dart
+if (index == -1) {
+    return;
+}
+```
+
+Se existe, substitúese:
+
+```dart
+_gardens[index] = updatedGarden;
+notifyListeners();
+```
+
+A nova instancia conserva o mesmo ID.
+
+---
+
+## getGardenById
+
+Engadiuse unha operación para recuperar unha horta mediante a súa identidade:
+
+```dart
+Garden? getGardenById(String id)
+```
+
+Pode devolver:
+
+```text
+Garden
+```
+
+ou:
+
+```text
+null
+```
+
+se non existe ningunha horta co identificador solicitado.
+
+---
+
+## GardenDetailsScreen e fonte de verdade
+
+Inicialmente `GardenDetailsScreen` recibía directamente:
+
+```dart
+Garden garden
+```
+
+Isto provocaba que, despois dunha edición, a pantalla puidese conservar unha referencia á instancia antiga.
+
+A solución foi facer que a pantalla traballe coa identidade:
+
+```dart
+String gardenId
+```
+
+e obteña a versión actual desde `GardensViewModel`:
+
+```dart
+final garden =
+    context.select<GardensViewModel, Garden?>(
+        (viewModel) =>
+            viewModel.getGardenById(gardenId),
+    );
+```
+
+Deste xeito o ViewModel actúa como fonte de verdade.
+
+```text
+GardenDetailsScreen
+       ↓
+gardenId
+       ↓
+GardensViewModel
+       ↓
+getGardenById()
+       ↓
+Garden actual
+```
+
+---
+
+## Eliminación por identidade
+
+Inicialmente:
+
+```dart
+removeGarden(Garden garden)
+```
+
+Posteriormente cambiouse a operación para traballar mediante identidade:
+
+```dart
+removeGarden(String id)
+```
+
+O ViewModel localiza internamente a horta mediante:
+
+```dart
+getGardenById(id)
+```
+
+Isto evita depender dunha instancia concreta do modelo.
+
+---
+
+## initState
+
+Na pantalla de edición utilizouse `initState()` para inicializar os controladores cos valores actuais da horta.
+
+```dart
+@override
+void initState() {
+    super.initState();
+
+    nameController = TextEditingController(
+        text: widget.garden.name,
+    );
+}
+```
+
+`initState()` execútase unha vez cando se crea o estado do widget.
+
+---
+
+## late final
+
+Os controladores de `EditGardenScreen` decláranse mediante:
+
+```dart
+late final TextEditingController nameController;
+```
+
+Isto permite declaralos antes de coñecer o valor inicial e inicializalos posteriormente en `initState()`.
+
+`final` garante que a referencia ao controlador non será substituída despois da inicialización.
+
+---
+
+## widget dentro dun State
+
+Dentro dunha clase:
+
+```dart
+State<EditGardenScreen>
+```
+
+pódese acceder á configuración do `StatefulWidget` asociado mediante:
+
+```dart
+widget
+```
+
+Por exemplo:
+
+```dart
+widget.garden.name
+```
+
+---
+
+## Conceptos principais aprendidos
+
+- Estado local.
+- Estado compartido.
+- Encapsulación do estado.
+- ViewModel como fonte de verdade.
+- Provider.
+- `ChangeNotifier`.
+- `notifyListeners()`.
+- `ChangeNotifierProvider`.
+- `context.read`.
+- `context.watch`.
+- `context.select`.
+- Modelos inmutables.
+- Identidade de entidades.
+- `Garden?` e tratamento de ausencia de datos.
+- `initState()`.
+- `late final`.
+- Acceso mediante `widget` desde un `State`.
+- CRUD en memoria.
+- Diferencia entre estado e persistencia.
+
+---
+
+## Estado ao finalizar a sesión
+
+O módulo de hortas permite actualmente:
+
+```text
+Crear horta
+    ↓
+Listar hortas
+    ↓
+Consultar detalle
+    ↓
+Editar horta
+    ↓
+Eliminar horta
+```
+
+Os cambios sincronízanse entre:
+
+- `DashboardScreen`
+- `GardensScreen`
+- `GardenDetailsScreen`
+- `CreateGardenScreen`
+- `EditGardenScreen`
+
+mediante `GardensViewModel` e Provider.
+
+Os datos aínda se almacenan exclusivamente en memoria.

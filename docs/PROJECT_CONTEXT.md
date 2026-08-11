@@ -54,7 +54,9 @@ docs/
 ├── UI_REFERENCE.md
 ├── ARCHITECTURE.md
 ├── DATABASE_DESIGN.md
-└── ROADMAP.md
+├── ROADMAP.md
+├── DEVELOPMENT_GUIDE.md
+└── LEARNING_NOTES.md
 ```
 
 ## Purpose
@@ -151,21 +153,54 @@ Arquitectura MVVM simplificada orientada a:
 
 ## Current Implementation State
 
-A arquitectura completa aínda non está implementada.
+A arquitectura MVVM simplificada comezou a implementarse no módulo de hortas.
 
-O desenvolvemento actual chegou aproximadamente a:
+O fluxo actual é:
 
 ```text
 View
  ↓
-Modelos de dominio
+GardensViewModel
  ↓
-Datos temporais locais
+Estado en memoria
 ```
 
-Xa existen modelos independentes da interface, como `Garden`, pero os datos de hortas continúan definidos temporalmente nas Views.
+Xa existe unha separación efectiva entre a interface e o estado das hortas.
 
-O seguinte paso será introducir Provider e os primeiros ViewModels para evolucionar cara á arquitectura prevista sen acoplar a interface directamente á futura persistencia.
+`GardensViewModel` actúa actualmente como fonte de verdade do módulo e é compartido entre as Views mediante Provider.
+
+As principais operacións do módulo están centralizadas no ViewModel:
+
+```text
+addGarden()
+getGardenById()
+updateGarden()
+removeGarden()
+```
+
+As Views acceden ao estado mediante:
+
+```text
+context.read()
+context.watch()
+context.select()
+```
+
+segundo necesiten executar unha acción, observar o estado completo ou reaccionar a unha parte concreta.
+
+Actualmente os datos continúan almacenándose exclusivamente en memoria.
+
+A arquitectura aínda non chegou ás capas:
+
+```text
+Repository
+ ↓
+DatabaseService
+ ↓
+SQLite
+```
+
+A seguinte evolución arquitectónica será introducir a capa Repository e posteriormente substituír o estado temporal en memoria por persistencia SQLite.
 
 ---
 
@@ -354,11 +389,11 @@ Plan de aprendizaxe e desenvolvemento progresivo de Flutter e Dart aplicado a MA
 
 ## Last Updated
 
-2026-08-10
+2026-08-11
 
 ## Current Phase
 
-Desenvolvemento funcional do módulo de hortas e preparación da xestión de estado.
+Desenvolvemento funcional do módulo de hortas con xestión de estado mediante Provider.
 
 ---
 
@@ -394,9 +429,19 @@ Desenvolvemento funcional do módulo de hortas e preparación da xestión de est
 
 ✅ Arquitectura MVVM simplificada
 
-✅ Repository Pattern
+✅ Repository Pattern definido
 
 ✅ Estrutura de carpetas
+
+✅ Primeiro ViewModel funcional (`GardensViewModel`)
+
+✅ Estado compartido mediante Provider
+
+✅ Separación inicial entre Views e estado do módulo de hortas
+
+⬜ Implementación da capa Repository
+
+⬜ Integración da capa de persistencia
 
 ---
 
@@ -490,11 +535,49 @@ Desenvolvemento funcional do módulo de hortas e preparación da xestión de est
 
 ✅ Recepción de resultados mediante `await Navigator.push<Garden>()`
 
+✅ Integración do paquete Provider
+
+✅ Creación de `GardensViewModel`
+
+✅ Centralización da colección de hortas no ViewModel
+
+✅ Encapsulación da colección mediante `List.unmodifiable`
+
+✅ Implementación de `ChangeNotifier` e `notifyListeners()`
+
+✅ Configuración de `ChangeNotifierProvider` por enriba de `MaterialApp`
+
+✅ Lectura reactiva do estado en `GardensScreen` mediante `context.watch`
+
+✅ Modificación do estado desde `CreateGardenScreen` mediante `context.read`
+
+✅ Actualización dinámica do número de hortas no Dashboard mediante `context.select`
+
+✅ Eliminación dos mock data locais de `GardensScreen`
+
+✅ Implementación de identificadores temporais para as hortas en memoria
+
+✅ Implementación de `getGardenById()`
+
+✅ Creación de `EditGardenScreen`
+
+✅ Inicialización dos formularios de edición mediante `initState()`
+
+✅ Actualización de hortas mediante modelos inmutables
+
+✅ Implementación de `updateGarden()`
+
+✅ Implementación de eliminación de hortas mediante `removeGarden()`
+
+✅ Confirmación de eliminación mediante `AlertDialog`
+
+✅ Conversión de `GardenDetailsScreen` para traballar mediante `gardenId`
+
+✅ Consulta da versión actual dunha horta desde `GardensViewModel`
+
+✅ CRUD completo de hortas en memoria
+
 ⏳ Desenvolvemento funcional do módulo de hortas
-
-⬜ Xestión de estado mediante Provider
-
-⬜ ViewModels
 
 ⬜ Repository
 
@@ -527,16 +610,28 @@ Desenvolvemento funcional do módulo de hortas e preparación da xestión de est
 - Os widgets de presentación comunicarán as interaccións mediante callbacks; a navegación será responsabilidade das pantallas que coñecen o fluxo da aplicación.
 - O desenvolvemento das novas funcionalidades seguirá unha estratexia incremental: primeiro establecerase o fluxo mediante pantallas provisionais e posteriormente implementarase o seu contido funcional.
 - Os datos de dominio representaranse mediante modelos independentes da interface, comezando polo modelo `Garden`.
-- As pantallas de detalle recibirán o obxecto do modelo que deben representar en lugar de depender de datos globais ou valores fixos.
+- As pantallas que necesiten manter sincronizada unha entidade co estado compartido traballarán preferentemente coa súa identidade e obterán a versión actual desde o ViewModel.
 - Os elementos das listas recibirán o modelo completo cando os seus datos pertenzan conceptualmente á mesma entidade.
 - A interacción dun widget non implica por si mesma a necesidade dun `StatefulWidget`; utilizarase estado local só cando exista estado ou recursos que deban ser xestionados polo widget.
 - Os recursos asociados ao ciclo de vida dun `State`, como os `TextEditingController`, serán creados e liberados polo propio `State`.
 - Os formularios utilizarán `Form`, `GlobalKey<FormState>` e validadores para comprobar os datos antes de construír os modelos de dominio.
 - Os datos procedentes de campos de texto serán convertidos explicitamente ao tipo requirido polo modelo antes da creación do obxecto.
-- O identificador de `Garden` poderá ser `null` antes da persistencia, xa que unha entidade pode existir temporalmente antes de recibir un identificador da capa de datos.
+- O identificador de `Garden` pode ser `null` antes de que a entidade entre no estado compartido. Durante a fase sen persistencia, `GardensViewModel` asignará identificadores temporais ás hortas almacenadas.
 - `Navigator` poderá utilizarse para devolver resultados entre rutas cando o fluxo o requira.
 - Non se implementarán solucións temporais para manter sincronizados datos locais entre pantallas cando esa responsabilidade corresponda posteriormente á xestión de estado.
-- A integración de Provider será o seguinte paso para separar progresivamente os datos das Views e permitir estado compartido.
+- Provider utilízase como mecanismo de distribución e observación do estado compartido.
+
+- `GardensViewModel` constitúe actualmente a fonte de verdade do módulo de hortas.
+
+- As Views non modificarán directamente as coleccións do ViewModel; as modificacións realizaranse mediante operacións específicas como `addGarden()`, `updateGarden()` e `removeGarden()`.
+
+- Utilizarase `context.read` para executar accións sen subscribirse aos cambios, `context.watch` cando a View dependa do estado completo e `context.select` cando só necesite observar unha parte concreta.
+
+- Os modelos de dominio manteranse inmutables. As actualizacións realizaranse creando unha nova instancia e substituíndo a anterior no estado.
+
+- A xestión de estado e a persistencia considéranse responsabilidades diferentes. Provider mantén o estado compartido da aplicación, mentres que SQLite proporcionará posteriormente persistencia.
+
+- A xeración actual de identificadores mediante un contador en `GardensViewModel` é temporal e será substituída pola estratexia de identificación da futura capa de persistencia.
 
 ---
 
@@ -544,34 +639,46 @@ Desenvolvemento funcional do módulo de hortas e preparación da xestión de est
 
 ### Current Objective
 
-Introducir a xestión de estado da aplicación e continuar a evolución do módulo de hortas cara á arquitectura MVVM simplificada prevista para MARTOLA.
+Introducir a capa Repository no módulo de hortas e preparar a transición desde o estado exclusivamente en memoria cara á persistencia local con SQLite.
 
 ### Starting Point
 
 Actualmente o módulo de hortas xa permite:
 
-- Representar unha horta mediante o modelo `Garden`.
-- Mostrar unha colección temporal de hortas.
-- Navegar desde a lista ao detalle dunha horta.
-- Crear e validar unha nova horta mediante un formulario.
-- Construír un obxecto `Garden` cos datos introducidos.
-- Devolver ese obxecto entre rutas.
+- Crear hortas mediante formulario validado.
+- Listar as hortas almacenadas no estado compartido.
+- Consultar o detalle dunha horta mediante o seu identificador.
+- Editar unha horta existente.
+- Eliminar unha horta con confirmación previa.
+- Manter sincronizadas as diferentes Views mediante Provider.
+- Mostrar dinamicamente no Dashboard o número real de hortas.
+- Centralizar as operacións CRUD en `GardensViewModel`.
 
-Os datos continúan sendo locais e temporais.
+O fluxo actual é:
+
+```text
+View
+ ↓
+GardensViewModel
+ ↓
+Estado en memoria
+```
+
+A principal limitación actual é que os datos desaparecen ao finalizar a aplicación.
 
 ### Implementation Tasks
 
-- Introducir Provider.
-- Comprender a diferenza entre estado local e estado compartido.
-- Crear o primeiro ViewModel.
-- Extraer progresivamente os datos de hortas das Views.
-- Permitir que o estado das hortas sexa compartido entre pantallas.
-- Preparar a futura integración do Repository.
-- Preparar a posterior persistencia mediante SQLite.
+- Comprender a responsabilidade da capa Repository.
+- Crear `GardenRepository`.
+- Separar progresivamente o acceso aos datos do `GardensViewModel`.
+- Definir a comunicación entre ViewModel e Repository.
+- Preparar a integración de SQLite.
+- Implementar posteriormente a persistencia local das hortas.
+- Substituír os identificadores temporais pola estratexia de identificación da capa de persistencia.
 
 ## Deliverable
 
-Primeira versión do módulo de hortas cun estado separado da interface e preparado para conectarse posteriormente á capa de persistencia.
+Módulo de hortas cunha separación clara entre estado de presentación e acceso aos datos, preparado para almacenar información de forma persistente mediante SQLite.
 ---
 
 # Future Improvements

@@ -33,25 +33,40 @@ SQLite / External Services
 
 ## Current Implementation State
 
-A arquitectura completa está definida, pero a súa implementación realízase de maneira incremental.
+A arquitectura completa está definida e a súa implementación realízase de maneira incremental.
 
-Ao finalizar a sesión 10, o estado aproximado é:
+Ao finalizar a sesión 11, o módulo de hortas chegou ao seguinte nivel:
 
 ```text
 View
  ↓
-Models
+GardensViewModel
  ↓
-Mock / Local Data
+Estado en memoria
 ```
 
-Xa se iniciou a separación entre interface e modelos de dominio mediante a clase `Garden`.
-
-As capas seguintes aínda están pendentes de implementación:
+Xa están implementadas e separadas as capas de:
 
 ```text
-ViewModel
+View
  ↓
+ViewModel
+```
+
+Provider permite compartir unha única instancia de `GardensViewModel` entre as diferentes Views da aplicación.
+
+`GardensViewModel` actúa actualmente como fonte de verdade para o estado das hortas e centraliza as operacións:
+
+```text
+addGarden()
+getGardenById()
+updateGarden()
+removeGarden()
+```
+
+As capas seguintes continúan pendentes de implementación:
+
+```text
 Repository
  ↓
 DatabaseService
@@ -59,7 +74,9 @@ DatabaseService
 SQLite
 ```
 
-O seguinte paso arquitectónico será introducir Provider e os primeiros ViewModels, evitando conectar directamente as Views coa futura capa SQLite.
+Polo tanto, os datos das hortas aínda se almacenan exclusivamente en memoria e desaparecen ao finalizar a aplicación.
+
+A seguinte evolución arquitectónica será introducir o Repository para separar a xestión do estado do acceso aos datos.
 
 A arquitectura evolucionará progresivamente cara ao fluxo definitivo:
 
@@ -117,7 +134,13 @@ class Garden {
 }
 ```
 
-O identificador pode ser `null` antes da persistencia, permitindo representar unha entidade que aínda non foi almacenada na base de datos.
+O identificador pode ser `null` antes de que a entidade entre no estado compartido ou sexa almacenada na futura capa de persistencia.
+
+Durante a fase actual, sen SQLite, `GardensViewModel` asigna temporalmente identificadores ás hortas mediante un contador interno.
+
+Esta estratexia é provisional e será substituída polo mecanismo de identificación definido pola futura capa de persistencia.
+
+Os modelos de dominio manteranse, na medida do posible, inmutables. Por este motivo, a actualización dunha entidade realízase creando unha nova instancia cos datos modificados en lugar de modificar directamente a instancia existente.
 
 Modelos previstos:
 
@@ -157,10 +180,13 @@ Exemplos actualmente implementados:
 - `CreateGardenScreen`
 - `TasksScreen`
 - `CreateTaskScreen`
+- `EditGardenScreen`
 
-Actualmente algunhas Views utilizan datos ficticios locais como parte da fase inicial de desenvolvemento.
+O módulo de hortas xa non almacena a súa colección de datos directamente nas Views.
 
-Estes datos serán extraídos progresivamente das Views cando se introduzan Provider e os ViewModels.
+As pantallas relacionadas co módulo acceden ao estado compartido mediante `GardensViewModel` e Provider.
+
+As Views manteñen unicamente o estado local que pertence á propia interface, como os `TextEditingController` e o `FormState` dos formularios.
 
 ---
 
@@ -217,22 +243,64 @@ Os widgets específicos dunha funcionalidade permanecerán dentro do directorio 
 
 ## ViewModel Layer
 
-Responsable da lóxica de presentación.
+Responsable da lóxica de presentación e da xestión do estado compartido asociado ás Views.
 
 Funcións:
 
-- Procesar accións do usuario.
-- Solicitar datos aos repositorios.
-- Preparar datos para a vista.
-- Notificar cambios mediante Provider.
+- Procesar accións solicitadas polas Views.
+- Manter o estado compartido necesario para a interface.
+- Expoñer os datos sen permitir modificacións externas non controladas.
+- Notificar cambios mediante `ChangeNotifier`.
+- Solicitar datos aos repositorios cando estes sexan implementados.
+- Preparar os datos necesarios para as Views.
 
-Exemplos:
+### GardensViewModel
 
-- HomeViewModel
-- GardensViewModel
-- GardenDetailViewModel
-- PlantDetailViewModel
+Primeiro ViewModel funcional implementado no proxecto.
 
+Actualmente é responsable de:
+
+- Manter a colección de hortas en memoria.
+- Asignar identificadores temporais.
+- Crear hortas.
+- Recuperar unha horta mediante o seu identificador.
+- Actualizar hortas.
+- Eliminar hortas.
+- Notificar cambios ás Views.
+
+Operacións actuais:
+
+```dart
+addGarden()
+getGardenById()
+updateGarden()
+removeGarden()
+```
+
+A colección interna:
+
+```dart
+final List<Garden> _gardens = [];
+```
+
+mantense privada.
+
+As Views acceden a ela mediante:
+
+```dart
+List<Garden> get gardens =>
+    List.unmodifiable(_gardens);
+```
+
+Isto evita modificacións directas desde a interface.
+
+As modificacións deben realizarse mediante as operacións proporcionadas polo ViewModel.
+
+### ViewModels previstos
+
+- `HomeViewModel`
+- `PlantDetailViewModel`
+- Outros ViewModels que resulten necesarios segundo evolucione a aplicación.
 ---
 
 ## Repository Layer
@@ -343,12 +411,16 @@ Exemplos:
 
 ## viewmodels/
 
-Lóxica de presentación.
+Lóxica de presentación e estado compartido.
 
-Exemplos:
+Actualmente implementado:
 
-- home_viewmodel.dart
-- gardens_viewmodel.dart
+```text
+viewmodels/
+└── gardens_viewmodel.dart
+```
+
+Futuros ViewModels engadiranse cando exista unha responsabilidade concreta que xustifique a súa creación.
 
 ---
 
@@ -433,7 +505,7 @@ Exemplos:
 
 ## Provider
 
-Utilizarase Provider como sistema principal de xestión de estado.
+Provider é o sistema principal de xestión e distribución do estado compartido da aplicación.
 
 Motivos:
 
@@ -441,36 +513,126 @@ Motivos:
 - Boa integración con Flutter.
 - Curva de aprendizaxe moderada.
 - Adecuado para o tamaño do proxecto.
-- Permite separar progresivamente o estado das Views.
+- Permite separar o estado das Views.
+- Facilita que diferentes pantallas compartan unha mesma fonte de verdade.
 
 ## Current Status
 
-Provider aínda non está implementado.
+Provider está integrado e funcional no módulo de hortas.
 
-Actualmente existen dous tipos de datos na interface:
+`GardensViewModel` estende:
 
-- Datos ficticios utilizados para construír e probar as Views.
-- Estado local necesario para widgets concretos, como os controladores de `CreateGardenScreen`.
+```dart
+ChangeNotifier
+```
 
-A introdución de Provider permitirá xestionar estado compartido entre pantallas.
+e utiliza:
 
-Por exemplo:
+```dart
+notifyListeners();
+```
+
+para informar ás Views cando cambia o estado.
+
+A instancia do ViewModel proporciónase por enriba de `MaterialApp` mediante:
+
+```dart
+ChangeNotifierProvider
+```
+
+O fluxo actual é:
 
 ```text
-CreateGardenScreen
-        ↓
-    crea Garden
+ChangeNotifierProvider
         ↓
 GardensViewModel
         ↓
-   actualiza estado
+   estado compartido
         ↓
-GardensScreen
-        ↓
-reconstrúe a lista
+ ┌──────┼───────────┐
+ ↓      ↓           ↓
+Dashboard   GardensScreen   GardenDetailsScreen
 ```
 
-Posteriormente o ViewModel utilizará o Repository para persistir os cambios.
+### context.read
+
+Utilízase cando unha View necesita executar unha acción sobre o ViewModel pero non necesita reaccionar aos seus cambios.
+
+Exemplo:
+
+```dart
+context
+    .read<GardensViewModel>()
+    .addGarden(garden);
+```
+
+### context.watch
+
+Utilízase cando unha View depende do estado do ViewModel e debe reconstruírse cando este cambia.
+
+Exemplo:
+
+```dart
+final gardensViewModel =
+    context.watch<GardensViewModel>();
+```
+
+### context.select
+
+Utilízase cando unha View só necesita observar unha parte concreta do estado.
+
+Exemplo:
+
+```dart
+final gardenCount =
+    context.select<GardensViewModel, int>(
+        (viewModel) => viewModel.gardens.length,
+    );
+```
+
+Isto permite limitar reconstrucións innecesarias.
+
+Tamén se utiliza para obter a versión actual dunha entidade concreta:
+
+```dart
+final garden =
+    context.select<GardensViewModel, Garden?>(
+        (viewModel) =>
+            viewModel.getGardenById(gardenId),
+    );
+```
+
+## Provider vs Persistence
+
+Provider non constitúe unha capa de persistencia.
+
+Actualmente:
+
+```text
+Provider
+ ↓
+GardensViewModel
+ ↓
+Estado en memoria
+```
+
+Ao finalizar a aplicación, o estado desaparece.
+
+A futura arquitectura será:
+
+```text
+Provider
+ ↓
+ViewModel
+ ↓
+Repository
+ ↓
+SQLite
+```
+
+Provider continuará xestionando e distribuíndo o estado mentres SQLite será responsable da persistencia.
+
+---
 
 # Local State vs Shared Application State
 
@@ -496,14 +658,14 @@ Estes recursos forman parte do estado local do formulario e son responsabilidade
 
 Representa datos que deben ser accesibles ou observables desde diferentes partes da aplicación.
 
-Exemplos previstos:
+Exemplos:
 
-- Lista de hortas.
-- Lista de plantas dunha horta.
-- Tarefas pendentes.
-- Información meteorolóxica compartida.
+- Lista de hortas — actualmente xestionada por `GardensViewModel`.
+- Lista de plantas dunha horta — prevista.
+- Tarefas pendentes — prevista.
+- Información meteorolóxica compartida — prevista.
 
-Este tipo de estado será xestionado mediante ViewModels e Provider.
+Este tipo de estado xestiónase mediante ViewModels e Provider cando debe ser compartido ou observado por diferentes partes da aplicación.
 
 A regra xeral será:
 
@@ -537,35 +699,43 @@ Navigator.of(context).push(
 );
 ```
 
-Tamén se permite pasar modelos entre pantallas:
+As pantallas poden recibir os datos mínimos necesarios para identificar o recurso que deben representar.
+
+No módulo de hortas, `GardenDetailsScreen` recibe actualmente o identificador:
 
 ```dart
 Navigator.of(context).push(
   MaterialPageRoute(
     builder: (context) => GardenDetailsScreen(
-      garden: garden,
+      gardenId: garden.id!,
     ),
   ),
 );
 ```
 
-E devolver resultados desde unha ruta:
+A pantalla utiliza posteriormente ese identificador para obter a versión actual da entidade desde `GardensViewModel`.
 
-```dart
-Navigator.of(context).pop(garden);
+```text
+GardensScreen
+      ↓
+gardenId
+      ↓
+GardenDetailsScreen
+      ↓
+GardensViewModel
+      ↓
+getGardenById()
 ```
 
-que poden ser recibidos mediante:
+Isto evita que unha pantalla de longa duración conserve unha instancia antiga dunha entidade despois dunha actualización.
+
+`Navigator.pop()` continúa utilizándose para pechar rutas:
 
 ```dart
-final garden =
-    await Navigator.of(context).push<Garden>(
-  MaterialPageRoute(
-    builder: (context) =>
-        const CreateGardenScreen(),
-  ),
-);
+Navigator.of(context).pop();
 ```
+
+A devolución de resultados mediante `Navigator.pop(result)` segue sendo unha ferramenta válida de Flutter, pero non se utiliza para sincronizar o estado compartido do módulo de hortas, xa que esa responsabilidade corresponde ao ViewModel.
 
 ## Navigation Responsibility
 
@@ -597,19 +767,31 @@ Non se introducirá esta complexidade mentres o `Navigator` estándar cubra corr
 
 ---
 
-# Dependency Flow
+## Current Dependency Flow
 
-As dependencias deben seguir esta dirección:
+Actualmente, no módulo de hortas:
 
+```text
 View
-→ ViewModel
-→ Repository
-→ Service / Database
+ ↓
+GardensViewModel
+ ↓
+Estado en memoria
+```
 
-Nunca:
+Seguinte evolución:
 
-Database
-→ View
+```text
+View
+ ↓
+GardensViewModel
+ ↓
+GardenRepository
+ ↓
+DatabaseService
+ ↓
+SQLite
+```
 
 ---
 

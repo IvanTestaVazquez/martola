@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'viewmodels/gardens_viewmodel.dart';
+
 import 'views/home/home_screen.dart';
 
 void main() {
@@ -10,26 +14,29 @@ class MartolaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'MARTOLA',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
-        ),
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 32,
-              vertical: 16,
+    return ChangeNotifierProvider(
+      create: (context) => GardensViewModel(),
+      child: MaterialApp(
+        title: 'MARTOLA',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.green,
+          ),
+          appBarTheme: const AppBarTheme(
+            centerTitle: true,
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 32,
+                vertical: 16,
+              ),
             ),
           ),
         ),
-      ),
-      home: const HomeScreen(),
+        home: const HomeScreen(),
+      )
     );
   }
 }

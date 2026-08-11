@@ -1234,3 +1234,102 @@ Pendente:
 - Edición de hortas.
 - Eliminación de hortas.
 - Asociación de plantas ás hortas.
+
+---
+
+## Sesión 11 - Estado compartido e Provider
+
+### Obxectivos
+
+- Comprender a diferenza entre estado local e compartido.
+- Introducir Provider.
+- Crear o primeiro ViewModel funcional.
+- Centralizar o estado das hortas.
+- Sincronizar diferentes pantallas.
+- Implementar CRUD en memoria.
+- Introducir identidade estable das entidades.
+
+### Contidos
+
+- `ChangeNotifier`
+- `notifyListeners()`
+- `ChangeNotifierProvider`
+- `context.read`
+- `context.watch`
+- `context.select`
+- Encapsulación de coleccións
+- `List.unmodifiable`
+- Modelos inmutables
+- `initState`
+- `late final`
+- `widget`
+- Identificadores temporais
+- `getGardenById`
+- CRUD en memoria
+
+### Implementación realizada
+
+Creouse:
+
+```text
+viewmodels/
+└── gardens_viewmodel.dart
+```
+
+O estado das hortas trasladouse desde `GardensScreen` a `GardensViewModel`.
+
+Provider configurouse no nivel superior da aplicación para compartir unha única instancia do ViewModel.
+
+`GardensScreen` deixou de utilizar mock data e pasou a observar a colección do ViewModel.
+
+`CreateGardenScreen` utiliza o ViewModel para crear hortas.
+
+`DashboardScreen` obtén dinamicamente o número de hortas mediante `context.select`.
+
+Implementouse `EditGardenScreen` para modificar hortas existentes.
+
+`GardenDetailsScreen` pasou a traballar mediante `gardenId` e obtén a versión actual da entidade desde o ViewModel.
+
+Implementáronse as operacións:
+
+```dart
+addGarden()
+getGardenById()
+updateGarden()
+removeGarden()
+```
+
+### Resultado
+
+Primeiro CRUD completo en memoria de MARTOLA:
+
+```text
+CREATE → CreateGardenScreen
+READ   → GardensScreen / GardenDetailsScreen
+UPDATE → EditGardenScreen
+DELETE → GardenDetailsScreen
+```
+
+O estado mantense sincronizado mediante:
+
+```text
+ChangeNotifier
+      ↓
+notifyListeners()
+      ↓
+Provider
+      ↓
+Views
+```
+
+### Limitación actual
+
+Os datos non son persistentes.
+
+Ao reiniciar a aplicación:
+
+```text
+_gardens = []
+```
+
+A seguinte evolución arquitectónica deberá separar a xestión de estado do acceso aos datos mediante Repository e posteriormente integrar SQLite.

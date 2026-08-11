@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import '../../models/garden.dart';
+import '../../viewmodels/gardens_viewmodel.dart';
 
 import 'garden_details_screen.dart';
 
@@ -12,26 +13,8 @@ class GardensScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    const List<Garden> gardens = [
-      Garden(
-        id: '1',
-        name: 'Horta casa',
-        location: 'Ourense',
-        area: 40.0,
-      ),
-      Garden(
-        id: '2',
-        name: 'Horta aldea',
-        location: 'Amoeiro',
-        area: 800.0,
-      ),
-      Garden(
-        id: '3',
-        name: 'Horta Mexide',
-        location: 'Mexide',
-        area: 120.0,
-      ),
-    ];
+    final gardensViewModel = context.watch<GardensViewModel>();
+    final gardens = gardensViewModel.gardens;
 
     return Scaffold(
       appBar: AppBar(
@@ -49,7 +32,7 @@ class GardensScreen extends StatelessWidget {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => GardenDetailsScreen(
-                      garden: garden,
+                      gardenId: garden.id!,
                     ),
                   ),
                 );
