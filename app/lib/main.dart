@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'repositories/memory_garden_repository.dart';
+
 import 'viewmodels/gardens_viewmodel.dart';
 
 import 'views/home/home_screen.dart';
@@ -15,7 +17,9 @@ class MartolaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => GardensViewModel(),
+      create: (context) => GardensViewModel(
+        repository: MemoryGardenRepository(),
+      ),
       child: MaterialApp(
         title: 'MARTOLA',
         debugShowCheckedModeBanner: false,

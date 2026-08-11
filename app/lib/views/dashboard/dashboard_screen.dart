@@ -20,8 +20,8 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    final gardensViewModel = context.watch<GardensViewModel>();
-    final gardenCount = context.select<GardensViewModel, int>((viewModel) => viewModel.gardens.length);
+    final gardenCount = context.select<GardensViewModel, int>(
+      (viewModel) => viewModel.gardens.length);
 
     return Scaffold(
       appBar: AppBar(

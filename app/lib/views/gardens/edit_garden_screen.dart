@@ -108,15 +108,20 @@ class _EditGardenScreenState extends State<EditGardenScreen>{
                         }
 
                         final area = double.parse(areaController.text);
+                        
+                        final gardenId = widget.garden.id;
 
+                        if (gardenId == null){
+                          return;
+                        }
+                        
                         final updatedGarden = Garden(
-                          id: widget.garden.id,
                           name: nameController.text.trim(),
                           location: locationController.text.trim(),
                           area: area,
                         );
 
-                        context.read<GardensViewModel>().updateGarden(widget.garden, updatedGarden);
+                        context.read<GardensViewModel>().updateGarden(gardenId, updatedGarden);
 
                         Navigator.of(context).pop();
                       },

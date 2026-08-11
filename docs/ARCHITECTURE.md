@@ -35,27 +35,37 @@ SQLite / External Services
 
 A arquitectura completa está definida e a súa implementación realízase de maneira incremental.
 
-Ao finalizar a sesión 11, o módulo de hortas chegou ao seguinte nivel:
+Ao finalizar a sesión 12, o módulo de hortas chegou ao seguinte nivel:
 
 ```text
 View
  ↓
 GardensViewModel
  ↓
+GardenRepository
+ ↑
+MemoryGardenRepository
+ ↓
 Estado en memoria
 ```
 
-Xa están implementadas e separadas as capas de:
+Xa están implementadas e conectadas as capas de:
 
 ```text
 View
  ↓
 ViewModel
+ ↓
+Repository
 ```
 
-Provider permite compartir unha única instancia de `GardensViewModel` entre as diferentes Views da aplicación.
+`GardenRepository` define o contrato de acceso aos datos do módulo de hortas.
 
-`GardensViewModel` actúa actualmente como fonte de verdade para o estado das hortas e centraliza as operacións:
+`MemoryGardenRepository` constitúe a implementación temporal dese contrato e mantén actualmente os datos mediante unha colección en memoria.
+
+`GardensViewModel` xa non almacena directamente a colección de hortas nin é responsable da xeración dos seus identificadores.
+
+O ViewModel depende da abstracción `GardenRepository` e delega nela as operacións de acceso e modificación dos datos:
 
 ```text
 addGarden()
@@ -64,32 +74,54 @@ updateGarden()
 removeGarden()
 ```
 
-As capas seguintes continúan pendentes de implementación:
+Provider continúa permitindo compartir unha única instancia de `GardensViewModel` entre as diferentes Views da aplicación.
+
+A implementación concreta do Repository inxéctase desde o punto de composición da aplicación.
+
+Actualmente:
 
 ```text
-Repository
- ↓
+main.dart
+   ↓
+MemoryGardenRepository
+   ↓
+GardensViewModel
+   ↓
+Provider
+   ↓
+Views
+```
+
+A capa de persistencia continúa pendente:
+
+```text
+GardenRepository
+      ↑
+SQLiteGardenRepository
+      ↓
 DatabaseService
- ↓
+      ↓
 SQLite
 ```
 
-Polo tanto, os datos das hortas aínda se almacenan exclusivamente en memoria e desaparecen ao finalizar a aplicación.
+Polo tanto, os datos das hortas aínda desaparecen ao finalizar a aplicación.
 
-A seguinte evolución arquitectónica será introducir o Repository para separar a xestión do estado do acceso aos datos.
+A seguinte evolución arquitectónica será introducir SQLite e adaptar o contrato do Repository ás operacións asíncronas necesarias para a persistencia.
 
-A arquitectura evolucionará progresivamente cara ao fluxo definitivo:
+A arquitectura evolucionará progresivamente cara ao fluxo:
 
 ```text
 View
  ↓
 ViewModel
  ↓
-Repository
+GardenRepository
+ ↑
+SQLiteGardenRepository
  ↓
-Database / API
+DatabaseService
  ↓
-SQLite / External Services
+SQLite
 ```
 
 ---
@@ -134,11 +166,13 @@ class Garden {
 }
 ```
 
-O identificador pode ser `null` antes de que a entidade entre no estado compartido ou sexa almacenada na futura capa de persistencia.
+O identificador pode ser `null` antes de que a entidade sexa almacenada por un Repository.
 
-Durante a fase actual, sen SQLite, `GardensViewModel` asigna temporalmente identificadores ás hortas mediante un contador interno.
+Durante a fase actual, sen SQLite, `MemoryGardenRepository` asigna temporalmente identificadores ás hortas mediante un contador interno.
 
-Esta estratexia é provisional e será substituída polo mecanismo de identificación definido pola futura capa de persistencia.
+Esta responsabilidade pertence á implementación da capa de acceso aos datos e non ao ViewModel.
+
+A estratexia actual é provisional e será substituída polo mecanismo de identificación proporcionado pola futura capa de persistencia.
 
 Os modelos de dominio manteranse, na medida do posible, inmutables. Por este motivo, a actualización dunha entidade realízase creando unha nova instancia cos datos modificados en lugar de modificar directamente a instancia existente.
 
@@ -258,66 +292,198 @@ Funcións:
 
 Primeiro ViewModel funcional implementado no proxecto.
 
-Actualmente é responsable de:
+É responsable de:
 
-- Manter a colección de hortas en memoria.
-- Asignar identificadores temporais.
-- Crear hortas.
-- Recuperar unha horta mediante o seu identificador.
-- Actualizar hortas.
-- Eliminar hortas.
-- Notificar cambios ás Views.
+- Xestionar o estado de presentación relacionado coas hortas.
+- Recibir as accións solicitadas polas Views.
+- Delegar o acceso e modificación dos datos en `GardenRepository`.
+- Expoñer os datos necesarios para as Views.
+- Notificar cambios mediante `notifyListeners()` cando unha operación modifica correctamente o estado.
+
+`GardensViewModel` xa non almacena directamente a colección de hortas.
+
+Recibe o Repository mediante inxección de dependencias:
+
+```dart
+final GardenRepository repository;
+
+GardensViewModel({
+  required this.repository,
+});
+```
+
+O acceso á colección delega no Repository:
+
+```dart
+List<Garden> get gardens => repository.gardens;
+```
+
+As operacións do ViewModel tamén delegan a manipulación dos datos:
+
+```text
+GardensViewModel
+       ↓
+GardenRepository
+```
 
 Operacións actuais:
 
-```dart
+```text
 addGarden()
 getGardenById()
 updateGarden()
 removeGarden()
 ```
 
-A colección interna:
+O ViewModel utiliza os resultados devoltos polo Repository para decidir cando debe notificar cambios ás Views.
 
-```dart
-final List<Garden> _gardens = [];
+Por exemplo, unha actualización ou eliminación que non poida completarse non debe provocar unha notificación innecesaria.
+
+Deste modo sepáranse dúas responsabilidades:
+
+```text
+GardensViewModel
+→ estado e lóxica de presentación
+→ coordinación coas Views
+→ notifyListeners()
+
+GardenRepository
+→ acceso e manipulación dos datos
 ```
-
-mantense privada.
-
-As Views acceden a ela mediante:
-
-```dart
-List<Garden> get gardens =>
-    List.unmodifiable(_gardens);
-```
-
-Isto evita modificacións directas desde a interface.
-
-As modificacións deben realizarse mediante as operacións proporcionadas polo ViewModel.
 
 ### ViewModels previstos
 
 - `HomeViewModel`
 - `PlantDetailViewModel`
 - Outros ViewModels que resulten necesarios segundo evolucione a aplicación.
+
 ---
 
 ## Repository Layer
 
-Responsable do acceso aos datos.
+Responsable de abstraer o acceso e manipulación dos datos.
 
-Funcións:
+A capa Repository permite que os ViewModels non dependan directamente da tecnoloxía utilizada para almacenar ou recuperar información.
 
-- Abstraer a fonte dos datos.
-- Combinar SQLite e APIs.
-- Proporcionar unha interface común.
+### GardenRepository
 
-Exemplos:
+`GardenRepository` está implementado como unha clase abstracta que define o contrato do módulo de hortas.
 
-- GardenRepository
-- PlantRepository
-- WeatherRepository
+```dart
+abstract class GardenRepository {
+  List<Garden> get gardens;
+
+  Garden addGarden(Garden garden);
+
+  Garden? getGardenById(String id);
+
+  Garden? updateGarden(
+    String gardenId,
+    Garden updatedGarden,
+  );
+
+  bool removeGarden(String id);
+}
+```
+
+O contrato define que operacións están dispoñibles, pero non como se realizan.
+
+### MemoryGardenRepository
+
+`MemoryGardenRepository` é a primeira implementación concreta de `GardenRepository`.
+
+```text
+GardenRepository
+       ↑
+MemoryGardenRepository
+```
+
+Actualmente é responsable de:
+
+- Manter temporalmente a colección de hortas en memoria.
+- Asignar identificadores temporais.
+- Crear hortas.
+- Recuperar hortas.
+- Actualizar hortas.
+- Eliminar hortas.
+- Garantir que unha actualización conserve a identidade da entidade.
+
+A implementación utiliza actualmente:
+
+```dart
+final List<Garden> _gardens = [];
+```
+
+e un contador temporal para xerar identificadores.
+
+Estes mecanismos pertencen exclusivamente á implementación en memoria e non forman parte do contrato `GardenRepository`.
+
+### Repository Abstraction
+
+`GardensViewModel` depende da abstracción:
+
+```dart
+GardenRepository
+```
+
+e non da implementación concreta:
+
+```dart
+MemoryGardenRepository
+```
+
+Isto permite substituír a fonte de datos sen modificar o ViewModel.
+
+Por exemplo:
+
+```text
+                 ┌─ MemoryGardenRepository
+                 │
+GardensViewModel → GardenRepository
+                 │
+                 └─ SQLiteGardenRepository
+```
+
+Esta separación facilita:
+
+- Substituír o almacenamento en memoria por SQLite.
+- Crear implementacións alternativas.
+- Realizar probas sen depender dunha base de datos real.
+- Reducir o acoplamento entre a lóxica de presentación e a persistencia.
+
+### Dependency Injection
+
+O Repository é proporcionado ao ViewModel mediante inxección de dependencias.
+
+`GardensViewModel` non crea internamente a súa implementación de Repository.
+
+A implementación concreta selecciónase no punto de composición da aplicación:
+
+```text
+main.dart
+   ↓
+MemoryGardenRepository()
+   ↓
+GardensViewModel
+```
+
+Isto permite cambiar posteriormente a implementación concreta sen modificar as Views nin a lóxica principal do ViewModel.
+
+### Future Repository Implementations
+
+Está prevista unha implementación persistente:
+
+```text
+SQLiteGardenRepository
+        ↓
+DatabaseService
+        ↓
+SQLite
+```
+
+O contrato actual é síncrono porque a implementación en memoria tamén o é.
+
+Coa introdución de SQLite será necesario revisar o contrato para representar operacións asíncronas mediante `Future`, `async` e `await`.
 
 ---
 
@@ -405,7 +571,7 @@ Exemplos:
 
 - home_screen.dart
 - gardens_screen.dart
-- garden_detail_screen.dart
+- garden_details_screen.dart
 
 ---
 
@@ -426,13 +592,31 @@ Futuros ViewModels engadiranse cando exista unha responsabilidade concreta que x
 
 ## repositories/
 
-Acceso aos datos.
+Define os contratos e implementacións responsables do acceso aos datos.
 
-Exemplos:
+Estrutura actual:
 
-- garden_repository.dart
-- plant_repository.dart
-- weather_repository.dart
+```text
+repositories/
+├── garden_repository.dart
+└── memory_garden_repository.dart
+```
+
+### garden_repository.dart
+
+Define a abstracción `GardenRepository` utilizada polo módulo de hortas.
+
+### memory_garden_repository.dart
+
+Implementación temporal de `GardenRepository` baseada nunha colección en memoria.
+
+As futuras implementacións de persistencia manteranse separadas do contrato sempre que resulte conveniente.
+
+Implementación prevista:
+
+```text
+SQLiteGardenRepository
+```
 
 ---
 
@@ -613,24 +797,32 @@ Provider
  ↓
 GardensViewModel
  ↓
+GardenRepository
+ ↑
+MemoryGardenRepository
+ ↓
 Estado en memoria
 ```
 
-Ao finalizar a aplicación, o estado desaparece.
+Ao finalizar a aplicación, os datos continúan desaparecendo porque `MemoryGardenRepository` non proporciona persistencia permanente.
 
 A futura arquitectura será:
 
 ```text
 Provider
  ↓
-ViewModel
+GardensViewModel
  ↓
-Repository
+GardenRepository
+ ↑
+SQLiteGardenRepository
+ ↓
+DatabaseService
  ↓
 SQLite
 ```
 
-Provider continuará xestionando e distribuíndo o estado mentres SQLite será responsable da persistencia.
+Provider continuará xestionando e distribuíndo o estado da interface, mentres a implementación do Repository e SQLite serán responsables do acceso e persistencia dos datos.
 
 ---
 
@@ -776,8 +968,16 @@ View
  ↓
 GardensViewModel
  ↓
+GardenRepository
+ ↑
+MemoryGardenRepository
+ ↓
 Estado en memoria
 ```
+
+A dirección das dependencias permite que `GardensViewModel` dependa da abstracción `GardenRepository` en lugar dunha implementación concreta.
+
+A selección da implementación realízase desde `main.dart`.
 
 Seguinte evolución:
 
@@ -787,11 +987,15 @@ View
 GardensViewModel
  ↓
 GardenRepository
+ ↑
+SQLiteGardenRepository
  ↓
 DatabaseService
  ↓
 SQLite
 ```
+
+O obxectivo é substituír a implementación de almacenamento sen modificar as Views nin a lóxica principal do ViewModel.
 
 ---
 

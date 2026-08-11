@@ -47,6 +47,14 @@ O seu obxectivo é:
 - Eliminación de hortas con confirmación.
 - CRUD completo de hortas en memoria.
 - Sincronización automática das Views mediante Provider.
+- Introdución do Repository Pattern.
+- Creación da abstracción `GardenRepository`.
+- Creación de `MemoryGardenRepository`.
+- Traslado do almacenamento temporal de hortas desde `GardensViewModel` ao Repository.
+- Integración de `GardensViewModel` con `GardenRepository`.
+- Inxección de dependencias mediante o construtor.
+- Desacoplamento do ViewModel da implementación concreta de persistencia.
+- CRUD de hortas delegado na capa Repository.
 
 ## In Progress
 
@@ -55,11 +63,10 @@ O seu obxectivo é:
 - Design System.
 - Navegación entre pantallas.
 - Módulo de hortas.
-- Preparación da capa Repository e persistencia local.
+- Preparación da persistencia local con SQLite.
 
 ## Pending
 
-- Capa Repository.
 - Persistencia con SQLite.
 - Módulo de plantas.
 - Seguemento da evolución das plantas.
@@ -139,7 +146,7 @@ Introducir unha xestión de estado organizada e desacoplar os datos das pantalla
 - [x] Utilizar `ChangeNotifier` e `notifyListeners()`.
 - [x] Diferenciar o uso de `context.read`, `context.watch` e `context.select`.
 - [x] Encapsular a colección de hortas.
-- [x] Establecer `GardensViewModel` como fonte de verdade do módulo de hortas.
+- [x] Establecer `GardensViewModel` como punto de acceso ao estado das hortas desde as Views.
 
 ## Deliverable
 
@@ -157,18 +164,21 @@ Introducir a capa Repository e separar a xestión do estado do acceso aos datos.
 
 ## Tasks
 
-- [ ] Comprender a responsabilidade do Repository.
-- [ ] Crear `GardenRepository`.
-- [ ] Definir as operacións necesarias para o módulo de hortas.
-- [ ] Conectar `GardensViewModel` con `GardenRepository`.
-- [ ] Evitar que o ViewModel dependa directamente da futura implementación SQLite.
-- [ ] Preparar o Repository para substituír o almacenamento temporal en memoria pola persistencia local.
+- [x] Comprender a responsabilidade do Repository.
+- [x] Crear `GardenRepository`.
+- [x] Definir as operacións necesarias para o módulo de hortas.
+- [x] Crear `MemoryGardenRepository`.
+- [x] Conectar `GardensViewModel` con `GardenRepository`.
+- [x] Mover o almacenamento temporal desde `GardensViewModel` ao Repository.
+- [x] Aplicar inxección de dependencias.
+- [x] Evitar que o ViewModel dependa directamente dunha implementación concreta.
+- [x] Preparar a arquitectura para substituír o almacenamento temporal en memoria pola persistencia local.
 
 ## Deliverable
 
 Separación funcional entre a xestión do estado e o acceso aos datos.
 
-Fluxo esperado:
+Fluxo actual:
 
 ```text
 View
@@ -176,11 +186,15 @@ View
 GardensViewModel
  ↓
 GardenRepository
+ ↑
+MemoryGardenRepository
  ↓
-Fonte de datos
+Memoria
 ```
 
-**Estado:** seguinte fase de desenvolvemento.
+A arquitectura permite substituír no futuro MemoryGardenRepository por unha implementación baseada en SQLite sen modificar as Views.
+
+**Estado:** completada.
 
 ---
 
@@ -235,11 +249,17 @@ Implementar a xestión completa de hortas.
 - [x] Eliminar unha horta.
 - [x] Solicitar confirmación antes da eliminación.
 - [x] Completar o CRUD de hortas en memoria.
+- [x] Crear `GardenRepository`.
+- [x] Crear `MemoryGardenRepository`.
+- [x] Integrar `GardensViewModel` con `GardenRepository`.
+- [x] Delegar o CRUD na capa Repository.
+- [x] Utilizar a identidade da horta nas operacións de actualización e eliminación.
+- [x] Desacoplar o ViewModel da implementación concreta do Repository.
 
 ## Pending
 
-- [ ] Crear `GardenRepository`.
-- [ ] Integrar `GardensViewModel` con `GardenRepository`.
+## Pending
+
 - [ ] Gardar unha horta en SQLite.
 - [ ] Recuperar hortas desde SQLite.
 - [ ] Actualizar hortas en SQLite.
@@ -251,7 +271,7 @@ Implementar a xestión completa de hortas.
 
 Módulo de hortas completo con operacións de creación, consulta, edición e eliminación persistidas localmente.
 
-**Estado:** en progreso. CRUD funcional en memoria; persistencia pendente.
+**Estado:** en progreso. CRUD funcional mediante Repository en memoria; persistencia SQLite pendente.
 
 ---
 
