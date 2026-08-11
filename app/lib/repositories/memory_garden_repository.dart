@@ -8,10 +8,10 @@ class MemoryGardenRepository implements GardenRepository {
   int _nextId = 1;
 
   @override
-  List<Garden> get gardens => List.unmodifiable(_gardens);
+  Future<List<Garden>> getGardens() async => List.unmodifiable(_gardens);
 
   @override
-  Garden addGarden(Garden garden){
+  Future<Garden> addGarden(Garden garden) async{
     final newGarden = Garden(
       id: _nextId.toString(),
       name: garden.name,
@@ -26,7 +26,7 @@ class MemoryGardenRepository implements GardenRepository {
   }
 
   @override
-  Garden? getGardenById(String id) {
+  Future<Garden?> getGardenById(String id) async {
     for (final garden in _gardens) {
       if (garden.id == id) {
         return garden;
@@ -37,8 +37,8 @@ class MemoryGardenRepository implements GardenRepository {
   }
 
   @override
-  Garden? updateGarden(String gardenId, Garden updatedGarden){
-    final garden = getGardenById(gardenId);
+  Future<Garden?> updateGarden(String gardenId, Garden updatedGarden)async{
+    final garden = await getGardenById(gardenId);
 
     if ( garden == null) {
       return null;
@@ -59,8 +59,8 @@ class MemoryGardenRepository implements GardenRepository {
   }
 
   @override
-  bool removeGarden(String id){
-    final garden = getGardenById(id);
+  Future<bool> removeGarden(String id) async{
+    final garden = await getGardenById(id);
 
     if (garden == null) {
       return false;

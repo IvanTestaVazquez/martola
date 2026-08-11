@@ -55,6 +55,15 @@ O seu obxectivo é:
 - Inxección de dependencias mediante o construtor.
 - Desacoplamento do ViewModel da implementación concreta de persistencia.
 - CRUD de hortas delegado na capa Repository.
+- Conversión de `GardenRepository` a un contrato asíncrono.
+- Adaptación de `MemoryGardenRepository` ao contrato asíncrono.
+- Introdución de `Future`, `async` e `await` na arquitectura de datos.
+- Estado local de hortas en `GardensViewModel` sincronizado co Repository.
+- Carga inicial de hortas mediante `loadGardens()`.
+- Inicialización da carga de datos desde Provider.
+- Adaptación dos fluxos CRUD ás operacións asíncronas.
+- Uso de `context.mounted` despois de operacións asíncronas.
+- Instalación das dependencias necesarias para SQLite multiplataforma.
 
 ## In Progress
 
@@ -63,7 +72,8 @@ O seu obxectivo é:
 - Design System.
 - Navegación entre pantallas.
 - Módulo de hortas.
-- Preparación da persistencia local con SQLite.
+- Implementación da infraestrutura de persistencia local con SQLite.
+- Creación de `DatabaseService`.
 
 ## Pending
 
@@ -173,6 +183,12 @@ Introducir a capa Repository e separar a xestión do estado do acceso aos datos.
 - [x] Aplicar inxección de dependencias.
 - [x] Evitar que o ViewModel dependa directamente dunha implementación concreta.
 - [x] Preparar a arquitectura para substituír o almacenamento temporal en memoria pola persistencia local.
+- [x] Converter `GardenRepository` nun contrato asíncrono.
+- [x] Adaptar `MemoryGardenRepository` ao contrato asíncrono.
+- [x] Introducir `Future`, `async` e `await` na comunicación co Repository.
+- [x] Manter no ViewModel o estado xa cargado para as Views.
+- [x] Implementar `loadGardens()`.
+- [x] Iniciar automaticamente a carga de datos ao crear `GardensViewModel`.
 
 ## Deliverable
 
@@ -180,19 +196,19 @@ Separación funcional entre a xestión do estado e o acceso aos datos.
 
 Fluxo actual:
 
-```text
-View
- ↓
-GardensViewModel
- ↓
-GardenRepository
- ↑
-MemoryGardenRepository
- ↓
-Memoria
-```
+    View
+      ↓
+    GardensViewModel
+      ↓ async
+    GardenRepository
+      ↑
+    MemoryGardenRepository
+      ↓
+    Memoria
 
-A arquitectura permite substituír no futuro MemoryGardenRepository por unha implementación baseada en SQLite sen modificar as Views.
+O ViewModel mantén o estado xa cargado para que as Views poidan consultalo de maneira síncrona.
+
+A arquitectura permite substituír `MemoryGardenRepository` por unha implementación baseada en SQLite sen modificar as Views.
 
 **Estado:** completada.
 
@@ -206,17 +222,50 @@ Integrar SQLite e establecer a capa básica de persistencia.
 
 ## Tasks
 
-- [ ] Configurar `sqflite`.
-- [ ] Crear DatabaseService.
-- [ ] Crear táboas.
+- [x] Analizar a estratexia SQLite multiplataforma.
+- [x] Preparar o contrato asíncrono necesario para a persistencia.
+- [x] Engadir `sqflite`.
+- [x] Engadir `sqflite_common_ffi`.
+- [x] Engadir `path`.
+- [x] Engadir `path_provider`.
+- [x] Comprobar que a aplicación continúa arrancando coas novas dependencias.
+- [x] Crear a estrutura inicial de `DatabaseService`.
+- [x] Preparar a selección da factoría SQLite segundo a plataforma.
+- [ ] Implementar a apertura de `martola.db`.
+- [ ] Manter e reutilizar a conexión coa base de datos.
+- [ ] Crear as táboas.
 - [ ] Crear migracións iniciais.
 - [ ] Implementar operacións básicas de lectura e escritura.
-- [ ] Integrar a persistencia coa capa Repository.
+- [ ] Crear `SQLiteGardenRepository`.
+- [ ] Integrar a persistencia SQLite coa capa Repository.
+- [ ] Substituír `MemoryGardenRepository` por `SQLiteGardenRepository` na composición da aplicación.
+- [ ] Verificar a persistencia entre reinicios da aplicación.
 
 ## Deliverable
 
 Base de datos local funcional e accesible mediante unha capa de persistencia organizada.
 
+## Current Progress
+
+A infraestrutura SQLite está en desenvolvemento.
+
+A aplicación xa dispón dun contrato Repository asíncrono e das dependencias necesarias para soportar SQLite en Android e escritorio.
+
+A implementación de `DatabaseService` está iniciada.
+
+O seguinte paso é:
+
+    DatabaseService
+          ↓
+    obter directorio
+          ↓
+    construír ruta martola.db
+          ↓
+    abrir base de datos
+          ↓
+    crear táboas
+
+**Estado:** en progreso.
 ---
 
 # Phase 6 - Gardens Module
@@ -255,8 +304,10 @@ Implementar a xestión completa de hortas.
 - [x] Delegar o CRUD na capa Repository.
 - [x] Utilizar a identidade da horta nas operacións de actualización e eliminación.
 - [x] Desacoplar o ViewModel da implementación concreta do Repository.
-
-## Pending
+- [x] Adaptar o CRUD de hortas a operacións asíncronas.
+- [x] Implementar a carga inicial mediante `loadGardens()`.
+- [x] Manter o estado cargado dentro de `GardensViewModel`.
+- [x] Adaptar creación, edición e eliminación ao uso de `await`.
 
 ## Pending
 
@@ -423,6 +474,32 @@ Completar a documentación final.
 ## Deliverable
 
 Documentación final do TFC.
+
+---
+
+# Current Development Milestone
+
+## Session 13 - Async Repository and SQLite Foundation
+
+**Estado:** en progreso.
+
+Completado:
+
+- Arquitectura Repository asíncrona.
+- `MemoryGardenRepository` adaptado.
+- Estado cargado en `GardensViewModel`.
+- `loadGardens()`.
+- CRUD adaptado a `await`.
+- Dependencias SQLite instaladas.
+- Inicio de `DatabaseService`.
+- Selección da estratexia SQLite multiplataforma.
+
+Seguinte paso:
+
+- Abrir `martola.db` desde `DatabaseService`.
+- Crear o esquema inicial.
+- Implementar `SQLiteGardenRepository`.
+- Substituír progresivamente o almacenamento en memoria pola persistencia real.
 
 ---
 

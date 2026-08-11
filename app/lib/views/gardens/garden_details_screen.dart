@@ -80,9 +80,11 @@ class GardenDetailsScreen extends StatelessWidget {
                           child: const Text('Cancelar'),
                         ),
                         FilledButton(
-                          onPressed: () {                            
-                            context.read<GardensViewModel>().removeGarden(gardenId);
+                          onPressed: () async {                            
+                            await context.read<GardensViewModel>().removeGarden(gardenId);
                             
+                            if(!context.mounted || !dialogContext.mounted) return;
+
                             Navigator.of(dialogContext).pop();
                             Navigator.of(context).pop();
                           },

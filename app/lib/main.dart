@@ -19,7 +19,7 @@ class MartolaApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => GardensViewModel(
         repository: MemoryGardenRepository(),
-      ),
+      )..loadGardens(),
       child: MaterialApp(
         title: 'MARTOLA',
         debugShowCheckedModeBanner: false,

@@ -92,7 +92,12 @@ Todos os cambios relevantes deberán reflectirse nestes documentos para facilita
 ## Database
 
 - SQLite
-- sqflite package
+- `sqflite`
+- `sqflite_common_ffi`
+- `path`
+- `path_provider`
+
+A infraestrutura de persistencia está deseñada para soportar Android, Windows e Linux.
 
 ## APIs
 
@@ -153,76 +158,98 @@ Arquitectura MVVM simplificada orientada a:
 
 ## Current Implementation State
 
-A arquitectura MVVM simplificada está xa implementada parcialmente no módulo de hortas.
+A arquitectura MVVM simplificada está implementada no módulo de hortas e evolucionou para preparar a integración dunha fonte de datos persistente.
 
 O fluxo actual é:
 
-```text
-View
- ↓
-GardensViewModel
- ↓
-GardenRepository
- ↑
-MemoryGardenRepository
- ↓
-Estado en memoria
-```
+    View
+      ↓
+    GardensViewModel
+      ↓ async
+    GardenRepository
+      ↑
+    MemoryGardenRepository
+      ↓
+    Estado en memoria
 
 Xa existe unha separación efectiva entre:
 
 - Interface de usuario.
 - Estado e lóxica de presentación.
-- Acceso e manipulación dos datos.
+- Contrato de acceso aos datos.
+- Implementación concreta da fonte de datos.
 
 `GardensViewModel` actúa como intermediario entre as Views e a capa Repository e é compartido mediante Provider.
 
-As principais operacións dispoñibles son:
+O ViewModel mantén unha colección local cos datos xa cargados:
 
-```text
-addGarden()
-getGardenById()
-updateGarden()
-removeGarden()
-```
+    List<Garden> _gardens
+
+Esta colección representa o estado de presentación e non a fonte de persistencia.
+
+A carga inicial realízase mediante:
+
+    loadGardens()
+
+que recupera de maneira asíncrona os datos desde o Repository e actualiza o estado observable.
+
+As principais operacións do módulo son:
+
+    loadGardens()
+    addGarden()
+    getGardenById()
+    updateGarden()
+    removeGarden()
 
 As Views acceden ao ViewModel mediante:
 
-```text
-context.read()
-context.watch()
-context.select()
-```
+    context.read()
+    context.watch()
+    context.select()
 
 segundo necesiten executar unha acción, observar o estado completo ou reaccionar a unha parte concreta.
 
-A capa Repository está xa introducida mediante:
+A capa Repository está definida mediante:
 
-```text
-GardenRepository
-        ↑
-MemoryGardenRepository
-```
+    GardenRepository
+          ↑
+    MemoryGardenRepository
 
-`GardenRepository` define o contrato de acceso aos datos, mentres que `MemoryGardenRepository` proporciona a implementación temporal en memoria.
+`GardenRepository` define actualmente un contrato asíncrono mediante `Future`.
+
+`MemoryGardenRepository` proporciona unha implementación temporal en memoria que respecta ese mesmo contrato.
 
 A implementación concreta inxéctase en `GardensViewModel` desde `main.dart`, permitindo que o ViewModel dependa da abstracción e non dunha implementación concreta.
 
 Actualmente os datos continúan almacenándose exclusivamente en memoria e desaparecen ao finalizar a aplicación.
 
-A seguinte evolución arquitectónica será implementar a persistencia local mediante SQLite:
+A arquitectura está preparada para evolucionar a:
 
-```text
-GardenRepository
-        ↑
-SQLiteGardenRepository
-        ↓
-DatabaseService
-        ↓
-SQLite
-```
+    View
+      ↓
+    GardensViewModel
+      ↓ async
+    GardenRepository
+      ↑
+    SQLiteGardenRepository
+      ↓
+    DatabaseService
+      ↓
+    SQLite
 
-Esta transición requirirá introducir operacións asíncronas mediante `Future`, `async` e `await`.
+Durante a sesión 13 iniciouse a infraestrutura SQLite.
+
+Xa se completou:
+
+- Adaptación asíncrona de `GardenRepository`.
+- Adaptación asíncrona de `MemoryGardenRepository`.
+- Introdución de `Future`, `async` e `await` no fluxo de datos.
+- Carga inicial mediante `loadGardens()`.
+- Adaptación das operacións CRUD ao modelo asíncrono.
+- Instalación das dependencias SQLite multiplataforma.
+- Inicio da implementación de `DatabaseService`.
+
+O seguinte paso é completar a apertura de `martola.db` desde `DatabaseService`.
 
 ---
 
@@ -415,7 +442,7 @@ Plan de aprendizaxe e desenvolvemento progresivo de Flutter e Dart aplicado a MA
 
 ## Current Phase
 
-Desenvolvemento funcional do módulo de hortas coa separación ViewModel/Repository completada e preparación da persistencia local mediante SQLite.
+Desenvolvemento da infraestrutura de persistencia SQLite, co módulo de hortas xa adaptado a unha arquitectura Repository asíncrona.
 
 ---
 
@@ -471,6 +498,18 @@ Desenvolvemento funcional do módulo de hortas coa separación ViewModel/Reposit
 
 ✅ Configuración de `main.dart` como punto de composición
 
+✅ Conversión de `GardenRepository` a contrato asíncrono
+
+✅ Adaptación de `MemoryGardenRepository` ao contrato asíncrono
+
+✅ Estado de presentación cargado en `GardensViewModel`
+
+✅ Carga inicial mediante `loadGardens()`
+
+⏳ Implementación de `DatabaseService`
+
+⬜ Implementación de `SQLiteGardenRepository`
+
 ⬜ Integración da capa de persistencia SQLite
 
 ---
@@ -481,7 +520,17 @@ Desenvolvemento funcional do módulo de hortas coa separación ViewModel/Reposit
 
 ✅ Documentación SQLite
 
-⬜ Implementación SQLite
+✅ Dependencias SQLite multiplataforma configuradas
+
+⏳ `DatabaseService`
+
+⬜ Apertura de `martola.db`
+
+⬜ Creación das táboas
+
+⬜ `SQLiteGardenRepository`
+
+⬜ Integración SQLite co módulo de hortas
 
 ---
 
@@ -630,6 +679,35 @@ Desenvolvemento funcional do módulo de hortas coa separación ViewModel/Reposit
 ✅ Selección de `MemoryGardenRepository` desde `main.dart`
 
 ✅ CRUD completo verificado tras a separación ViewModel/Repository
+✅ Conversión das operacións de `GardenRepository` a `Future`
+
+✅ Adaptación de `MemoryGardenRepository` ao modelo asíncrono
+
+✅ Creación do estado local `_gardens` en `GardensViewModel`
+
+✅ Implementación de `loadGardens()`
+
+✅ Carga inicial dos datos ao crear `GardensViewModel`
+
+✅ Sincronización do estado local tras creación, edición e eliminación
+
+✅ Adaptación de `CreateGardenScreen` ao uso de `await`
+
+✅ Adaptación de `EditGardenScreen` ao uso de `await`
+
+✅ Adaptación da eliminación desde `GardenDetailsScreen` ao uso de `await`
+
+✅ Uso de `context.mounted` despois de operacións asíncronas
+
+✅ Instalación de `sqflite`
+
+✅ Instalación de `sqflite_common_ffi`
+
+✅ Instalación de `path`
+
+✅ Instalación de `path_provider`
+
+⏳ Implementación de `DatabaseService`
 
 ⏳ Preparación da persistencia SQLite
 
@@ -684,7 +762,13 @@ Desenvolvemento funcional do módulo de hortas coa separación ViewModel/Reposit
 - `main.dart` actúa como punto de composición para seleccionar e inxectar as implementacións concretas das dependencias.
 - As operacións sobre entidades persistidas utilizarán preferentemente o identificador da entidade en lugar de depender dunha instancia concreta do modelo.
 - O Repository será responsable de garantir a conservación da identidade dunha entidade durante unha actualización.
-- A futura integración de SQLite requirirá adaptar as operacións de acceso aos datos ao modelo asíncrono de Dart mediante `Future`, `async` e `await`.
+- `GardenRepository` utiliza un contrato asíncrono mediante `Future` para permitir implementacións baseadas tanto en memoria como en fontes persistentes.
+- `GardensViewModel` mantén o estado xa cargado necesario para as Views, mentres que o Repository continúa sendo a abstracción de acceso á fonte de datos.
+- As Views non accederán directamente á base de datos nin deberán coñecer a tecnoloxía de persistencia utilizada.
+- `DatabaseService` centralizará a apertura, configuración e ciclo de vida da conexión SQLite.
+- Os Repositories específicos utilizarán `DatabaseService` para acceder á infraestrutura de persistencia.
+- A infraestrutura SQLite deberá soportar Android, Windows e Linux mediante a factoría apropiada para cada plataforma.
+- As rutas de ficheiros construiranse mediante `path` e os directorios da aplicación obteranse mediante `path_provider`.
 
 ---
 
@@ -692,7 +776,7 @@ Desenvolvemento funcional do módulo de hortas coa separación ViewModel/Reposit
 
 ### Current Objective
 
-Introducir a persistencia local mediante SQLite mantendo a separación arquitectónica conseguida entre Views, ViewModel e Repository.
+Completar a infraestrutura SQLite e comezar a persistencia real do módulo de hortas mantendo a separación entre Views, ViewModel, Repository e DatabaseService.
 
 ### Starting Point
 
@@ -707,38 +791,59 @@ Actualmente o módulo de hortas xa permite:
 - Mostrar dinamicamente no Dashboard o número real de hortas.
 - Delegar as operacións de datos desde `GardensViewModel` a `GardenRepository`.
 - Substituír implementacións concretas do Repository mediante inxección de dependencias.
+- Traballar cun contrato Repository asíncrono.
+- Cargar o estado inicial mediante `loadGardens()`.
+- Esperar polas operacións de datos mediante `await`.
 
 O fluxo actual é:
 
-```text
-View
- ↓
-GardensViewModel
- ↓
-GardenRepository
- ↑
-MemoryGardenRepository
- ↓
-Estado en memoria
-```
+    View
+      ↓
+    GardensViewModel
+      ↓ async
+    GardenRepository
+      ↑
+    MemoryGardenRepository
+      ↓
+    Estado en memoria
 
-A principal limitación actual é que os datos desaparecen ao finalizar a aplicación.
+A principal limitación continúa sendo que os datos desaparecen ao finalizar a aplicación.
+
+A infraestrutura SQLite está iniciada mediante `DatabaseService`.
+
+O punto exacto de continuación é:
+
+    DatabaseService
+          ↓
+    obter directorio
+          ↓
+    construír ruta martola.db
+          ↓
+    abrir base de datos
+          ↓
+    crear táboas
 
 ### Implementation Tasks
 
-- Comprender o funcionamento de `Future`, `async` e `await`.
-- Configurar SQLite e `sqflite`.
-- Crear a infraestrutura inicial de `DatabaseService`.
-- Adaptar o contrato `GardenRepository` ás operacións asíncronas necesarias.
-- Crear unha implementación de Repository baseada en SQLite.
-- Implementar a persistencia local das hortas.
-- Recuperar as hortas almacenadas ao iniciar a aplicación.
-- Substituír a xeración temporal de identificadores pola proporcionada pola base de datos.
-- Manter as Views independentes da tecnoloxía de persistencia.
+- [x] Comprender `Future`, `async` e `await`.
+- [x] Adaptar `GardenRepository` ao modelo asíncrono.
+- [x] Adaptar `MemoryGardenRepository`.
+- [x] Preparar `GardensViewModel` para unha fonte asíncrona.
+- [x] Implementar `loadGardens()`.
+- [x] Configurar as dependencias necesarias para SQLite.
+- [x] Iniciar `DatabaseService`.
+- [ ] Completar a apertura de `martola.db`.
+- [ ] Crear o esquema inicial da base de datos.
+- [ ] Crear `SQLiteGardenRepository`.
+- [ ] Implementar o CRUD SQLite das hortas.
+- [ ] Recuperar as hortas persistidas ao iniciar a aplicación.
+- [ ] Substituír os identificadores temporais polos identificadores SQLite.
+- [ ] Inxectar `SQLiteGardenRepository` desde `main.dart`.
+- [ ] Verificar que os datos sobreviven ao reinicio da aplicación.
 
 ## Deliverable
 
-Módulo de hortas con operacións CRUD persistidas localmente mediante SQLite, mantendo a separación entre View, ViewModel, Repository e capa de datos.
+Módulo de hortas con operacións CRUD persistidas localmente mediante SQLite, mantendo a separación entre View, ViewModel, Repository e capa de infraestrutura.
 
 ---
 

@@ -2,14 +2,13 @@ import '../models/garden.dart';
 
 abstract class GardenRepository {
 
-  List<Garden> get gardens;
+  Future<List<Garden>> getGardens();
 
-  Garden addGarden(Garden garden);
-   
+  Future<Garden> addGarden(Garden garden);   
 
-  Garden? getGardenById(String id);
+  Future<Garden?> getGardenById(String id);
 
-  Garden? updateGarden(String gardenId, Garden updatedGarden);
+  Future<Garden?> updateGarden(String gardenId, Garden updatedGarden);
 
-  bool removeGarden(String id);
+  Future<bool> removeGarden(String id);
 }

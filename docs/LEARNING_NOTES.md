@@ -5961,3 +5961,691 @@ Os cambios sincronízanse entre:
 mediante `GardensViewModel` e Provider.
 
 Os datos aínda se almacenan exclusivamente en memoria.
+
+---
+
+---
+
+# Sesión 13 - Asincronía e preparación da persistencia SQLite
+
+## Programación asíncrona
+
+Unha operación asíncrona é unha operación cuxo resultado pode non estar dispoñible inmediatamente.
+
+Isto é especialmente importante cando traballamos con:
+
+- Bases de datos.
+- Ficheiros.
+- APIs.
+- Rede.
+- Navegación que devolve resultados.
+
+A aplicación non debería bloquear a interface mentres espera a que estas operacións rematen.
+
+---
+
+## Future
+
+`Future<T>` representa un valor de tipo `T` que estará dispoñible no futuro.
+
+Por exemplo:
+
+    Future<Garden> addGarden(Garden garden)
+
+significa:
+
+> O método devolverá un `Garden`, pero ese resultado pode non estar dispoñible inmediatamente.
+
+Outro exemplo:
+
+    Future<Garden?> getGardenById(String id)
+
+significa que no futuro obteremos:
+
+    Garden
+
+ou:
+
+    null
+
+A diferenza entre:
+
+    Garden
+
+e:
+
+    Future<Garden>
+
+é conceptual:
+
+    Garden
+       ↓
+    resultado dispoñible agora
+
+    Future<Garden>
+       ↓
+    resultado que estará dispoñible máis adiante
+
+---
+
+## async
+
+A palabra clave:
+
+    async
+
+indica que unha función é asíncrona e permite utilizar `await` no seu interior.
+
+Exemplo:
+
+    Future<void> loadGardens() async {
+      // operacións asíncronas
+    }
+
+Un método `async` devolve un `Future`.
+
+Por exemplo:
+
+    Future<void>
+
+representa unha operación asíncrona que non necesita devolver un valor útil cando remata.
+
+---
+
+## await
+
+`await` permite esperar dentro dunha función asíncrona a que un `Future` se complete.
+
+Exemplo:
+
+    final gardens =
+        await repository.getGardens();
+
+Conceptualmente:
+
+    repository.getGardens()
+            ↓
+        Future pendente
+            ↓
+           await
+            ↓
+    Future completado
+            ↓
+       List<Garden>
+
+O código situado despois do `await` dentro desa función non continúa ata que esa operación remata.
+
+Isto non significa que toda a aplicación quede bloqueada.
+
+---
+
+## Relación entre Future, async e await
+
+Os tres conceptos están relacionados:
+
+    Future
+       ↓
+    representa un resultado futuro
+
+    async
+       ↓
+    permite escribir unha función asíncrona
+
+    await
+       ↓
+    permite esperar polo resultado dun Future
+
+Exemplo:
+
+    Future<void> loadGardens() async {
+      final gardens =
+          await repository.getGardens();
+
+      _gardens.clear();
+      _gardens.addAll(gardens);
+
+      notifyListeners();
+    }
+
+---
+
+## Por que o Repository debe ser asíncrono
+
+Un Repository en memoria pode responder practicamente de maneira inmediata.
+
+SQLite, pola contra, realiza operacións de entrada e saída que deben tratarse de maneira asíncrona.
+
+Se o contrato fose síncrono:
+
+    Garden addGarden(Garden garden);
+
+sería máis difícil substituír posteriormente a implementación en memoria por SQLite.
+
+Por este motivo o contrato evolucionou a:
+
+    Future<Garden> addGarden(Garden garden);
+
+O mesmo principio aplícase ao resto das operacións.
+
+A interface do Repository queda preparada para fontes de datos asíncronas independentemente da implementación concreta.
+
+---
+
+## Contrato asíncrono do Repository
+
+A abstracción utilizada no módulo de hortas pasa a seguir esta estrutura:
+
+    abstract class GardenRepository {
+      Future<List<Garden>> getGardens();
+
+      Future<Garden> addGarden(Garden garden);
+
+      Future<Garden?> getGardenById(String id);
+
+      Future<Garden?> updateGarden(
+        String gardenId,
+        Garden updatedGarden,
+      );
+
+      Future<bool> removeGarden(String id);
+    }
+
+Isto permite ter diferentes implementacións:
+
+    GardenRepository
+          ↑
+          │
+    ┌─────┴──────────────┐
+    │                    │
+    MemoryGardenRepository
+                         │
+                 SQLiteGardenRepository
+                       (futuro)
+
+As Views e o ViewModel dependen do contrato, non da tecnoloxía concreta utilizada para almacenar os datos.
+
+---
+
+## MemoryGardenRepository asíncrono
+
+`MemoryGardenRepository` continúa almacenando os datos nunha colección en memoria.
+
+Porén, implementa o mesmo contrato asíncrono que utilizará posteriormente SQLite.
+
+Exemplo:
+
+    Future<Garden> addGarden(
+      Garden garden,
+    ) async {
+      // gardado en memoria
+
+      return newGarden;
+    }
+
+A operación realmente non necesita esperar por unha base de datos neste momento.
+
+A vantaxe é arquitectónica:
+
+> Podemos desenvolver e probar o fluxo asíncrono antes de introducir a persistencia real.
+
+---
+
+## Estado do ViewModel e fonte de datos
+
+Ao introducir asincronía aparece unha distinción importante.
+
+O Repository representa o acceso á fonte de datos:
+
+    Repository
+        ↓
+    memoria / SQLite
+
+O ViewModel mantén o estado que necesita a interface:
+
+    final List<Garden> _gardens = [];
+
+A interface pode consultar:
+
+    List<Garden> get gardens =>
+        List.unmodifiable(_gardens);
+
+sen ter que esperar continuamente por unha operación asíncrona.
+
+Fluxo:
+
+    Fonte de datos
+          ↓
+    GardenRepository
+          ↓
+        await
+          ↓
+    GardensViewModel
+          ↓
+       _gardens
+          ↓
+        Views
+
+---
+
+## loadGardens()
+
+Creouse unha operación específica para cargar as hortas desde o Repository:
+
+    Future<void> loadGardens() async {
+      final gardens =
+          await repository.getGardens();
+
+      _gardens.clear();
+      _gardens.addAll(gardens);
+
+      notifyListeners();
+    }
+
+Responsabilidade:
+
+> Recuperar o estado inicial desde a fonte de datos e trasladalo ao estado observable do ViewModel.
+
+Primeiro:
+
+    await repository.getGardens()
+
+obtén os datos.
+
+Despois:
+
+    _gardens.clear();
+    _gardens.addAll(gardens);
+
+actualiza o estado local.
+
+Finalmente:
+
+    notifyListeners();
+
+informa ás Views.
+
+---
+
+## Por que facer clear() antes de addAll()
+
+Se `loadGardens()` se executase máis dunha vez e só utilizásemos:
+
+    _gardens.addAll(gardens);
+
+poderiamos duplicar elementos xa cargados.
+
+Por iso utilizamos:
+
+    _gardens.clear();
+    _gardens.addAll(gardens);
+
+Conceptualmente:
+
+    estado anterior
+         ↓
+       clear()
+         ↓
+      lista baleira
+         ↓
+       addAll()
+         ↓
+    estado recuperado
+
+---
+
+## Actualización eficiente do estado
+
+Despois dunha operación como:
+
+    final newGarden =
+        await repository.addGarden(garden);
+
+non é necesario volver cargar inmediatamente toda a colección desde o Repository.
+
+Podemos utilizar directamente o resultado:
+
+    _gardens.add(newGarden);
+
+e despois:
+
+    notifyListeners();
+
+Fluxo:
+
+    View
+      ↓
+    ViewModel
+      ↓
+    Repository
+      ↓
+    gardar
+      ↓
+    Garden gardado
+      ↓
+    ViewModel
+      ↓
+    actualizar _gardens
+      ↓
+    notifyListeners()
+      ↓
+    View
+
+Isto evita unha segunda consulta innecesaria á fonte de datos.
+
+---
+
+## context.mounted
+
+Despois dun `await` pode pasar tempo antes de que a función continúe.
+
+Durante ese intervalo, o widget podería desaparecer da árbore.
+
+Por exemplo:
+
+    await context
+        .read<GardensViewModel>()
+        .addGarden(garden);
+
+Antes de volver utilizar `context` comprobamos:
+
+    if (!context.mounted) {
+      return;
+    }
+
+E só despois:
+
+    Navigator.of(context).pop();
+
+Regra:
+
+> Se utilizamos `BuildContext` despois dun `await`, debemos comprobar que o contexto continúa montado cando exista a posibilidade de que o widget xa non forme parte da árbore.
+
+---
+
+## Operador de cascada
+
+Introduciuse o operador:
+
+    ..
+
+Este operador permite executar operacións sobre un obxecto mantendo como resultado a referencia ao propio obxecto.
+
+Aplicado á creación do ViewModel:
+
+    GardensViewModel(
+      repository: MemoryGardenRepository(),
+    )..loadGardens()
+
+Conceptualmente:
+
+    crear GardensViewModel
+             ↓
+       executar loadGardens()
+             ↓
+    conservar GardensViewModel
+
+Isto permite inicializar o ViewModel e iniciar a súa carga inicial nunha mesma expresión.
+
+---
+
+## Separación entre Repository e DatabaseService
+
+O Repository e `DatabaseService` teñen responsabilidades diferentes.
+
+### DatabaseService
+
+Responsable da infraestrutura da base de datos:
+
+- Determinar onde se almacena o ficheiro.
+- Abrir a base de datos.
+- Manter a conexión.
+- Crear as táboas.
+- Xestionar versións.
+- Preparar futuras migracións.
+
+### Repository
+
+Responsable das operacións relacionadas cun tipo de datos concreto.
+
+Por exemplo:
+
+    SQLiteGardenRepository
+
+será responsable de operacións como:
+
+    getGardens()
+    addGarden()
+    updateGarden()
+    removeGarden()
+
+pero utilizará `DatabaseService` para acceder á base de datos.
+
+Fluxo previsto:
+
+    View
+      ↓
+    GardensViewModel
+      ↓
+    GardenRepository
+      ↑
+    SQLiteGardenRepository
+      ↓
+    DatabaseService
+      ↓
+    SQLite
+
+---
+
+## Por que separar DatabaseService do Repository
+
+Se cada Repository fose responsable de abrir e configurar a súa propia base de datos:
+
+    GardenRepository
+         ↓
+    abre SQLite
+
+    PlantRepository
+         ↓
+    abre SQLite
+
+    WeatherRepository
+         ↓
+    abre SQLite
+
+duplicariamos responsabilidades.
+
+Co servizo compartido:
+
+    GardenRepository ───┐
+                       │
+    PlantRepository ────┼──→ DatabaseService → SQLite
+                       │
+    WeatherRepository ──┘
+
+a infraestrutura da base de datos queda centralizada.
+
+---
+
+## SQLite multiplataforma
+
+MARTOLA pretende funcionar tanto en Android como en escritorio.
+
+Por este motivo preparouse unha solución SQLite que poida adaptarse á plataforma.
+
+Dependencias introducidas:
+
+    sqflite
+    sqflite_common_ffi
+    path
+    path_provider
+
+Responsabilidades xerais:
+
+### sqflite
+
+Permite traballar con SQLite nas plataformas soportadas polo paquete.
+
+### sqflite_common_ffi
+
+Permite utilizar SQLite mediante FFI nas plataformas de escritorio previstas.
+
+### path_provider
+
+Permite obter directorios apropiados proporcionados polo sistema operativo.
+
+### path
+
+Permite construír rutas de ficheiros de forma independente da plataforma.
+
+---
+
+## DatabaseFactory
+
+A factoría determina como se crea e utiliza a conexión SQLite.
+
+Conceptualmente:
+
+    DatabaseFactory
+          ↓
+    sabe como abrir
+    unha base SQLite
+
+Segundo a plataforma, `DatabaseService` pode seleccionar a factoría apropiada.
+
+Isto evita que o resto da aplicación necesite coñecer as diferenzas entre Android e escritorio.
+
+---
+
+## Platform
+
+`Platform` permite consultar información sobre o sistema operativo no que se está executando a aplicación.
+
+Isto permite tomar decisións como:
+
+    Windows / Linux
+          ↓
+    SQLite mediante FFI
+
+    outras plataformas soportadas
+          ↓
+    factoría SQLite correspondente
+
+A responsabilidade de tomar esta decisión pertence á infraestrutura, non ás Views nin ao ViewModel.
+
+---
+
+## Ruta da base de datos
+
+Un ficheiro SQLite necesita unha localización no sistema de ficheiros.
+
+`path_provider` permite obter un directorio apropiado:
+
+    final directory =
+        await getApplicationDocumentsDirectory();
+
+O obxecto devolto representa un directorio.
+
+A súa ruta pode obterse mediante:
+
+    directory.path
+
+Posteriormente debe engadirse o nome da base de datos:
+
+    martola.db
+
+---
+
+## join()
+
+Non é recomendable construír unha ruta concatenando manualmente Strings.
+
+Evítase:
+
+    '${directory.path}/martola.db'
+
+porque os sistemas operativos poden utilizar diferentes convencións para as rutas.
+
+Utilízase:
+
+    join(
+      directory.path,
+      'martola.db',
+    )
+
+`join()` constrúe correctamente a ruta segundo a plataforma.
+
+Conceptualmente:
+
+    directorio da aplicación
+             +
+         martola.db
+             ↓
+    ruta completa da base de datos
+
+---
+
+## Punto actual da aprendizaxe
+
+A preparación da persistencia chegou ata:
+
+    DatabaseService
+          ↓
+    seleccionar DatabaseFactory
+          ↓
+    obter directorio
+          ↓
+    construír ruta martola.db
+          ↓
+    abrir base de datos
+          ↑
+    seguinte paso
+
+A apertura real da base de datos e a creación das táboas quedan pendentes para continuar a sesión 13.
+
+---
+
+## Conceptos clave da sesión
+
+- Programación asíncrona.
+- `Future<T>`.
+- `Future<void>`.
+- `async`.
+- `await`.
+- Repository asíncrono.
+- Estado local do ViewModel.
+- Fonte de datos.
+- `loadGardens()`.
+- `List.clear()`.
+- `List.addAll()`.
+- `context.mounted`.
+- Operador de cascada `..`.
+- `DatabaseService`.
+- Separación entre infraestrutura e acceso aos datos.
+- SQLite.
+- SQLite multiplataforma.
+- `DatabaseFactory`.
+- `Platform`.
+- `path_provider`.
+- `getApplicationDocumentsDirectory()`.
+- `path`.
+- `join()`.
+
+---
+
+## Regra principal da sesión
+
+A interface non debe depender de como ou onde se almacenan os datos.
+
+A separación:
+
+    View
+      ↓
+    ViewModel
+      ↓
+    Repository
+      ↓
+    DatabaseService
+      ↓
+    SQLite
+
+permite cambiar a implementación da persistencia mantendo desacopladas as capas superiores da aplicación.

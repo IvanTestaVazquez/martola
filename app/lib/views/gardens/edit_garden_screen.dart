@@ -29,7 +29,7 @@ class _EditGardenScreenState extends State<EditGardenScreen>{
   late final TextEditingController areaController;
 
   @override
-  initState(){
+  void initState(){
     super.initState();
     nameController = TextEditingController(text: widget.garden.name);
     locationController = TextEditingController(text: widget.garden.location);
@@ -100,7 +100,7 @@ class _EditGardenScreenState extends State<EditGardenScreen>{
                     ),              
                     const SizedBox(height: 16.0),
                     FilledButton(
-                      onPressed: () {
+                      onPressed: () async {
                         final isValid = _formKey.currentState!.validate();
                         
                         if(!isValid) {
@@ -121,7 +121,9 @@ class _EditGardenScreenState extends State<EditGardenScreen>{
                           area: area,
                         );
 
-                        context.read<GardensViewModel>().updateGarden(gardenId, updatedGarden);
+                        await context.read<GardensViewModel>().updateGarden(gardenId, updatedGarden);
+
+                        if(!context.mounted) return;
 
                         Navigator.of(context).pop();
                       },

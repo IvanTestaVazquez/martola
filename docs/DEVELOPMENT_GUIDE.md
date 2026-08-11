@@ -32,13 +32,27 @@ O módulo de hortas xa dispón de:
 - Estado compartido mediante Provider.
 - `GardensViewModel`.
 - CRUD completo en memoria.
-- `GardenRepository` como abstracción.
+- `GardenRepository` como abstracción asíncrona.
 - `MemoryGardenRepository` como implementación temporal.
 - Inxección de dependencias.
+- Operacións asíncronas mediante `Future`, `async` e `await`.
+- Estado local no ViewModel sincronizado co Repository.
+- Carga inicial mediante `loadGardens()`.
+- Fluxos de creación, edición e eliminación adaptados á asincronía.
+- Dependencias SQLite multiplataforma instaladas.
+- Estrutura inicial de `DatabaseService`.
 
 ## Next Action
 
-Comezar a Session 13 introducindo asincronía en Dart (`Future`, `async` e `await`) e preparar a integración de SQLite.
+Continuar a Session 13 implementando a apertura da base de datos `martola.db` desde `DatabaseService`.
+
+O seguinte paso será:
+
+1. Obter o directorio da aplicación.
+2. Construír a ruta de `martola.db`.
+3. Abrir a base de datos coa factoría correspondente á plataforma.
+4. Manter a conexión dentro de `DatabaseService`.
+5. Preparar a creación inicial das táboas.
 
 ---
 
@@ -1639,3 +1653,310 @@ Pendente ao finalizar a actualización da documentación.
 A sesión 12 supón a transición desde un ViewModel que tamén almacenaba os datos cara a unha arquitectura cunha capa de acceso aos datos claramente separada.
 
 A implementación continúa sendo deliberadamente sinxela e en memoria, pero a aplicación queda preparada para introducir persistencia real sen acoplar as Views nin `GardensViewModel` a SQLite.
+
+---
+
+## Sesión 13 - Asincronía e preparación de SQLite
+
+### Status
+
+🟡 In Progress
+
+### Obxectivos
+
+- Comprender o funcionamento de `Future`.
+- Introducir `async` e `await`.
+- Adaptar a arquitectura Repository a operacións asíncronas.
+- Preparar `GardensViewModel` para unha fonte de datos persistente.
+- Adaptar as Views ás operacións asíncronas.
+- Introducir a carga inicial de datos.
+- Preparar a infraestrutura necesaria para SQLite.
+- Comezar a implementación de `DatabaseService`.
+
+### Conceptos aprendidos
+
+- `Future<T>`.
+- `async`.
+- `await`.
+- Operacións asíncronas.
+- Espera dunha operación antes de continuar o fluxo.
+- `context.mounted`.
+- Estado local do ViewModel.
+- Sincronización entre Repository e ViewModel.
+- Carga inicial de datos.
+- Operador de cascada `..`.
+- Separación entre Repository e Database Service.
+- Factorías de base de datos.
+- Detección da plataforma mediante `Platform`.
+- SQLite multiplataforma.
+- Construción de rutas multiplataforma.
+
+### Evolución do GardenRepository
+
+O contrato `GardenRepository` evolucionou para permitir fontes de datos asíncronas.
+
+As operacións pasan a devolver `Future`:
+
+    abstract class GardenRepository {
+      Future<List<Garden>> getGardens();
+
+      Future<Garden> addGarden(Garden garden);
+
+      Future<Garden?> getGardenById(String id);
+
+      Future<Garden?> updateGarden(
+        String gardenId,
+        Garden updatedGarden,
+      );
+
+      Future<bool> removeGarden(String id);
+    }
+
+Esta modificación permite que o mesmo contrato poida ser implementado tanto por un Repository en memoria como por unha futura implementación SQLite.
+
+### MemoryGardenRepository asíncrono
+
+`MemoryGardenRepository` foi adaptado ao novo contrato.
+
+A implementación continúa utilizando unha colección en memoria, pero os seus métodos devolven agora `Future`.
+
+Isto permite probar a arquitectura asíncrona antes de introducir SQLite real.
+
+### Evolución de GardensViewModel
+
+`GardensViewModel` mantén agora unha colección propia que representa o estado actualmente dispoñible para a interface:
+
+    final List<Garden> _gardens = [];
+
+    List<Garden> get gardens =>
+        List.unmodifiable(_gardens);
+
+O Repository continúa sendo a fonte de datos, mentres que o ViewModel mantén o estado preparado para ser consumido polas Views.
+
+O fluxo pasa a ser:
+
+    Fonte de datos
+          ↓
+    GardenRepository
+          ↓ async
+    GardensViewModel
+          ↓
+    _gardens
+          ↓ sync
+    Views
+
+Deste modo, o acceso á fonte de datos pode ser asíncrono sen obrigar ás Views a traballar directamente con `Future`.
+
+### Carga inicial
+
+Engadiuse:
+
+    Future<void> loadGardens() async {
+      final gardens = await repository.getGardens();
+
+      _gardens.clear();
+      _gardens.addAll(gardens);
+
+      notifyListeners();
+    }
+
+A carga inicial execútase ao crear o ViewModel desde Provider:
+
+    GardensViewModel(
+      repository: MemoryGardenRepository(),
+    )..loadGardens()
+
+Isto prepara a aplicación para recuperar automaticamente as hortas almacenadas cando se introduza SQLite.
+
+### Sincronización do CRUD
+
+As operacións de creación, actualización e eliminación:
+
+1. Esperan mediante `await` pola resposta do Repository.
+2. Actualizan o estado local de `GardensViewModel`.
+3. Executan `notifyListeners()`.
+
+Isto evita realizar unha segunda carga completa da colección despois de cada operación.
+
+### Adaptación das Views
+
+`CreateGardenScreen`, `EditGardenScreen` e `GardenDetailsScreen` foron adaptadas para esperar polas operacións asíncronas.
+
+Patrón empregado:
+
+    await context
+        .read<GardensViewModel>()
+        .addGarden(garden);
+
+    if (!context.mounted) {
+      return;
+    }
+
+    Navigator.of(context).pop();
+
+Introduciuse `context.mounted` para comprobar que o contexto continúa sendo válido despois dunha operación asíncrona antes de utilizalo novamente.
+
+O mesmo principio foi aplicado aos fluxos de edición e eliminación.
+
+### Consulta síncrona desde as Views
+
+Aínda que o Repository ofrece:
+
+    Future<Garden?> getGardenById(String id)
+
+o ViewModel pode consultar sincronamente a súa colección xa cargada:
+
+    Garden? getGardenById(String id) {
+      for (final garden in _gardens) {
+        if (garden.id == id) {
+          return garden;
+        }
+      }
+
+      return null;
+    }
+
+Isto permite manter chamadas como:
+
+    context.select<GardensViewModel, Garden?>(...)
+
+sen expoñer a asincronía da persistencia directamente á interface.
+
+### Preparación de SQLite
+
+Instaláronse as dependencias necesarias para preparar unha solución SQLite multiplataforma:
+
+    sqflite
+    sqflite_common_ffi
+    path
+    path_provider
+
+A estratexia inicial é:
+
+    Android
+       ↓
+    sqflite
+
+    Windows / Linux
+       ↓
+    sqflite_common_ffi
+
+### DatabaseService
+
+Comezouse a deseñar:
+
+    lib/
+    └── services/
+        └── database_service.dart
+
+A súa responsabilidade será:
+
+- Abrir a base de datos.
+- Determinar a ruta do ficheiro.
+- Xestionar a conexión.
+- Crear as táboas.
+- Xestionar futuras versións e migracións.
+
+Os Repositories serán responsables das operacións relacionadas coas súas entidades, pero non de abrir ou configurar a base de datos.
+
+A arquitectura prevista é:
+
+    Views
+      ↓
+    GardensViewModel
+      ↓
+    GardenRepository
+      ↑
+    SQLiteGardenRepository
+      ↓
+    DatabaseService
+      ↓
+    SQLite
+
+### Soporte multiplataforma
+
+`DatabaseService` seleccionará a factoría de base de datos segundo a plataforma.
+
+Para Windows e Linux utilizarase:
+
+    sqfliteFfiInit();
+    databaseFactoryFfi;
+
+mentres que nas plataformas soportadas por `sqflite` poderá utilizarse:
+
+    databaseFactory;
+
+A detección realízase mediante `Platform`.
+
+### Ruta da base de datos
+
+Estudouse o papel de:
+
+    getApplicationDocumentsDirectory()
+
+para obter un directorio apropiado da aplicación e de:
+
+    join()
+
+para construír unha ruta multiplataforma.
+
+O ficheiro previsto será:
+
+    martola.db
+
+### Comprobación funcional
+
+Tras adaptar a arquitectura á asincronía comprobouse que:
+
+- Crear hortas funciona.
+- Consultar hortas funciona.
+- Editar hortas funciona.
+- Eliminar hortas funciona.
+- O estado continúa sincronizado mediante Provider.
+- A carga inicial non rompe o funcionamento actual.
+- As novas dependencias SQLite permiten arrancar a aplicación correctamente.
+
+### Estado actual
+
+A integración SQLite aínda non está completada.
+
+A sesión detívose durante a implementación inicial de `DatabaseService`.
+
+O punto exacto de continuación é:
+
+    DatabaseService
+          ↓
+    obter directorio da aplicación
+          ↓
+    construír ruta de martola.db
+          ↓
+    ABRIR BASE DE DATOS
+          ↓
+    crear táboas
+
+### Seguinte paso
+
+Continuar a Session 13 implementando o método encargado de abrir `martola.db`.
+
+Deberá:
+
+1. Obter o directorio da aplicación.
+2. Construír a ruta mediante `join()`.
+3. Utilizar a factoría SQLite correspondente.
+4. Abrir a base de datos.
+5. Conservar a instancia aberta.
+6. Devolver a conexión mediante `Future<Database>`.
+
+### Documentation Updated
+
+- `DEVELOPMENT_GUIDE.md`
+
+### Commit
+
+Pendente ao finalizar a actualización da documentación.
+
+### Notes
+
+A sesión 13 introduce a fronteira asíncrona entre o estado da aplicación e a súa futura fonte de persistencia.
+
+A arquitectura continúa funcionando mediante `MemoryGardenRepository`, pero queda preparada para introducir `SQLiteGardenRepository` sen acoplar as Views nin `GardensViewModel` á tecnoloxía SQLite.

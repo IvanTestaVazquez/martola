@@ -6,39 +6,71 @@ import '../repositories/garden_repository.dart';
 class GardensViewModel extends ChangeNotifier {
 
   final GardenRepository repository;
+  final List<Garden> _gardens = [];
 
   GardensViewModel({
     required this.repository,
   });
 
-  List<Garden> get gardens => repository.gardens;
+  Future<void> loadGardens() async {
+    final gardens = await repository.getGardens();
 
-  void addGarden(Garden garden) {
-    repository.addGarden(garden);
+    _gardens.clear();
+    _gardens.addAll(gardens);
+    
     notifyListeners();
   }
 
-  void removeGarden(String id) {
-    final removed = repository.removeGarden(id);
+  List<Garden> get gardens => List.unmodifiable(_gardens);
+
+  Future<void> addGarden(Garden garden) async {
+    final newGarden = await repository.addGarden(garden);
+
+    _gardens.add(newGarden);
+
+    notifyListeners();
+  }
+
+  Future<void> removeGarden(String id) async {
+    final removed = await repository.removeGarden(id);
 
     if (!removed) {
       return;
     }
+    
+     _gardens.removeWhere(
+      (garden) => garden.id == id,
+    );
 
     notifyListeners();
   }
 
-  void updateGarden(String gardenId, Garden updatedGarden){
-    final garden = repository.updateGarden(gardenId, updatedGarden);
+  Future<void> updateGarden(String gardenId, Garden updatedGarden) async{
+    final garden = await repository.updateGarden(gardenId, updatedGarden);
 
     if ( garden == null) {
       return;
     }
 
+    for(final currentGarden in _gardens){
+      if (currentGarden.id == gardenId) {
+        final index = _gardens.indexOf(currentGarden);
+        _gardens[index] = garden;
+
+        break;
+      }
+    }       
+
     notifyListeners();
   }
 
   Garden? getGardenById(String id) { 
-    return repository.getGardenById(id);
+    for (final garden in _gardens){
+      if (garden.id == id){
+        return garden;
+      }
+    }
+
+    return null;
   }
 }

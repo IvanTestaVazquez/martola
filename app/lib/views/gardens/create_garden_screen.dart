@@ -85,7 +85,7 @@ class _CreateGardenScreenState extends State<CreateGardenScreen> {
                     ),              
                     const SizedBox(height: 16.0),
                     FilledButton(
-                      onPressed: () {
+                      onPressed: () async {
                         final isValid = _formKey.currentState!.validate();
                         
                         if(!isValid) {
@@ -100,8 +100,10 @@ class _CreateGardenScreenState extends State<CreateGardenScreen> {
                           area: area,
                         );
 
-                        context.read<GardensViewModel>().addGarden(garden);
+                        await context.read<GardensViewModel>().addGarden(garden);
 
+                        if (!context.mounted) return;
+                        
                         Navigator.of(context).pop();
                       },
                       child: const Text('Crear horta'),
