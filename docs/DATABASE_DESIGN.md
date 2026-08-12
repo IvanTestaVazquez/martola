@@ -258,6 +258,147 @@ garden_plants 1:1 garden_layout_items
 
 ---
 
+# Current SQLite Implementation
+
+O modelo descrito neste documento representa o deseño previsto da base de datos completa de MARTOLA.
+
+A implementación real da base de datos realizarase de maneira incremental a medida que se desenvolvan os diferentes módulos da aplicación.
+
+Actualmente está implementada a primeira versión da infraestrutura SQLite e a persistencia do módulo de hortas.
+
+## Database
+
+A base de datos local utiliza:
+
+    martola.db
+
+A apertura e creación da base de datos está centralizada en:
+
+    DatabaseService
+
+A versión inicial da base de datos é:
+
+    version: 1
+
+## Implemented Tables
+
+Actualmente está implementada a táboa:
+
+    gardens
+
+O esquema físico actual é:
+
+    CREATE TABLE gardens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      location TEXT NOT NULL,
+      area REAL NOT NULL
+    )
+
+Esta primeira implementación é deliberadamente máis pequena que o deseño completo previsto para a entidade `gardens`.
+
+Actualmente están implementados:
+
+- `id`
+- `name`
+- `location`
+- `area`
+
+Permanecen previstos para fases posteriores:
+
+- `user_id`
+- `description`
+- `latitude`
+- `longitude`
+- `created_at`
+
+Esta diferenza permite desenvolver e validar a persistencia de maneira incremental sen introducir campos ou relacións que aínda non utiliza a aplicación.
+
+## Garden ID
+
+Na base de datos, `gardens.id` utiliza:
+
+    INTEGER PRIMARY KEY AUTOINCREMENT
+
+SQLite é responsable de xerar automaticamente o identificador ao inserir unha nova horta.
+
+Na representación actual do modelo Dart:
+
+    String? id
+
+Por este motivo, `SQLiteGardenRepository` converte o identificador xerado por SQLite mediante:
+
+    id.toString()
+
+## Model Mapping
+
+O modelo `Garden` incorpora conversións entre a representación utilizada pola aplicación e a utilizada pola base de datos.
+
+Lectura desde SQLite:
+
+    Map<String, Object?>
+            ↓
+    Garden.fromMap()
+            ↓
+          Garden
+
+Escritura en SQLite:
+
+          Garden
+            ↓
+        toMap()
+            ↓
+    Map<String, Object?>
+
+`toMap()` non inclúe o identificador.
+
+Durante un `INSERT`, SQLite xera o `id` mediante `AUTOINCREMENT`.
+
+Durante un `UPDATE`, o identificador utilízase na condición `WHERE` para localizar a fila, pero non forma parte dos valores que se modifican.
+
+## Implemented CRUD Operations
+
+`SQLiteGardenRepository` implementa actualmente o CRUD completo da entidade `Garden`:
+
+    CREATE → addGarden()      → INSERT
+    READ   → getGardens()     → SELECT
+    READ   → getGardenById()  → SELECT ... WHERE
+    UPDATE → updateGarden()   → UPDATE ... WHERE
+    DELETE → removeGarden()   → DELETE ... WHERE
+
+As operacións son asíncronas e devolven `Future`.
+
+A persistencia foi comprobada manualmente creando, consultando, modificando e eliminando hortas.
+
+Tamén se comprobou que os cambios permanecen despois de pechar e volver abrir a aplicación.
+
+## Pending Tables
+
+As seguintes táboas forman parte do deseño previsto pero aínda non están implementadas:
+
+- `users`
+- `plant_species`
+- `garden_plants`
+- `plant_evolution_records`
+- `weather_records`
+- `garden_layout_items`
+
+Serán incorporadas progresivamente cando se desenvolvan os módulos correspondentes.
+
+## Database Evolution
+
+A estrutura da base de datos evolucionará mediante versións e migracións.
+
+Actualmente utilízase:
+
+    version: 1
+
+O sistema de migracións aínda non foi desenvolvido.
+
+Este será tratado antes de realizar cambios no esquema que deban conservar datos existentes.
+
+---
+
 # Initial Dataset
 
 A primeira versión da aplicación incluirá unha pequena colección de especies vexetais predefinidas:
@@ -296,8 +437,22 @@ A estrutura proposta permite implementar unha primeira versión completamente fu
 
 ## Current Implementation Note
 
-A base de datos SQLite aínda non está implementada.
+A infraestrutura SQLite está actualmente implementada e operativa.
 
-Durante a fase actual de desenvolvemento, `GardensViewModel` mantén temporalmente as hortas en memoria e asigna identificadores provisionais.
+O módulo de hortas utiliza:
 
-Este mecanismo non forma parte do deseño definitivo da base de datos e será substituído cando se implemente a capa de persistencia.
+    SQLiteGardenRepository
+            ↓
+    DatabaseService
+            ↓
+    SQLite
+            ↓
+    martola.db
+
+A táboa `gardens` dispón actualmente dun CRUD persistente completo.
+
+`MemoryGardenRepository` mantense como implementación alternativa de `GardenRepository`, pero xa non constitúe o mecanismo principal de almacenamento da aplicación.
+
+A implementación da base de datos continuará de maneira incremental.
+
+O deseño completo documentado neste ficheiro representa o modelo obxectivo de MARTOLA, mentres que a sección `Current SQLite Implementation` documenta o subconxunto que existe realmente en cada fase do desenvolvemento.

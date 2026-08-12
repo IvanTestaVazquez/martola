@@ -1,24 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'repositories/memory_garden_repository.dart';
+import 'services/database_service.dart';
+import 'repositories/sqlite_garden_repository.dart';
 
 import 'viewmodels/gardens_viewmodel.dart';
 
 import 'views/home/home_screen.dart';
 
+
 void main() {
-  runApp(const MartolaApp());
+  final databaseService = DatabaseService();
+  
+  final gardenRepository = SQLiteGardenRepository(
+    databaseService: databaseService,
+  );
+
+  runApp(
+    MartolaApp(
+      gardenRepository: gardenRepository,
+    ),
+  );
 }
 
 class MartolaApp extends StatelessWidget {
-  const MartolaApp({super.key});
+  const MartolaApp({
+    super.key,
+    required this.gardenRepository,
+    });
+
+  final SQLiteGardenRepository gardenRepository;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => GardensViewModel(
-        repository: MemoryGardenRepository(),
+        repository: gardenRepository,
       )..loadGardens(),
       child: MaterialApp(
         title: 'MARTOLA',

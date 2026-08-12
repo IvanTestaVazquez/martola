@@ -35,9 +35,9 @@ SQLite / External Services
 
 A arquitectura completa está definida e a súa implementación realízase de maneira incremental.
 
-Durante a sesión 13 introduciuse asincronía na fronteira entre o ViewModel e a capa Repository.
+Durante a sesión 13 completouse a primeira implementación de persistencia real mediante SQLite para o módulo de hortas.
 
-O fluxo actual do módulo de hortas é:
+O fluxo actual é:
 
     View
       ↓
@@ -45,31 +45,64 @@ O fluxo actual do módulo de hortas é:
       ↓ async
     GardenRepository
       ↑
-    MemoryGardenRepository
+    SQLiteGardenRepository
       ↓
-    Estado en memoria
+    DatabaseService
+      ↓
+    SQLite
+      ↓
+    martola.db
 
-`GardenRepository` define agora un contrato asíncrono para permitir que as súas implementacións poidan acceder a fontes de datos que requiran operacións de entrada e saída.
+`GardenRepository` define un contrato asíncrono que permite que as súas implementacións traballen con fontes de datos que requiran operacións de entrada e saída.
 
-`MemoryGardenRepository` continúa sendo a implementación temporal e mantén actualmente os datos mediante unha colección en memoria.
+A implementación utilizada actualmente pola aplicación é:
 
-`GardensViewModel` mantén unha colección propia:
+    SQLiteGardenRepository
+
+Esta implementación realiza o CRUD das hortas sobre a base de datos SQLite.
+
+`MemoryGardenRepository` mantense como implementación alternativa do mesmo contrato. Pode utilizarse para probas ou para executar o módulo sen depender da base de datos real.
+
+As dúas implementacións respectan:
+
+    GardenRepository
+
+Conceptualmente:
+
+                     ┌─ MemoryGardenRepository
+                     │
+    GardensViewModel → GardenRepository
+                     │
+                     └─ SQLiteGardenRepository
+                                ↓
+                         DatabaseService
+                                ↓
+                              SQLite
+
+`GardensViewModel` non coñece cal destas implementacións está utilizando.
+
+Actualmente recibe `SQLiteGardenRepository` mediante inxección de dependencias.
+
+`GardensViewModel` mantén ademais unha colección propia:
 
     List<Garden> _gardens
 
-pero a súa responsabilidade xa non é actuar como fonte de persistencia.
+Esta colección non constitúe a fonte persistente dos datos.
 
-Esta colección representa o estado actualmente cargado e preparado para ser consumido polas Views.
+Representa o estado actualmente cargado e preparado para ser consumido polas Views.
 
 A separación actual é:
 
-    MemoryGardenRepository
-    → fonte de datos temporal
+    SQLite / SQLiteGardenRepository
+    → fonte persistente dos datos
 
     GardensViewModel._gardens
     → estado de presentación observable
 
-O ViewModel depende da abstracción `GardenRepository` e utiliza operacións asíncronas para acceder e modificar a fonte de datos:
+    Provider
+    → distribución dese estado ás Views
+
+O ViewModel utiliza operacións asíncronas para comunicarse co Repository:
 
     getGardens()
     addGarden()
@@ -80,43 +113,53 @@ A consulta dunha entidade xa cargada pode realizarse de forma síncrona sobre o 
 
     getGardenById()
 
-Isto evita expoñer `Future` innecesariamente ás Views.
+Isto evita expoñer `Future` innecesariamente ás Views cando a información xa está cargada en memoria.
 
-Provider continúa permitindo compartir unha única instancia de `GardensViewModel` entre as diferentes pantallas.
+Provider permite compartir unha única instancia de `GardensViewModel` entre as diferentes pantallas.
 
-A inicialización actual é conceptualmente:
+A composición actual das dependencias realízase desde `main.dart`:
 
-    main.dart
-       ↓
-    MemoryGardenRepository
-       ↓
+    main()
+      ↓
+    DatabaseService
+      ↓
+    SQLiteGardenRepository
+      ↓
     GardensViewModel
-       ↓
+      ↓
     loadGardens()
-       ↓
-    Provider
-       ↓
+      ↓
+    ChangeNotifierProvider
+      ↓
     Views
 
-A futura capa de persistencia manterá o mesmo contrato:
+`main.dart` actúa deste xeito como punto de composición das dependencias principais do módulo.
 
-    GardenRepository
-          ↑
-    SQLiteGardenRepository
-          ↓
-    DatabaseService
-          ↓
-    SQLite
+A infraestrutura SQLite xa está operativa.
 
-A infraestrutura SQLite comezou a prepararse durante a sesión 13.
+`DatabaseService` é responsable de:
 
-Xa están instaladas as dependencias necesarias para unha implementación multiplataforma e iniciouse a creación de `DatabaseService`.
+- Seleccionar a factoría SQLite apropiada segundo a plataforma.
+- Determinar a ruta de `martola.db`.
+- Abrir a base de datos.
+- Manter a referencia á conexión.
+- Crear o esquema inicial.
+- Servir a conexión aos Repositories.
 
-O seguinte punto de implementación é abrir o ficheiro:
+A primeira táboa implementada é:
 
-    martola.db
+    gardens
 
-desde `DatabaseService`, utilizando a factoría SQLite correspondente á plataforma.
+O CRUD persistente foi comprobado manualmente:
+
+    CREATE → persiste
+    READ   → recupera datos persistidos
+    UPDATE → persiste os cambios
+    DELETE → persiste a eliminación
+
+Tamén se comprobou que os datos continúan dispoñibles despois de pechar e volver abrir MARTOLA.
+
+Isto valida na práctica a separación definida polo Repository Pattern: a aplicación puido substituír `MemoryGardenRepository` por `SQLiteGardenRepository` sen modificar as Views nin a lóxica principal de `GardensViewModel`.
 
 ---
 
@@ -162,11 +205,45 @@ class Garden {
 
 O identificador pode ser `null` antes de que a entidade sexa almacenada por un Repository.
 
-Durante a fase actual, sen SQLite, `MemoryGardenRepository` asigna temporalmente identificadores ás hortas mediante un contador interno.
+Actualmente `SQLiteGardenRepository` utiliza o identificador xerado pola base de datos mediante:
 
-Esta responsabilidade pertence á implementación da capa de acceso aos datos e non ao ViewModel.
+    INTEGER PRIMARY KEY AUTOINCREMENT
 
-A estratexia actual é provisional e será substituída polo mecanismo de identificación proporcionado pola futura capa de persistencia.
+SQLite devolve o identificador xerado como `int`.
+
+O modelo `Garden` mantén actualmente:
+
+    String? id
+
+polo que `SQLiteGardenRepository` realiza a conversión:
+
+    id.toString()
+
+antes de devolver a entidade ao resto da aplicación.
+
+Esta diferenza entre a representación utilizada pola base de datos e a utilizada polo modelo queda encapsulada na capa de acceso aos datos.
+
+`Garden` incorpora ademais mecanismos de conversión entre o modelo de dominio e a representación utilizada por SQLite:
+
+    Garden.fromMap()
+
+permite transformar:
+
+    Map<String, Object?>
+            ↓
+          Garden
+
+mentres:
+
+    toMap()
+
+permite transformar:
+
+          Garden
+            ↓
+    Map<String, Object?>
+
+Estas conversións permiten manter separada a representación orientada a obxectos utilizada pola aplicación da representación tabular utilizada por SQLite.
 
 Os modelos de dominio manteranse, na medida do posible, inmutables. Por este motivo, a actualización dunha entidade realízase creando unha nova instancia cos datos modificados en lugar de modificar directamente a instancia existente.
 
@@ -388,14 +465,22 @@ Por exemplo, `DatabaseService` non debería decidir como se crea un `Garden` ou 
 
 ### Relación cos Repositories
 
-Os Repositories utilizarán `DatabaseService` para acceder á infraestrutura SQLite.
+Os Repositories utilizan `DatabaseService` para acceder á infraestrutura SQLite.
 
-Fluxo previsto:
+A primeira implementación real desta relación é:
+
+    SQLiteGardenRepository
+            ↓
+    DatabaseService
+            ↓
+    SQLite
+
+No futuro outras implementacións poderán compartir a mesma infraestrutura:
 
     SQLiteGardenRepository ──┐
-                            │
+                             │
     SQLitePlantRepository ───┼──→ DatabaseService → SQLite
-                            │
+                             │
     Outros Repositories ─────┘
 
 Deste modo existe unha única infraestrutura compartida en lugar de duplicar a apertura e configuración da base de datos en cada Repository.
@@ -420,11 +505,11 @@ As capas superiores non deben coñecer que factoría se utiliza.
 
 ### Ruta da base de datos
 
-A base de datos utilizará inicialmente o nome:
+A base de datos utiliza actualmente o nome:
 
     martola.db
 
-A ruta construirase utilizando:
+A ruta constrúese utilizando:
 
     getApplicationDocumentsDirectory()
 
@@ -433,6 +518,10 @@ e:
     join()
 
 para evitar depender das convencións específicas de rutas de cada sistema operativo.
+
+Durante as probas en Windows comprobouse a creación física do ficheiro SQLite.
+
+A localización concreta depende da plataforma na que se execute MARTOLA.
 
 ### GardenRepository
 

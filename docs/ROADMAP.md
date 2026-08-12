@@ -64,6 +64,15 @@ O seu obxectivo é:
 - Adaptación dos fluxos CRUD ás operacións asíncronas.
 - Uso de `context.mounted` despois de operacións asíncronas.
 - Instalación das dependencias necesarias para SQLite multiplataforma.
+- Creación e apertura de `martola.db`.
+- Creación do esquema SQLite inicial.
+- Creación da táboa `gardens`.
+- Conversión `Garden ↔ Map<String, Object?>`.
+- Creación de `SQLiteGardenRepository`.
+- Implementación do CRUD completo de hortas en SQLite.
+- Integración de `SQLiteGardenRepository` coa arquitectura existente.
+- Substitución de `MemoryGardenRepository` por `SQLiteGardenRepository` na composición da aplicación.
+- Persistencia de hortas verificada entre reinicios.
 
 ## In Progress
 
@@ -72,12 +81,11 @@ O seu obxectivo é:
 - Design System.
 - Navegación entre pantallas.
 - Módulo de hortas.
-- Implementación da infraestrutura de persistencia local con SQLite.
-- Creación de `DatabaseService`.
+- Revisión e peche da infraestrutura SQLite inicial.
+- Versionado e migracións da base de datos.
 
 ## Pending
 
-- Persistencia con SQLite.
 - Módulo de plantas.
 - Seguemento da evolución das plantas.
 - API meteorolóxica.
@@ -229,17 +237,18 @@ Integrar SQLite e establecer a capa básica de persistencia.
 - [x] Engadir `path`.
 - [x] Engadir `path_provider`.
 - [x] Comprobar que a aplicación continúa arrancando coas novas dependencias.
-- [x] Crear a estrutura inicial de `DatabaseService`.
+- [x] Crear `DatabaseService`.
 - [x] Preparar a selección da factoría SQLite segundo a plataforma.
-- [ ] Implementar a apertura de `martola.db`.
-- [ ] Manter e reutilizar a conexión coa base de datos.
-- [ ] Crear as táboas.
-- [ ] Crear migracións iniciais.
-- [ ] Implementar operacións básicas de lectura e escritura.
-- [ ] Crear `SQLiteGardenRepository`.
-- [ ] Integrar a persistencia SQLite coa capa Repository.
-- [ ] Substituír `MemoryGardenRepository` por `SQLiteGardenRepository` na composición da aplicación.
-- [ ] Verificar a persistencia entre reinicios da aplicación.
+- [x] Implementar a apertura de `martola.db`.
+- [x] Manter e reutilizar a conexión coa base de datos.
+- [x] Crear o esquema inicial.
+- [x] Crear a táboa `gardens`.
+- [x] Implementar operacións básicas de lectura e escritura.
+- [x] Crear `SQLiteGardenRepository`.
+- [x] Integrar a persistencia SQLite coa capa Repository.
+- [x] Substituír `MemoryGardenRepository` por `SQLiteGardenRepository` na composición da aplicación.
+- [x] Verificar a persistencia entre reinicios da aplicación.
+- [ ] Introducir o sistema de versionado e migracións.
 
 ## Deliverable
 
@@ -247,25 +256,34 @@ Base de datos local funcional e accesible mediante unha capa de persistencia org
 
 ## Current Progress
 
-A infraestrutura SQLite está en desenvolvemento.
+A infraestrutura SQLite inicial está operativa.
 
-A aplicación xa dispón dun contrato Repository asíncrono e das dependencias necesarias para soportar SQLite en Android e escritorio.
+O fluxo actual é:
 
-A implementación de `DatabaseService` está iniciada.
-
-O seguinte paso é:
-
+    GardensViewModel
+          ↓
+    GardenRepository
+          ↑
+    SQLiteGardenRepository
+          ↓
     DatabaseService
           ↓
-    obter directorio
+    SQLite
           ↓
-    construír ruta martola.db
-          ↓
-    abrir base de datos
-          ↓
-    crear táboas
+    martola.db
 
-**Estado:** en progreso.
+A primeira versión do esquema inclúe a táboa:
+
+    gardens
+
+O CRUD completo desta entidade funciona sobre SQLite e comprobouse a persistencia dos datos entre reinicios da aplicación.
+
+`MemoryGardenRepository` mantense como implementación alternativa do contrato, pero a aplicación utiliza actualmente `SQLiteGardenRepository`.
+
+Queda pendente introducir formalmente os conceptos de versionado e migracións antes de evolucionar o esquema da base de datos.
+
+**Estado:** practicamente completada. Pendentes versionado e migracións.
+
 ---
 
 # Phase 6 - Gardens Module
@@ -308,21 +326,26 @@ Implementar a xestión completa de hortas.
 - [x] Implementar a carga inicial mediante `loadGardens()`.
 - [x] Manter o estado cargado dentro de `GardensViewModel`.
 - [x] Adaptar creación, edición e eliminación ao uso de `await`.
+- [x] Crear `Garden.fromMap()`.
+- [x] Crear `Garden.toMap()`.
+- [x] Gardar unha horta en SQLite.
+- [x] Recuperar hortas desde SQLite.
+- [x] Recuperar unha horta concreta mediante o seu identificador.
+- [x] Actualizar hortas en SQLite.
+- [x] Eliminar hortas de SQLite.
+- [x] Utilizar identificadores xerados pola capa de persistencia.
+- [x] Verificar o CRUD completo contra SQLite.
+- [x] Verificar a persistencia entre reinicios.
 
 ## Pending
 
-- [ ] Gardar unha horta en SQLite.
-- [ ] Recuperar hortas desde SQLite.
-- [ ] Actualizar hortas en SQLite.
-- [ ] Eliminar hortas de SQLite.
-- [ ] Substituír os identificadores temporais polos identificadores da capa de persistencia.
 - [ ] Revisar e refinar a interface do módulo.
 
 ## Deliverable
 
 Módulo de hortas completo con operacións de creación, consulta, edición e eliminación persistidas localmente.
 
-**Estado:** en progreso. CRUD funcional mediante Repository en memoria; persistencia SQLite pendente.
+**Estado:** funcional a nivel de CRUD e persistencia. Pendentes refinamentos da interface e futuras ampliacións do modelo.
 
 ---
 
@@ -486,20 +509,32 @@ Documentación final do TFC.
 Completado:
 
 - Arquitectura Repository asíncrona.
-- `MemoryGardenRepository` adaptado.
+- `MemoryGardenRepository` adaptado ao contrato asíncrono.
 - Estado cargado en `GardensViewModel`.
 - `loadGardens()`.
 - CRUD adaptado a `await`.
 - Dependencias SQLite instaladas.
-- Inicio de `DatabaseService`.
+- `DatabaseService`.
 - Selección da estratexia SQLite multiplataforma.
+- Apertura de `martola.db`.
+- Creación do esquema SQLite inicial.
+- Creación da táboa `gardens`.
+- Conversión `Garden ↔ Map<String, Object?>`.
+- Implementación de `SQLiteGardenRepository`.
+- Implementación de `SELECT`, `INSERT`, `UPDATE` e `DELETE`.
+- Integración de `SQLiteGardenRepository` coa arquitectura.
+- Substitución de `MemoryGardenRepository` como implementación utilizada pola aplicación.
+- Verificación manual do CRUD SQLite.
+- Verificación da persistencia entre reinicios.
 
 Seguinte paso:
 
-- Abrir `martola.db` desde `DatabaseService`.
-- Crear o esquema inicial.
-- Implementar `SQLiteGardenRepository`.
-- Substituír progresivamente o almacenamento en memoria pola persistencia real.
+- Revisar a implementación final de `DatabaseService`.
+- Introducir o versionado da base de datos.
+- Comprender o concepto de migración.
+- Preparar a evolución futura do esquema.
+- Revisar a arquitectura de persistencia resultante.
+- Pechar formalmente a sesión 13.
 
 ---
 
@@ -509,8 +544,8 @@ A primeira versión mínima viable de MARTOLA debe incluír:
 
 - [x] Navegación funcional.
 - [x] Xestión de estado.
-- [ ] SQLite.
-- [ ] Xestión de hortas persistente.
+- [x] SQLite.
+- [x] Xestión de hortas persistente.
 - [ ] Xestión de plantas.
 - [ ] Rexistros de evolución.
 

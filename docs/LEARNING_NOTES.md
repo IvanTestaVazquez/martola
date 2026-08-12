@@ -6584,23 +6584,510 @@ Conceptualmente:
 
 ---
 
-## Punto actual da aprendizaxe
+## Apertura da base de datos
 
-A preparación da persistencia chegou ata:
+Completouse a implementación de `DatabaseService` para abrir a base de datos SQLite.
+
+O getter:
+
+    Future<Database> get database async {
+      _database ??= await _openDatabase();
+
+      return _database!;
+    }
+
+mantén unha única referencia á base de datos.
+
+O operador:
+
+    ??=
+
+asigna un valor unicamente se a variable situada á esquerda é `null`.
+
+Conceptualmente:
+
+    _database
+        ↓
+    é null?
+     ┌──┴──┐
+     si    non
+     ↓      ↓
+    abrir   reutilizar
+    BD      BD existente
+     └──┬───┘
+        ↓
+    return _database!
+
+Deste xeito, a base de datos ábrese cando se necesita por primeira vez e posteriormente reutilízase a instancia existente.
+
+O operador:
+
+    !
+
+indica a Dart que nese punto sabemos que `_database` xa non é `null`.
+
+---
+
+## Creación da táboa `gardens`
+
+A base de datos configurouse inicialmente coa táboa:
+
+    gardens
+
+O identificador utiliza:
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT
+
+Responsabilidades:
+
+- `INTEGER`: almacena un número enteiro.
+- `PRIMARY KEY`: identifica de forma única cada fila.
+- `AUTOINCREMENT`: permite que SQLite xere automaticamente novos identificadores.
+
+A primeira versión do esquema utilizada actualmente é:
+
+    CREATE TABLE gardens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      location TEXT NOT NULL,
+      area REAL NOT NULL
+    )
+
+A creación da táboa confirmou que a infraestrutura SQLite estaba funcionando.
+
+Ao consultar as táboas existentes obtivéronse:
+
+    gardens
+    sqlite_sequence
+
+`sqlite_sequence` é unha táboa interna utilizada por SQLite para manter información relacionada cos valores xerados mediante `AUTOINCREMENT`.
+
+---
+
+## Localización física da base de datos
+
+Durante as probas en Windows comprobouse a ruta real utilizada pola aplicación:
+
+    C:\Users\briga\OneDrive\Documentos\martola.db
+
+Isto confirmou o seguinte fluxo:
+
+    getApplicationDocumentsDirectory()
+            ↓
+    directorio proporcionado polo sistema
+            ↓
+    join(..., 'martola.db')
+            ↓
+    ruta completa
+            ↓
+    ficheiro SQLite
+
+A localización concreta depende do sistema operativo no que se execute MARTOLA.
+
+---
+
+## Conversión entre `Garden` e SQLite
+
+SQLite non traballa directamente con obxectos `Garden`.
+
+As filas recupéranse mediante estruturas do tipo:
+
+    Map<String, Object?>
+
+Por este motivo engadíronse ao modelo `Garden` mecanismos de conversión entre o modelo de dominio e a representación utilizada para a persistencia.
+
+### Garden.fromMap()
+
+Responsabilidade:
+
+Construír unha instancia de `Garden` a partir dos datos dunha fila recuperada da base de datos.
+
+    factory Garden.fromMap(Map<String, Object?> map) {
+      return Garden(
+        id: map['id'].toString(),
+        name: map['name'] as String,
+        location: map['location'] as String,
+        area: (map['area'] as num).toDouble(),
+      );
+    }
+
+Fluxo:
+
+    Map<String, Object?>
+            ↓
+    Garden.fromMap()
+            ↓
+    Garden
+
+Para `area` utilízase:
+
+    (map['area'] as num).toDouble()
+
+para garantir que o modelo reciba un `double`, independentemente da representación numérica recuperada.
+
+### toMap()
+
+Responsabilidade:
+
+Transformar os datos dun `Garden` nun mapa que poida utilizarse nas operacións de persistencia.
+
+    Map<String, Object?> toMap() {
+      return {
+        'name': name,
+        'location': location,
+        'area': area,
+      };
+    }
+
+O `id` non se inclúe neste mapa.
+
+Ao crear unha horta nova, SQLite debe xerar o identificador mediante `AUTOINCREMENT`.
+
+Ao actualizar unha horta, o identificador utilízase para localizar a fila mediante `WHERE`, pero non debe modificarse.
+
+---
+
+## SQLiteGardenRepository
+
+Creouse unha implementación real do contrato:
+
+    GardenRepository
+
+denominada:
+
+    SQLiteGardenRepository
+
+A súa responsabilidade é realizar as operacións de persistencia das hortas utilizando SQLite.
+
+Recibe `DatabaseService` mediante o construtor:
+
+    SQLiteGardenRepository({
+      required this.databaseService,
+    });
+
+Isto mantén separadas as responsabilidades:
+
+    SQLiteGardenRepository
+            ↓
+    operacións sobre Garden
 
     DatabaseService
-          ↓
-    seleccionar DatabaseFactory
-          ↓
-    obter directorio
-          ↓
-    construír ruta martola.db
-          ↓
-    abrir base de datos
-          ↑
-    seguinte paso
+            ↓
+    infraestrutura SQLite
 
-A apertura real da base de datos e a creación das táboas quedan pendentes para continuar a sesión 13.
+---
+
+## Lectura de todas as hortas
+
+`getGardens()` consulta a táboa mediante:
+
+    final maps = await db.query('gardens');
+
+SQLite devolve:
+
+    List<Map<String, Object?>>
+
+pero o Repository debe devolver:
+
+    List<Garden>
+
+A transformación realízase mediante:
+
+    final gardens =
+        maps.map((map) => Garden.fromMap(map)).toList();
+
+`map()` transforma cada elemento da colección.
+
+Neste caso:
+
+    Map<String, Object?>
+            ↓
+    Garden
+
+O resultado de `map()` é un:
+
+    Iterable<Garden>
+
+Mediante:
+
+    toList()
+
+convértese finalmente en:
+
+    List<Garden>
+
+---
+
+## Inserción dunha horta
+
+Para gardar unha nova horta utilízase:
+
+    db.insert()
+
+O `Garden` convértese previamente mediante:
+
+    garden.toMap()
+
+Fluxo:
+
+    Garden sen id
+         ↓
+    toMap()
+         ↓
+    Map<String, Object?>
+         ↓
+    db.insert()
+         ↓
+    SQLite
+         ↓
+    id xerado
+
+`insert()` devolve o identificador xerado por SQLite como `int`.
+
+Como o modelo `Garden` utiliza actualmente:
+
+    String? id
+
+o identificador convértese mediante:
+
+    id.toString()
+
+Finalmente o Repository devolve unha nova instancia de `Garden` cos mesmos datos e co identificador asignado por SQLite.
+
+---
+
+## Consulta dunha horta por identificador
+
+Para localizar unha horta concreta utilízase:
+
+    where: 'id = ?',
+    whereArgs: [id],
+
+Conceptualmente equivale a:
+
+    WHERE id = ?
+
+`where` define a condición.
+
+`whereArgs` proporciona os valores utilizados nos marcadores `?`.
+
+Esta aproximación permite separar a consulta SQL dos valores utilizados nela e evita construír condicións concatenando Strings manualmente.
+
+Se a consulta non devolve filas:
+
+    maps.isEmpty
+
+`getGardenById()` devolve:
+
+    null
+
+Se existe unha fila:
+
+    Garden.fromMap(maps.first)
+
+convértea nun obxecto do dominio.
+
+---
+
+## Actualización dunha horta
+
+Para modificar unha horta utilízase:
+
+    db.update()
+
+Os novos datos proceden de:
+
+    updatedGarden.toMap()
+
+e a fila localízase mediante:
+
+    where: 'id = ?',
+    whereArgs: [gardenId],
+
+`update()` devolve o número de filas afectadas.
+
+    0 filas
+       ↓
+    null
+
+    1 fila
+       ↓
+    Garden actualizado
+
+O Repository devolve unha nova instancia de `Garden` cos datos actualizados conservando o identificador orixinal.
+
+---
+
+## Eliminación dunha horta
+
+Para eliminar unha horta utilízase:
+
+    db.delete()
+
+A fila localízase mediante:
+
+    where: 'id = ?',
+    whereArgs: [id],
+
+`delete()` devolve o número de filas eliminadas.
+
+Isto permite implementar:
+
+    return affectedRows > 0;
+
+Conceptualmente:
+
+    0 filas eliminadas
+            ↓
+          false
+
+    1 ou máis filas eliminadas
+            ↓
+           true
+
+---
+
+## CRUD SQLite completo
+
+`SQLiteGardenRepository` implementa actualmente:
+
+    CREATE
+      ↓
+    addGarden()
+      ↓
+    INSERT
+
+    READ
+      ↓
+    getGardens()
+    getGardenById()
+      ↓
+    SELECT
+
+    UPDATE
+      ↓
+    updateGarden()
+      ↓
+    UPDATE
+
+    DELETE
+      ↓
+    removeGarden()
+      ↓
+    DELETE
+
+Deste xeito o módulo de hortas xa dispón dun CRUD persistente completo.
+
+---
+
+## Substitución da implementación do Repository
+
+Ata este punto utilizábase:
+
+    MemoryGardenRepository
+
+como implementación de:
+
+    GardenRepository
+
+En `main.dart` substituíuse pola implementación:
+
+    SQLiteGardenRepository
+
+As dependencias créanse no punto de composición da aplicación:
+
+    main()
+       ↓
+    DatabaseService
+       ↓
+    SQLiteGardenRepository
+       ↓
+    GardensViewModel
+       ↓
+    Provider
+       ↓
+    Views
+
+`GardensViewModel` continúa dependendo de:
+
+    GardenRepository
+
+e non necesita coñecer a implementación concreta.
+
+Como consecuencia, a substitución:
+
+    MemoryGardenRepository
+            ↓
+    SQLiteGardenRepository
+
+non requiriu modificar:
+
+- `GardensViewModel`.
+- `GardensScreen`.
+- `GardenDetailsScreen`.
+- `CreateGardenScreen`.
+- `EditGardenScreen`.
+
+Isto comproba na práctica a utilidade do desacoplamento mediante o Repository Pattern.
+
+---
+
+## Persistencia comprobada
+
+Realizáronse probas manuais do CRUD completo utilizando SQLite.
+
+Comprobouse:
+
+    CREATE → persiste despois de reiniciar
+    READ   → recupera os datos gardados
+    UPDATE → os cambios persisten
+    DELETE → a eliminación persiste
+
+Polo tanto, os datos das hortas xa non dependen exclusivamente da memoria durante a execución da aplicación.
+
+O fluxo actual é:
+
+    View
+      ↓
+    GardensViewModel
+      ↓
+    GardenRepository
+      ↑
+    SQLiteGardenRepository
+      ↓
+    DatabaseService
+      ↓
+    martola.db
+
+---
+
+## Estado actual da sesión 13
+
+A sesión 13 continúa en progreso.
+
+Completouse:
+
+- Conversión do contrato `GardenRepository` a operacións asíncronas.
+- Adaptación de `MemoryGardenRepository`.
+- Adaptación de `GardensViewModel`.
+- Uso de `await` nas Views.
+- Creación de `DatabaseService`.
+- Configuración multiplataforma de SQLite.
+- Apertura real de `martola.db`.
+- Creación da táboa `gardens`.
+- Conversión `Garden ↔ Map<String, Object?>`.
+- Implementación de `SQLiteGardenRepository`.
+- CRUD SQLite completo.
+- Substitución de `MemoryGardenRepository` por `SQLiteGardenRepository`.
+- Verificación da persistencia entre reinicios da aplicación.
+
+Queda para continuar a sesión:
+
+- Revisión final de `DatabaseService`.
+- Introdución ao versionado da base de datos.
+- Introdución ao concepto de migracións.
+- Revisión final da arquitectura de persistencia.
+- Peche formal da sesión 13.
 
 ---
 
@@ -6629,6 +7116,29 @@ A apertura real da base de datos e a creación das táboas quedan pendentes para
 - `getApplicationDocumentsDirectory()`.
 - `path`.
 - `join()`.
+- Getter asíncrono de `Database`.
+- Operador `??=`.
+- Operador de aserción non nula `!`.
+- `INTEGER PRIMARY KEY AUTOINCREMENT`.
+- `sqlite_sequence`.
+- `Map<String, Object?>`.
+- `factory constructor`.
+- `Garden.fromMap()`.
+- `Garden.toMap()`.
+- `Iterable<T>`.
+- `map()`.
+- `toList()`.
+- `db.query()`.
+- `db.insert()`.
+- `db.update()`.
+- `db.delete()`.
+- `where`.
+- `whereArgs`.
+- Filas afectadas.
+- `SQLiteGardenRepository`.
+- CRUD persistente.
+- Inxección de dependencias desde `main()`.
+- Persistencia entre reinicios.
 
 ---
 

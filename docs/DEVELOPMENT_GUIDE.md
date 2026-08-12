@@ -31,28 +31,34 @@ O módulo de hortas xa dispón de:
 
 - Estado compartido mediante Provider.
 - `GardensViewModel`.
-- CRUD completo en memoria.
 - `GardenRepository` como abstracción asíncrona.
-- `MemoryGardenRepository` como implementación temporal.
+- `MemoryGardenRepository` como implementación alternativa en memoria.
+- `SQLiteGardenRepository` como implementación persistente actualmente utilizada.
 - Inxección de dependencias.
 - Operacións asíncronas mediante `Future`, `async` e `await`.
 - Estado local no ViewModel sincronizado co Repository.
 - Carga inicial mediante `loadGardens()`.
 - Fluxos de creación, edición e eliminación adaptados á asincronía.
 - Dependencias SQLite multiplataforma instaladas.
-- Estrutura inicial de `DatabaseService`.
+- `DatabaseService` funcional.
+- Base de datos `martola.db`.
+- Táboa `gardens`.
+- Conversión entre `Garden` e `Map<String, Object?>`.
+- CRUD completo de hortas mediante SQLite.
+- Persistencia dos datos entre reinicios.
 
 ## Next Action
 
-Continuar a Session 13 implementando a apertura da base de datos `martola.db` desde `DatabaseService`.
+Completar a Session 13 estudando o versionado e as migracións de SQLite.
 
 O seguinte paso será:
 
-1. Obter o directorio da aplicación.
-2. Construír a ruta de `martola.db`.
-3. Abrir a base de datos coa factoría correspondente á plataforma.
-4. Manter a conexión dentro de `DatabaseService`.
-5. Preparar a creación inicial das táboas.
+1. Comprender por que unha base de datos necesita un número de versión.
+2. Analizar que ocorre cando cambia o esquema dunha base de datos xa existente.
+3. Introducir o concepto de migración.
+4. Preparar `DatabaseService` para futuras modificacións do esquema.
+5. Revisar a arquitectura SQLite resultante.
+6. Pechar a Session 13.
 
 ---
 
@@ -136,7 +142,7 @@ Flutter Fundamentals
 
 Status:
 
-🟡 In Progress (75%)
+✅ Completed
 
 ### Concepts
 
@@ -167,7 +173,7 @@ Layouts
 
 Status:
 
-⬜ Pending
+✅ Completed
 
 ### Concepts
 
@@ -193,7 +199,7 @@ Navigation
 
 Status:
 
-⬜ Pending
+🟡 In Progress
 
 ### Concepts
 
@@ -220,7 +226,7 @@ Reusable Widgets
 
 Status:
 
-⬜ Pending
+🟡 In Progress
 
 ### Concepts
 
@@ -246,7 +252,7 @@ Application Theme
 
 Status:
 
-⬜ Pending
+🟡 In Progress
 
 ### Concepts
 
@@ -268,7 +274,7 @@ State Management
 
 Status:
 
-⬜ Pending
+✅ Completed
 
 ### Concepts
 
@@ -289,7 +295,7 @@ Models
 
 Status:
 
-⬜ Pending
+🟡 In Progress
 
 ### Concepts
 
@@ -311,7 +317,7 @@ SQLite
 
 Status:
 
-⬜ Pending
+🟡 In Progress
 
 ### Concepts
 
@@ -332,7 +338,7 @@ Forms
 
 Status:
 
-⬜ Pending
+🟡 In Progress
 
 ### Concepts
 
@@ -375,7 +381,7 @@ Garden Module
 
 Status:
 
-⬜ Pending
+🟡 In Progress
 
 ### Practical Objective
 
@@ -1656,7 +1662,7 @@ A implementación continúa sendo deliberadamente sinxela e en memoria, pero a a
 
 ---
 
-## Sesión 13 - Asincronía e preparación de SQLite
+## Sesión 13 - Asincronía e persistencia con SQLite
 
 ### Status
 
@@ -1670,8 +1676,13 @@ A implementación continúa sendo deliberadamente sinxela e en memoria, pero a a
 - Preparar `GardensViewModel` para unha fonte de datos persistente.
 - Adaptar as Views ás operacións asíncronas.
 - Introducir a carga inicial de datos.
-- Preparar a infraestrutura necesaria para SQLite.
-- Comezar a implementación de `DatabaseService`.
+- Implementar a infraestrutura SQLite.
+- Implementar `DatabaseService`.
+- Comprender a conversión entre modelos Dart e filas SQLite.
+- Crear `SQLiteGardenRepository`.
+- Implementar o CRUD persistente do módulo de hortas.
+- Integrar SQLite mediante inxección de dependencias.
+- Comprender o versionado e as migracións dunha base de datos.
 
 ### Conceptos aprendidos
 
@@ -1690,6 +1701,21 @@ A implementación continúa sendo deliberadamente sinxela e en memoria, pero a a
 - Detección da plataforma mediante `Platform`.
 - SQLite multiplataforma.
 - Construción de rutas multiplataforma.
+- Getter asíncrono.
+- Operador `??=`.
+- `Map<String, Object?>`.
+- Conversión modelo → fila mediante `toMap()`.
+- Conversión fila → modelo mediante `fromMap()`.
+- `db.query()`.
+- `db.insert()`.
+- `db.update()`.
+- `db.delete()`.
+- `where`.
+- `whereArgs`.
+- `INTEGER PRIMARY KEY AUTOINCREMENT`.
+- Número de filas afectadas por unha operación SQL.
+- Separación entre Repository e infraestrutura de base de datos.
+- Persistencia local real.
 
 ### Evolución do GardenRepository
 
@@ -1843,23 +1869,34 @@ A estratexia inicial é:
 
 ### DatabaseService
 
-Comezouse a deseñar:
+Implementouse:
 
     lib/
-    └── services/
-        └── database_service.dart
+        └── services/
+            └── database_service.dart
 
-A súa responsabilidade será:
+A súa responsabilidade é:
 
+- Determinar a ruta do ficheiro da base de datos.
 - Abrir a base de datos.
-- Determinar a ruta do ficheiro.
-- Xestionar a conexión.
-- Crear as táboas.
-- Xestionar futuras versións e migracións.
+- Xestionar e reutilizar a conexión.
+- Crear o esquema inicial.
+- Proporcionar acceso á instancia de `Database`.
+- Servir como punto central para futuras versións e migracións.
 
-Os Repositories serán responsables das operacións relacionadas coas súas entidades, pero non de abrir ou configurar a base de datos.
+A conexión obtense mediante un getter asíncrono:
 
-A arquitectura prevista é:
+    Future<Database> get database async {
+      _database ??= await _openDatabase();
+
+      return _database!;
+    }
+
+O operador `??=` permite abrir a base de datos unicamente cando `_database` aínda non contén unha instancia.
+
+Os Repositories son responsables das operacións relacionadas coas súas entidades, mentres que `DatabaseService` se encarga da infraestrutura común da base de datos.
+
+A arquitectura actualmente implementada é:
 
     Views
       ↓
@@ -1904,59 +1941,202 @@ O ficheiro previsto será:
 
     martola.db
 
+### Conversión entre Garden e SQLite
+
+SQLite traballa con filas representadas en Dart mediante mapas.
+
+Para permitir a conversión entre o modelo de dominio e a representación da base de datos, `Garden` incorpora:
+
+    Garden.fromMap(...)
+
+e:
+
+    toMap()
+
+`fromMap()` constrúe unha instancia de `Garden` a partir dunha fila recuperada da base de datos.
+
+`toMap()` transforma os atributos dunha instancia de `Garden` nun:
+
+    Map<String, Object?>
+
+que pode ser utilizado nas operacións SQLite.
+
+O fluxo é:
+
+    SQLite
+      ↓
+    Map<String, Object?>
+      ↓
+    Garden.fromMap()
+      ↓
+    Garden
+
+e na dirección contraria:
+
+    Garden
+      ↓
+    toMap()
+      ↓
+    Map<String, Object?>
+      ↓
+    SQLite
+
+- Getter asíncrono.
+- Operador `??=`.
+- `Map<String, Object?>`.
+- Conversión modelo → fila mediante `toMap()`.
+- Conversión fila → modelo mediante `fromMap()`.
+- `db.query()`.
+- `db.insert()`.
+- `db.update()`.
+- `db.delete()`.
+- `where`.
+- `whereArgs`.
+- `INTEGER PRIMARY KEY AUTOINCREMENT`.
+- Número de filas afectadas por unha operación SQL.
+- Separación entre Repository e infraestrutura de base de datos.
+- Persistencia local real.
+
+### SQLiteGardenRepository
+
+Creouse:
+
+    repositories/
+    └── sqlite_garden_repository.dart
+
+`SQLiteGardenRepository` implementa o contrato `GardenRepository` utilizando SQLite como fonte persistente de datos.
+
+Recibe `DatabaseService` mediante inxección de dependencias:
+
+    SQLiteGardenRepository(
+      databaseService: databaseService,
+    )
+
+As operacións implementadas son:
+
+    getGardens()
+    addGarden()
+    updateGarden()
+    removeGarden()
+
+`getGardens()`:
+
+1. Obtén a conexión mediante `DatabaseService`.
+2. Consulta a táboa `gardens`.
+3. Recibe unha colección de mapas.
+4. Converte cada mapa nun `Garden` mediante `Garden.fromMap()`.
+5. Devolve unha `List<Garden>`.
+
+`addGarden()`:
+
+1. Converte o modelo mediante `toMap()`.
+2. Insire a fila na táboa `gardens`.
+3. Obtén o identificador xerado por SQLite.
+4. Constrúe e devolve un novo `Garden` co identificador definitivo.
+
+`updateGarden()`:
+
+1. Localiza a fila mediante o identificador.
+2. Converte os novos datos mediante `toMap()`.
+3. Executa `db.update()`.
+4. Comproba o número de filas afectadas.
+5. Devolve a versión actualizada da entidade cando a operación ten éxito.
+
+`removeGarden()`:
+
+1. Localiza a fila mediante o identificador.
+2. Executa `db.delete()`.
+3. Comproba o número de filas afectadas.
+4. Devolve se a eliminación tivo éxito.
+
 ### Comprobación funcional
 
-Tras adaptar a arquitectura á asincronía comprobouse que:
+Tras integrar SQLite comprobouse que:
 
+- A aplicación arranca correctamente.
+- `martola.db` créase correctamente.
+- A táboa `gardens` existe.
 - Crear hortas funciona.
 - Consultar hortas funciona.
 - Editar hortas funciona.
 - Eliminar hortas funciona.
 - O estado continúa sincronizado mediante Provider.
-- A carga inicial non rompe o funcionamento actual.
-- As novas dependencias SQLite permiten arrancar a aplicación correctamente.
+- `loadGardens()` recupera os datos desde SQLite.
+- O Dashboard continúa mostrando o número correcto de hortas.
+- Os identificadores son xerados por SQLite.
+- As hortas permanecen almacenadas despois de pechar e volver abrir a aplicación.
+
+A persistencia real do primeiro módulo de MARTOLA queda así verificada.
 
 ### Estado actual
 
-A integración SQLite aínda non está completada.
+A primeira integración SQLite está completada e funcionando.
 
-A sesión detívose durante a implementación inicial de `DatabaseService`.
+O módulo de hortas dispón agora dun CRUD persistente completo:
 
-O punto exacto de continuación é:
+    CREATE
+      ↓
+    SQLiteGardenRepository.addGarden()
 
-    DatabaseService
+    READ
+      ↓
+    SQLiteGardenRepository.getGardens()
+
+    UPDATE
+      ↓
+    SQLiteGardenRepository.updateGarden()
+
+    DELETE
+      ↓
+    SQLiteGardenRepository.removeGarden()
+
+A aplicación recupera automaticamente as hortas almacenadas ao iniciar mediante:
+
+    GardensViewModel
           ↓
-    obter directorio da aplicación
+    loadGardens()
           ↓
-    construír ruta de martola.db
+    GardenRepository
           ↓
-    ABRIR BASE DE DATOS
+    SQLiteGardenRepository
           ↓
-    crear táboas
+    martola.db
+
+A persistencia foi comprobada pechando e volvendo iniciar a aplicación.
 
 ### Seguinte paso
 
-Continuar a Session 13 implementando o método encargado de abrir `martola.db`.
+Antes de considerar pechada a Session 13 estudarase como debe evolucionar unha base de datos SQLite cando cambia o seu esquema.
 
-Deberá:
+Os seguintes conceptos serán:
 
-1. Obter o directorio da aplicación.
-2. Construír a ruta mediante `join()`.
-3. Utilizar a factoría SQLite correspondente.
-4. Abrir a base de datos.
-5. Conservar a instancia aberta.
-6. Devolver a conexión mediante `Future<Database>`.
+1. Versión dunha base de datos.
+2. Cambios de esquema.
+3. Migracións.
+4. Conservación dos datos existentes.
+5. Evolución de `DatabaseService`.
+
+Unha vez comprendidos e preparada a infraestrutura necesaria, realizarase unha revisión final da arquitectura de persistencia e pecharase a Session 13.
 
 ### Documentation Updated
 
 - `DEVELOPMENT_GUIDE.md`
+- `PROJECT_CONTEXT.md`
+- `ARCHITECTURE.md`
+- `DATABASE_DESIGN.md`
+- `ROADMAP.md`
+- `LEARNING_NOTES.md`
 
 ### Commit
 
-Pendente ao finalizar a actualización da documentación.
+Pendente ao finalizar a Session 13.
 
 ### Notes
 
-A sesión 13 introduce a fronteira asíncrona entre o estado da aplicación e a súa futura fonte de persistencia.
+A Session 13 supón a transición definitiva desde unha fonte de datos temporal en memoria cara á primeira persistencia real de MARTOLA.
 
-A arquitectura continúa funcionando mediante `MemoryGardenRepository`, pero queda preparada para introducir `SQLiteGardenRepository` sen acoplar as Views nin `GardensViewModel` á tecnoloxía SQLite.
+A arquitectura preparada nas sesións anteriores permitiu substituír `MemoryGardenRepository` por `SQLiteGardenRepository` sen modificar as Views e mantendo `GardensViewModel` desacoplado da tecnoloxía de persistencia.
+
+A implementación confirma na práctica a utilidade do Repository Pattern, a inxección de dependencias e a separación entre estado de presentación e acceso aos datos.
+
+Antes de pechar a sesión queda pendente introducir o versionado e as migracións necesarias para permitir que o esquema SQLite evolucione de forma segura.
