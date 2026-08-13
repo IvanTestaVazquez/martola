@@ -276,15 +276,33 @@ A apertura e creación da base de datos está centralizada en:
 
     DatabaseService
 
-A versión inicial da base de datos é:
+A versión actual da base de datos é:
 
-    version: 1
+    version: 2
+
+A versión 2 introduce a primeira ampliación real do esquema SQLite de MARTOLA.
+
+A evolución realizada é:
+
+    version 1
+        │
+        │ migración v1 → v2
+        ▼
+    version 2
+
+A migración conserva os datos existentes da táboa `gardens` e incorpora as táboas necesarias para iniciar o módulo de plantas.
 
 ## Implemented Tables
 
-Actualmente está implementada a táboa:
+Actualmente están implementadas as seguintes táboas:
 
     gardens
+    plant_species
+    garden_plants
+
+### gardens
+
+Representa as hortas e xardíns creados polo usuario.
 
 O esquema físico actual é:
 
@@ -294,8 +312,6 @@ O esquema físico actual é:
       location TEXT NOT NULL,
       area REAL NOT NULL
     )
-
-Esta primeira implementación é deliberadamente máis pequena que o deseño completo previsto para a entidade `gardens`.
 
 Actualmente están implementados:
 
@@ -312,7 +328,122 @@ Permanecen previstos para fases posteriores:
 - `longitude`
 - `created_at`
 
-Esta diferenza permite desenvolver e validar a persistencia de maneira incremental sen introducir campos ou relacións que aínda non utiliza a aplicación.
+### plant_species
+
+Representa o catálogo de especies vexetais que poden ser utilizadas polas plantas dunha horta.
+
+O esquema físico actual é:
+
+    CREATE TABLE plant_species (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      common_name TEXT NOT NULL,
+      scientific_name TEXT NOT NULL
+    )
+
+A primeira implementación é deliberadamente mínima.
+
+Actualmente están implementados:
+
+- `id`
+- `common_name`
+- `scientific_name`
+
+Outros campos definidos no modelo obxectivo incorporaranse progresivamente cando sexan necesarios.
+
+### garden_plants
+
+Representa unha planta concreta pertencente a unha horta.
+
+O esquema físico actual é:
+
+    CREATE TABLE garden_plants (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      garden_id INTEGER NOT NULL,
+      species_id INTEGER NOT NULL,
+      custom_name TEXT NOT NULL,
+      planting_date TEXT NOT NULL,
+
+      FOREIGN KEY (garden_id)
+        REFERENCES gardens(id)
+        ON DELETE CASCADE,
+
+      FOREIGN KEY (species_id)
+        REFERENCES plant_species(id)
+        ON DELETE RESTRICT
+    )
+
+Actualmente están implementados:
+
+- `id`
+- `garden_id`
+- `species_id`
+- `custom_name`
+- `planting_date`
+
+`garden_id` relaciona cada planta coa horta á que pertence.
+
+`species_id` relaciona cada planta coa súa especie.
+
+A data de plantación almacénase como `TEXT` en formato ISO 8601 e represéntase mediante `DateTime` no modelo Dart.
+
+## Referential Integrity
+
+A versión 2 introduce as primeiras claves foráneas da base de datos.
+
+As relacións implementadas son:
+
+    gardens
+       │
+       │ 1:N
+       ▼
+    garden_plants
+       ▲
+       │ N:1
+       │
+    plant_species
+
+SQLite require que a comprobación de claves foráneas estea activada para cada conexión.
+
+`DatabaseService` realiza esta configuración mediante:
+
+    PRAGMA foreign_keys = ON
+
+### Garden deletion
+
+A relación:
+
+    garden_plants.garden_id
+        ↓
+    gardens.id
+
+utiliza:
+
+    ON DELETE CASCADE
+
+Se unha horta é eliminada, SQLite elimina automaticamente as plantas asociadas a ela.
+
+Este comportamento foi comprobado mediante unha proba transaccional:
+
+    plantas antes de eliminar a horta: 1
+    plantas despois de eliminar a horta: 0
+
+### Plant species deletion
+
+A relación:
+
+    garden_plants.species_id
+        ↓
+    plant_species.id
+
+utiliza:
+
+    ON DELETE RESTRICT
+
+Unha especie non pode ser eliminada mentres exista algunha planta que a utilice.
+
+Este comportamento tamén foi comprobado mediante unha proba transaccional.
+
+As probas temporais utilizaron rollback para evitar modificar permanentemente os datos da aplicación.
 
 ## Garden ID
 
@@ -355,6 +486,42 @@ Escritura en SQLite:
 Durante un `INSERT`, SQLite xera o `id` mediante `AUTOINCREMENT`.
 
 Durante un `UPDATE`, o identificador utilízase na condición `WHERE` para localizar a fila, pero non forma parte dos valores que se modifican.
+Os novos modelos `GardenPlant` e `PlantSpecies` aplican o mesmo patrón de conversión.
+
+`GardenPlant` utiliza:
+
+    GardenPlant
+        ↓ toMap()
+    Map<String, Object?>
+        ↓
+    SQLite
+
+e:
+
+    SQLite
+        ↓
+    Map<String, Object?>
+        ↓ GardenPlant.fromMap()
+    GardenPlant
+
+Os identificadores continúan representándose como `String` no dominio, aínda que SQLite utiliza `INTEGER`.
+
+Por este motivo, `GardenPlant.toMap()` converte:
+
+    gardenId  → int.parse(gardenId)
+    speciesId → int.parse(speciesId)
+
+e `GardenPlant.fromMap()` realiza a conversión inversa mediante `toString()`.
+
+`plantingDate` utiliza:
+
+    DateTime
+        ↓ toIso8601String()
+    TEXT
+        ↓ DateTime.parse()
+    DateTime
+
+`PlantSpecies` utiliza tamén `toMap()` e `fromMap()` para converter entre a representación do dominio e a representación SQLite.
 
 ## Implemented CRUD Operations
 
@@ -374,11 +541,9 @@ Tamén se comprobou que os cambios permanecen despois de pechar e volver abrir a
 
 ## Pending Tables
 
-As seguintes táboas forman parte do deseño previsto pero aínda non están implementadas:
+As seguintes táboas do deseño previsto aínda non están implementadas:
 
 - `users`
-- `plant_species`
-- `garden_plants`
 - `plant_evolution_records`
 - `weather_records`
 - `garden_layout_items`
@@ -387,49 +552,86 @@ Serán incorporadas progresivamente cando se desenvolvan os módulos corresponde
 
 ## Database Evolution
 
-A estrutura da base de datos evolucionará mediante versións e migracións cando sexa necesario modificar o esquema existente.
+A estrutura da base de datos evoluciona mediante versións e migracións cando é necesario modificar o esquema existente.
 
 Actualmente utilízase:
 
-    version: 1
+    version: 2
 
-Esta versión representa o primeiro esquema físico implementado en MARTOLA.
+### Version 1
 
-A versión da base de datos é independente da versión da aplicación e só debe incrementarse cando exista un cambio no esquema que requira actualizar bases de datos xa existentes.
+A versión 1 constituíu o primeiro esquema físico de MARTOLA e incluía:
 
-Para unha instalación nova:
+    gardens
 
-    onCreate
-        ↓
-    crea directamente o esquema actual
+### Version 2
 
-Para unha base de datos existente que necesite actualizarse:
+A versión 2 introduce:
 
-    versión antiga
-        ↓
-    onUpgrade
-        ↓
-    migracións necesarias
-        ↓
-    nova versión do esquema
+    plant_species
+    garden_plants
 
-As migracións deberán conservar os datos existentes sempre que sexa posible.
+e as primeiras relacións mediante claves foráneas.
 
-Para permitir actualizacións desde versións antigas poderán utilizarse migracións acumulativas baseadas en `oldVersion`.
+A evolución do esquema é:
 
-Por exemplo:
+    v1
+    │
+    │ CREATE TABLE plant_species
+    │ CREATE TABLE garden_plants
+    ▼
+    v2
+
+### New installations
+
+Nunha instalación nova, `onCreate` crea directamente o esquema completo correspondente á versión actual:
+
+    gardens
+    plant_species
+    garden_plants
+
+Non é necesario crear primeiro o esquema v1 e posteriormente migralo.
+
+### Existing installations
+
+Nunha base de datos existente en versión 1, `onUpgrade` executa a primeira migración real de MARTOLA.
+
+A migración utiliza:
 
     if (oldVersion < 2) {
       // cambios introducidos na versión 2
     }
 
-    if (oldVersion < 3) {
-      // cambios introducidos na versión 3
+Dentro desta migración créanse:
+
+    plant_species
+    garden_plants
+
+A táboa `gardens` non se crea novamente porque xa existe nas bases de datos v1.
+
+A migración v1 → v2 foi executada e comprobada correctamente.
+
+A aplicación arrancou coa base de datos actualizada e conservou os datos existentes de `gardens`.
+
+### Migration Strategy
+
+As futuras migracións seguirán un modelo acumulativo:
+
+    if (oldVersion < 2) {
+      // cambios da versión 2
     }
 
-Actualmente non existe unha migración implementada porque o esquema de MARTOLA continúa na versión 1.
+    if (oldVersion < 3) {
+      // cambios da versión 3
+    }
 
-`onUpgrade` introducirase cando se realice o primeiro cambio real no esquema que requira unha versión 2.
+    if (oldVersion < 4) {
+      // cambios da versión 4
+    }
+
+Isto permitirá que unha base de datos antiga aplique todos os cambios necesarios ata alcanzar o esquema actual.
+
+A versión da base de datos seguirá sendo independente da versión da aplicación e só se incrementará cando exista un cambio real no esquema.
 
 ---
 
@@ -471,7 +673,7 @@ A estrutura proposta permite implementar unha primeira versión completamente fu
 
 ## Current Implementation Note
 
-A infraestrutura SQLite está actualmente implementada e operativa.
+A infraestrutura SQLite está actualmente implementada e operativa na versión 2.
 
 O módulo de hortas utiliza:
 
@@ -479,14 +681,39 @@ O módulo de hortas utiliza:
             ↓
     DatabaseService
             ↓
-    SQLite
+          SQLite
             ↓
-    martola.db
+        martola.db
 
-A táboa `gardens` dispón actualmente dun CRUD persistente completo.
+A táboa `gardens` dispón dun CRUD persistente completo.
 
-`MemoryGardenRepository` mantense como implementación alternativa de `GardenRepository`, pero xa non constitúe o mecanismo principal de almacenamento da aplicación.
+Tamén están creadas e validadas estruturalmente:
 
-A implementación da base de datos continuará de maneira incremental.
+    plant_species
+    garden_plants
 
-O deseño completo documentado neste ficheiro representa o modelo obxectivo de MARTOLA, mentres que a sección `Current SQLite Implementation` documenta o subconxunto que existe realmente en cada fase do desenvolvemento.
+Os modelos Dart correspondentes son:
+
+    PlantSpecies
+    GardenPlant
+
+Ambos dispoñen de conversión entre modelos de dominio e representación SQLite mediante `toMap()` e `fromMap()`.
+
+Están definidos os contratos:
+
+    PlantSpeciesRepository
+    GardenPlantRepository
+
+As implementacións SQLite destes novos repositorios aínda non están desenvolvidas.
+
+A seguinte tarefa prevista é iniciar:
+
+    SQLitePlantSpeciesRepository
+
+As relacións entre `gardens`, `garden_plants` e `plant_species` están protexidas mediante claves foráneas e comprobáronse os comportamentos `ON DELETE CASCADE` e `ON DELETE RESTRICT`.
+
+`MemoryGardenRepository` mantense como implementación alternativa de `GardenRepository`, pero non constitúe o mecanismo principal de almacenamento.
+
+A implementación continuará de maneira incremental.
+
+O deseño completo documentado neste ficheiro representa o modelo obxectivo de MARTOLA, mentres que `Current SQLite Implementation` documenta o subconxunto que existe realmente en cada fase do desenvolvemento.

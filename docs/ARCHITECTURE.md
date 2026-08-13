@@ -135,31 +135,57 @@ A composición actual das dependencias realízase desde `main.dart`:
 
 `main.dart` actúa deste xeito como punto de composición das dependencias principais do módulo.
 
-A infraestrutura SQLite xa está operativa.
+A infraestrutura SQLite está operativa e actualmente utiliza o esquema:
+
+    version: 2
 
 `DatabaseService` é responsable de:
 
 - Seleccionar a factoría SQLite apropiada segundo a plataforma.
 - Determinar a ruta de `martola.db`.
-- Abrir a base de datos.
-- Manter a referencia á conexión.
-- Crear o esquema inicial.
+- Abrir e manter a conexión coa base de datos.
+- Configurar SQLite.
+- Crear o esquema actual.
+- Xestionar versións e migracións.
 - Servir a conexión aos Repositories.
 
-A primeira táboa implementada é:
+Actualmente están implementadas as táboas:
 
     gardens
+    plant_species
+    garden_plants
 
-O CRUD persistente foi comprobado manualmente:
+O módulo de hortas dispón dun CRUD persistente completo mediante:
 
-    CREATE → persiste
-    READ   → recupera datos persistidos
-    UPDATE → persiste os cambios
-    DELETE → persiste a eliminación
+    SQLiteGardenRepository
+        ↓
+    DatabaseService
+        ↓
+    SQLite
 
-Tamén se comprobou que os datos continúan dispoñibles despois de pechar e volver abrir MARTOLA.
+Durante a sesión 14 realizouse a primeira evolución real do esquema:
 
-Isto valida na práctica a separación definida polo Repository Pattern: a aplicación puido substituír `MemoryGardenRepository` por `SQLiteGardenRepository` sen modificar as Views nin a lóxica principal de `GardensViewModel`.
+    version 1
+        ↓
+    version 2
+
+A migración conserva os datos existentes e incorpora `plant_species` e `garden_plants`.
+
+Tamén se introduciron as primeiras relacións mediante claves foráneas:
+
+    Garden 1 ─── N GardenPlant
+                       │
+                       N
+                       │
+                       1
+                       ↓
+                  PlantSpecies
+
+A eliminación dunha horta utiliza `ON DELETE CASCADE`, mentres que a eliminación dunha especie en uso está protexida mediante `ON DELETE RESTRICT`.
+
+Ambos comportamentos foron comprobados mediante probas transaccionais.
+
+Isto continúa validando na práctica a separación definida polo Repository Pattern: a persistencia pode evolucionar sen trasladar lóxica SQLite ás Views ou aos ViewModels.
 
 ---
 
@@ -247,15 +273,33 @@ Estas conversións permiten manter separada a representación orientada a obxect
 
 Os modelos de dominio manteranse, na medida do posible, inmutables. Por este motivo, a actualización dunha entidade realízase creando unha nova instancia cos datos modificados en lugar de modificar directamente a instancia existente.
 
-Modelos previstos:
+Modelos actualmente implementados:
 
-- `User`
 - `Garden`
 - `PlantSpecies`
 - `GardenPlant`
+
+Modelos previstos:
+
+- `User`
 - `PlantEvolutionRecord`
 - `WeatherRecord`
 - `GardenLayoutItem`
+
+`GardenPlant` representa unha planta concreta pertencente a unha horta e mantén referencias mediante:
+
+    gardenId
+    speciesId
+
+`PlantSpecies` representa a información compartida dunha especie vexetal.
+
+Esta separación evita duplicar a información dunha especie en cada planta individual.
+
+Os identificadores destes modelos mantéñense como `String` no dominio, aínda que SQLite utiliza `INTEGER` para as claves primarias e foráneas.
+
+A conversión queda encapsulada mediante `toMap()` e `fromMap()`.
+
+No caso de `GardenPlant`, `plantingDate` represéntase como `DateTime` no dominio e almacénase como `TEXT` en formato ISO 8601 en SQLite.
 
 ## View Layer
 
@@ -465,51 +509,107 @@ Por exemplo, `DatabaseService` non debería decidir como se crea un `Garden` ou 
 
 ### Database Versioning and Migrations
 
-`DatabaseService` é tamén o punto responsable da futura evolución do esquema SQLite.
+`DatabaseService` é o punto responsable da evolución do esquema SQLite.
 
 A base de datos utiliza actualmente:
 
-    version: 1
+    version: 2
 
-`onCreate` define o esquema que debe crearse cando `martola.db` non existe.
+`onCreate` define o esquema completo que debe crearse cando `martola.db` non existe.
 
-Un cambio futuro no esquema requirirá incrementar a versión da base de datos e introducir a migración correspondente mediante `onUpgrade`.
+Actualmente unha instalación nova crea directamente:
+
+    gardens
+    plant_species
+    garden_plants
+
+Non é necesario crear esquemas intermedios nunha instalación nova.
+
+Durante a sesión 14 implementouse a primeira migración real de MARTOLA:
+
+    version 1
+        ↓
+    version 2
+
+`onUpgrade` permite actualizar unha base de datos existente conservando os seus datos.
+
+A migración v1 → v2 incorpora:
+
+    plant_species
+    garden_plants
 
 Conceptualmente:
 
-    Base de datos existente
-            ↓
-    versión antiga < versión actual
-            ↓
-         onUpgrade
-            ↓
-        migracións
-            ↓
-    esquema actualizado
+    Base de datos v1
+          ↓
+    version solicitada = 2
+          ↓
+       onUpgrade
+          ↓
+    oldVersion < 2
+          ↓
+    CREATE TABLE plant_species
+    CREATE TABLE garden_plants
+          ↓
+    Base de datos v2
 
-As migracións deberán permitir evolucionar o esquema conservando os datos existentes.
+A táboa `gardens` non se crea novamente durante esta migración porque xa existe nas bases de datos v1.
 
-Para soportar actualizacións desde versións antigas, as migracións poderán aplicarse de maneira acumulativa:
+A migración foi executada sobre unha base de datos existente e comprobouse que os datos previamente almacenados permanecen dispoñibles.
+
+As futuras migracións seguirán unha estratexia acumulativa:
 
     if (oldVersion < 2) {
-      // migración introducida na versión 2
+      // cambios introducidos na versión 2
     }
 
     if (oldVersion < 3) {
-      // migración introducida na versión 3
+      // cambios introducidos na versión 3
     }
 
-Deste modo unha base de datos v1 poderá actualizarse directamente a unha versión posterior aplicando todos os cambios de esquema necesarios.
+Isto permitirá actualizar directamente bases de datos antigas aplicando sucesivamente os cambios necesarios ata alcanzar o esquema actual.
 
-Actualmente non existe `onUpgrade` porque MARTOLA continúa utilizando a versión 1 do esquema e aínda non se produciu ningún cambio que requira unha migración.
+A versión da base de datos só se incrementará cando exista un cambio real no esquema.
 
-Non se incrementará a versión da base de datos ata que exista un cambio real no esquema.
+### Foreign Keys
+
+A versión 2 introduce as primeiras claves foráneas de MARTOLA.
+
+SQLite require activar explicitamente a comprobación de claves foráneas para cada conexión.
+
+`DatabaseService` realiza esta configuración mediante:
+
+    PRAGMA foreign_keys = ON
+
+executado desde `onConfigure`.
+
+As relacións actualmente implementadas son:
+
+    garden_plants.garden_id
+        ↓
+    gardens.id
+        ↓
+    ON DELETE CASCADE
+
+e:
+
+    garden_plants.species_id
+        ↓
+    plant_species.id
+        ↓
+    ON DELETE RESTRICT
+
+`ON DELETE CASCADE` garante que ao eliminar unha horta se eliminen tamén as plantas que pertencen a ela.
+
+`ON DELETE RESTRICT` impide eliminar unha especie mentres exista algunha planta que a referencie.
+
+Ambos comportamentos foron verificados mediante probas transaccionais con rollback para evitar deixar datos temporais na base de datos.
 
 ### Relación cos Repositories
 
 Os Repositories utilizan `DatabaseService` para acceder á infraestrutura SQLite.
 
-A primeira implementación real desta relación é:
+A implementación actualmente operativa é:
 
     SQLiteGardenRepository
             ↓
@@ -517,15 +617,32 @@ A primeira implementación real desta relación é:
             ↓
     SQLite
 
-No futuro outras implementacións poderán compartir a mesma infraestrutura:
+Durante a sesión 14 definíronse tamén os contratos:
 
-    SQLiteGardenRepository ──┐
-                             │
-    SQLitePlantRepository ───┼──→ DatabaseService → SQLite
-                             │
-    Outros Repositories ─────┘
+    GardenPlantRepository
+    PlantSpeciesRepository
 
-Deste modo existe unha única infraestrutura compartida en lugar de duplicar a apertura e configuración da base de datos en cada Repository.
+A separación responde ao principio de responsabilidade única:
+
+    GardenPlantRepository
+    → xestión das plantas concretas pertencentes ás hortas
+
+    PlantSpeciesRepository
+    → xestión do catálogo compartido de especies
+
+As futuras implementacións SQLite compartirán o mesmo `DatabaseService`:
+
+    SQLiteGardenRepository ───────────┐
+                                     │
+    SQLiteGardenPlantRepository ─────┼──→ DatabaseService → SQLite
+                                     │
+    SQLitePlantSpeciesRepository ────┘
+
+A seguinte implementación prevista é:
+
+    SQLitePlantSpeciesRepository
+
+Deste modo existe unha única infraestrutura SQLite compartida sen mesturar as responsabilidades específicas de cada entidade.
 
 ### SQLite multiplataforma
 
@@ -596,6 +713,42 @@ O uso de `Future` permite que o mesmo contrato sexa válido para:
 
 O contrato non obriga ás Views a traballar directamente con `Future`, xa que `GardensViewModel` mantén o estado xa cargado para a interface.
 
+### GardenPlantRepository
+
+`GardenPlantRepository` define o contrato para acceder ás plantas concretas pertencentes ás hortas.
+
+A operación principal de lectura está contextualizada por horta:
+
+    Future<List<GardenPlant>> getPlantsByGardenId(
+      String gardenId,
+    );
+
+Isto evita realizar unha consulta global de plantas cando a interface necesita mostrar unicamente as pertencentes a unha horta concreta.
+
+O contrato inclúe:
+
+    getPlantsByGardenId()
+    addPlant()
+    getPlantById()
+    updatePlant()
+    removePlant()
+
+### PlantSpeciesRepository
+
+`PlantSpeciesRepository` define de maneira independente as operacións relacionadas co catálogo de especies.
+
+O contrato inclúe:
+
+    getSpecies()
+    addSpecies()
+    getSpeciesById()
+    updateSpecies()
+    removeSpecies()
+
+A separación entre `GardenPlantRepository` e `PlantSpeciesRepository` evita que un único Repository acumule responsabilidades de dúas entidades diferentes.
+
+As implementacións SQLite destes contratos aínda están pendentes.
+
 ### Repository Abstraction
 
 `GardensViewModel` depende da abstracción:
@@ -653,21 +806,31 @@ Aínda que as operacións sobre unha colección en memoria son inmediatas, os se
 
 Isto permite validar a arquitectura asíncrona antes de introducir persistencia real.
 
-### Future Repository Implementations
+### Repository Implementations
 
-Está prevista unha implementación persistente:
+Actualmente:
 
-```text
-SQLiteGardenRepository
-        ↓
-DatabaseService
-        ↓
-SQLite
-```
+    GardenRepository
+          ↑
+    SQLiteGardenRepository
+          ↓
+    DatabaseService
+          ↓
+    SQLite
 
-O contrato xa foi adaptado a operacións asíncronas mediante `Future`.
+`MemoryGardenRepository` mantense como implementación alternativa do mesmo contrato.
 
-`MemoryGardenRepository` utiliza actualmente esta interface asíncrona, e a futura implementación `SQLiteGardenRepository` deberá respectar o mesmo contrato.
+Están definidos pero pendentes de implementación SQLite:
+
+    GardenPlantRepository
+    PlantSpeciesRepository
+
+As seguintes implementacións previstas son:
+
+    SQLiteGardenPlantRepository
+    SQLitePlantSpeciesRepository
+
+Todas elas utilizarán `DatabaseService` como infraestrutura común de acceso a SQLite.
 
 ---
 
@@ -780,11 +943,23 @@ Define os contratos e implementacións responsables do acceso aos datos.
 
 Estrutura actual:
 
-```text
-repositories/
-├── garden_repository.dart
-└── memory_garden_repository.dart
-```
+    repositories/
+    ├── garden_repository.dart
+    ├── memory_garden_repository.dart
+    ├── sqlite_garden_repository.dart
+    ├── garden_plant_repository.dart
+    └── plant_species_repository.dart
+
+`garden_repository.dart`, `garden_plant_repository.dart` e `plant_species_repository.dart` definen abstraccións independentes da fonte concreta de datos.
+
+`sqlite_garden_repository.dart` constitúe actualmente a implementación persistente do módulo de hortas.
+
+`memory_garden_repository.dart` mantense como implementación alternativa en memoria.
+
+Implementacións previstas:
+
+    sqlite_garden_plant_repository.dart
+    sqlite_plant_species_repository.dart
 
 ### garden_repository.dart
 
@@ -817,20 +992,17 @@ Estrutura actual:
 
 `DatabaseService` centraliza a infraestrutura necesaria para SQLite.
 
-Será responsable de:
+É responsable de:
 
 - Seleccionar a implementación SQLite adecuada á plataforma.
 - Inicializar FFI cando sexa necesario.
 - Determinar a localización de `martola.db`.
-- Abrir a base de datos.
-- Manter a conexión.
-- Crear as táboas iniciais.
-- Xestionar versións e futuras migracións.
+- Abrir e manter a conexión.
+- Configurar as claves foráneas.
+- Crear o esquema actual.
+- Xestionar versións e migracións.
 
-Outros servizos previstos:
-
-- `weather_service.dart`
-- Servizos de APIs externas.
+Actualmente xestiona o esquema SQLite v2 e a migración v1 → v2.
 
 ---
 
@@ -997,37 +1169,27 @@ Provider non constitúe unha capa de persistencia.
 
 Actualmente:
 
-```text
-Provider
- ↓
-GardensViewModel
- ↓
-GardenRepository
- ↑
-MemoryGardenRepository
- ↓
-Estado en memoria
-```
+    Provider
+        ↓
+    GardensViewModel
+        ↓
+    GardenRepository
+        ↑
+    SQLiteGardenRepository
+        ↓
+    DatabaseService
+        ↓
+    SQLite
 
-Ao finalizar a aplicación, os datos continúan desaparecendo porque `MemoryGardenRepository` non proporciona persistencia permanente.
+Provider xestiona e distribúe o estado da interface.
 
-A futura arquitectura será:
+`GardensViewModel` mantén unha representación en memoria dos datos actualmente cargados.
 
-```text
-Provider
- ↓
-GardensViewModel
- ↓
-GardenRepository
- ↑
-SQLiteGardenRepository
- ↓
-DatabaseService
- ↓
-SQLite
-```
+`SQLiteGardenRepository` é responsable do acceso persistente aos datos.
 
-Provider continuará xestionando e distribuíndo o estado da interface, mentres a implementación do Repository e SQLite serán responsables do acceso e persistencia dos datos.
+`DatabaseService` proporciona a infraestrutura común de SQLite.
+
+Polo tanto, pechar a aplicación non elimina as hortas almacenadas, xa que a fonte persistente é `martola.db`.
 
 Durante a sesión 13, `GardensViewModel` pasou a manter unha copia do estado xa cargado para a interface.
 
@@ -1189,41 +1351,39 @@ Actualmente, no módulo de hortas:
       ↓ async
     GardenRepository
       ↑
-    MemoryGardenRepository
-      ↓
-    Estado en memoria
-
-`GardensViewModel` mantén ademais unha colección local cos datos xa cargados:
-
-    Repository
-        ↓
-    loadGardens()
-        ↓
-    GardensViewModel._gardens
-        ↓
-    Provider
-        ↓
-    Views
-
-A dirección das dependencias permite que `GardensViewModel` dependa da abstracción `GardenRepository` en lugar dunha implementación concreta.
-
-A implementación actual selecciónase desde `main.dart`.
-
-A arquitectura en preparación é:
-
-    View
-      ↓
-    GardensViewModel
-      ↓ async
-    GardenRepository
-      ↑
     SQLiteGardenRepository
       ↓
     DatabaseService
       ↓
     SQLite
 
-O obxectivo continúa sendo substituír a fonte de datos sen modificar as Views nin acoplar `GardensViewModel` á tecnoloxía SQLite.
+`GardensViewModel` mantén ademais unha colección local cos datos xa cargados:
+
+    SQLite
+      ↓
+    SQLiteGardenRepository
+      ↓
+    loadGardens()
+      ↓
+    GardensViewModel._gardens
+      ↓
+    Provider
+      ↓
+    Views
+
+A dirección das dependencias permite que `GardensViewModel` dependa da abstracción `GardenRepository` en lugar da implementación concreta.
+
+A implementación seleccionada desde `main.dart` é actualmente `SQLiteGardenRepository`.
+
+`MemoryGardenRepository` continúa dispoñible como implementación alternativa.
+
+Para o módulo de plantas, a arquitectura está actualmente neste punto:
+
+    GardenPlantRepository ──────── implementación SQLite pendente
+
+    PlantSpeciesRepository ─────── implementación SQLite pendente
+
+A seguinte tarefa prevista é implementar `SQLitePlantSpeciesRepository`.
 
 ---
 

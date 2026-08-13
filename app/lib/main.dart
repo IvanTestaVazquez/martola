@@ -1,3 +1,4 @@
+import 'package:app/repositories/garden_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -15,10 +16,10 @@ void main() {
   final gardenRepository = SQLiteGardenRepository(
     databaseService: databaseService,
   );
-
+  
   runApp(
     MartolaApp(
-      gardenRepository: gardenRepository,
+      gardenRepository: gardenRepository,      
     ),
   );
 }
@@ -30,7 +31,7 @@ class MartolaApp extends StatelessWidget {
     });
 
   final SQLiteGardenRepository gardenRepository;
-
+  
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(

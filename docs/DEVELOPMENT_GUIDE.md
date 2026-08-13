@@ -25,7 +25,7 @@ Cada sesión de traballo terá un obxectivo concreto, conceptos asociados e un r
 
 ## Current Phase
 
-Persistencia e arquitectura de datos.
+Persistencia relacional e inicio do módulo de plantas.
 
 O módulo de hortas xa dispón de:
 
@@ -33,32 +33,48 @@ O módulo de hortas xa dispón de:
 - `GardensViewModel`.
 - `GardenRepository` como abstracción asíncrona.
 - `MemoryGardenRepository` como implementación alternativa en memoria.
-- `SQLiteGardenRepository` como implementación persistente actualmente utilizada.
+- `SQLiteGardenRepository` como implementación persistente.
 - Inxección de dependencias.
 - Operacións asíncronas mediante `Future`, `async` e `await`.
-- Estado local no ViewModel sincronizado co Repository.
 - Carga inicial mediante `loadGardens()`.
-- Fluxos de creación, edición e eliminación adaptados á asincronía.
-- Dependencias SQLite multiplataforma instaladas.
-- `DatabaseService` funcional.
-- Base de datos `martola.db`.
-- Táboa `gardens`.
-- Conversión entre `Garden` e `Map<String, Object?>`.
 - CRUD completo de hortas mediante SQLite.
 - Persistencia dos datos entre reinicios.
 
+A infraestrutura SQLite dispón actualmente de:
+
+- `DatabaseService`.
+- Base de datos `martola.db`.
+- Esquema na versión 2.
+- Migración v1 → v2.
+- Táboa `gardens`.
+- Táboa `plant_species`.
+- Táboa `garden_plants`.
+- Claves foráneas activadas mediante `PRAGMA foreign_keys = ON`.
+- `ON DELETE CASCADE` entre `gardens` e `garden_plants`.
+- `ON DELETE RESTRICT` entre `plant_species` e `garden_plants`.
+
+O módulo de plantas dispón actualmente de:
+
+- Modelo `GardenPlant`.
+- Modelo `PlantSpecies`.
+- Conversión `toMap()` e `fromMap()` nos dous modelos.
+- Contrato `GardenPlantRepository`.
+- Contrato `PlantSpeciesRepository`.
+
 ## Next Action
 
-Completar a Session 13 estudando o versionado e as migracións de SQLite.
+Comezar a Session 15 implementando a primeira capa de persistencia do módulo de plantas.
 
 O seguinte paso será:
 
-1. Comprender por que unha base de datos necesita un número de versión.
-2. Analizar que ocorre cando cambia o esquema dunha base de datos xa existente.
-3. Introducir o concepto de migración.
-4. Preparar `DatabaseService` para futuras modificacións do esquema.
-5. Revisar a arquitectura SQLite resultante.
-6. Pechar a Session 13.
+1. Revisar brevemente o patrón xa utilizado en `SQLiteGardenRepository`.
+2. Implementar `SQLitePlantSpeciesRepository`.
+3. Aplicar o contrato definido por `PlantSpeciesRepository`.
+4. Implementar progresivamente as operacións CRUD sobre `plant_species`.
+5. Comprobar o funcionamento contra SQLite.
+6. Continuar posteriormente con `SQLiteGardenPlantRepository`.
+
+Comezarase por `PlantSpecies` porque unha `GardenPlant` necesita referenciar unha especie existente mediante `speciesId`.
 
 ---
 
@@ -395,7 +411,7 @@ Plant Module
 
 Status:
 
-⬜ Pending
+🟡 In Progress
 
 ### Practical Objective
 
@@ -2205,30 +2221,32 @@ A base de datos permanece correctamente na versión 1 ata que exista un cambio r
 
 ### Seguinte paso
 
-Antes de considerar pechada a Session 13 estudarase como debe evolucionar unha base de datos SQLite cando cambia o seu esquema.
+A seguinte sesión partirá dunha infraestrutura SQLite xa funcional e persistente.
 
-Os seguintes conceptos serán:
+O seguinte obxectivo de desenvolvemento determinarase revisando o roadmap de MARTOLA.
 
-1. Versión dunha base de datos.
-2. Cambios de esquema.
-3. Migracións.
-4. Conservación dos datos existentes.
-5. Evolución de `DatabaseService`.
+Calquera futura modificación do esquema SQLite deberá considerar:
 
-Unha vez comprendidos e preparada a infraestrutura necesaria, realizarase unha revisión final da arquitectura de persistencia e pecharase a Session 13.
+1. A versión actual da base de datos.
+2. O novo esquema necesario.
+3. A actualización de `onCreate` para instalacións novas.
+4. A migración necesaria en `onUpgrade` para instalacións existentes.
+5. A conservación dos datos xa almacenados.
 
 ### Documentation Updated
 
-- `DEVELOPMENT_GUIDE.md`
-- `PROJECT_CONTEXT.md`
+- `LEARNING_NOTES.md`
 - `ARCHITECTURE.md`
 - `DATABASE_DESIGN.md`
 - `ROADMAP.md`
-- `LEARNING_NOTES.md`
+- `PROJECT_CONTEXT.md`
+- `DEVELOPMENT_GUIDE.md`
+
+A documentación queda sincronizada co estado final da Session 13.
 
 ### Commit
 
-Pendente ao finalizar a Session 13.
+Complete SQLite persistence foundation
 
 ### Notes
 
@@ -2239,3 +2257,353 @@ A arquitectura preparada nas sesións anteriores permitiu substituír `MemoryGar
 A implementación confirma na práctica a utilidade do Repository Pattern, a inxección de dependencias e a separación entre estado de presentación e acceso aos datos.
 
 Antes de pechar a sesión queda pendente introducir o versionado e as migracións necesarias para permitir que o esquema SQLite evolucione de forma segura.
+
+---
+
+---
+
+## Sesión 14 - Modelo relacional e preparación do módulo de plantas
+
+### Status
+
+✅ Completed
+
+### Obxectivos
+
+- Evolucionar o esquema SQLite para incorporar o módulo de plantas.
+- Aplicar por primeira vez unha migración real.
+- Comprender e implementar relacións mediante claves foráneas.
+- Diferenciar unha especie dunha planta concreta.
+- Crear os modelos de dominio necesarios.
+- Preparar os contratos Repository do módulo de plantas.
+- Verificar o comportamento da integridade referencial.
+
+### Conceptos aprendidos
+
+- Relación 1:N.
+- Clave primaria.
+- Clave foránea.
+- Integridade referencial.
+- `PRAGMA foreign_keys = ON`.
+- `ON DELETE CASCADE`.
+- `ON DELETE RESTRICT`.
+- Migración real de esquema.
+- Evolución SQLite v1 → v2.
+- Orde de creación das táboas relacionadas.
+- Separación entre modelo de dominio e representación SQLite.
+- Conversión de identificadores entre `String` e `INTEGER`.
+- Representación de `DateTime` mediante ISO 8601.
+- Separación de responsabilidades entre Repositories.
+
+### Evolución do modelo de datos
+
+Introducíronse dúas novas entidades:
+
+    PlantSpecies
+    GardenPlant
+
+`PlantSpecies` representa información compartida dunha especie vexetal.
+
+`GardenPlant` representa unha planta concreta pertencente a unha horta.
+
+A relación conceptual é:
+
+    Garden
+      1
+      │
+      N
+    GardenPlant
+      N
+      │
+      1
+    PlantSpecies
+
+Isto permite que varias plantas concretas compartan unha mesma especie sen duplicar a información da especie.
+
+### Modelo GardenPlant
+
+Creouse o modelo:
+
+```dart
+class GardenPlant {
+  final String? id;
+  final String gardenId;
+  final String speciesId;
+  final String customName;
+  final DateTime plantingDate;
+
+  const GardenPlant({
+    this.id,
+    required this.gardenId,
+    required this.speciesId,
+    required this.customName,
+    required this.plantingDate,
+  });
+}
+```
+
+O modelo utiliza `String` para os identificadores do dominio, mantendo coherencia co modelo `Garden`.
+
+Na fronteira con SQLite, os identificadores utilizados como claves foráneas convértense a `INTEGER`:
+
+```dart
+'garden_id': int.parse(gardenId),
+'species_id': int.parse(speciesId),
+```
+
+Na dirección contraria, os identificadores recuperados desde SQLite convértense novamente a `String`.
+
+`plantingDate` represéntase no dominio mediante `DateTime` e almacénase en SQLite como `TEXT` utilizando:
+
+```dart
+plantingDate.toIso8601String()
+```
+
+### Modelo PlantSpecies
+
+Creouse o modelo:
+
+```dart
+class PlantSpecies {
+  final String? id;
+  final String commonName;
+  final String scientificName;
+
+  const PlantSpecies({
+    this.id,
+    required this.commonName,
+    required this.scientificName,
+  });
+}
+```
+
+Tamén se implementaron:
+
+```dart
+PlantSpecies.fromMap(...)
+```
+
+e:
+
+```dart
+toMap()
+```
+
+para realizar a conversión entre o modelo de dominio e as filas SQLite.
+
+### Evolución da base de datos
+
+A base de datos evolucionou:
+
+    version 1
+        ↓
+    version 2
+
+Esta é a primeira migración real do proxecto.
+
+O esquema actual incorpora:
+
+    gardens
+    plant_species
+    garden_plants
+
+Para instalacións novas, `onCreate` crea directamente o esquema completo correspondente á versión actual.
+
+Para bases de datos existentes, `onUpgrade` realiza a migración necesaria conservando os datos xa almacenados.
+
+### Táboa plant_species
+
+Creouse:
+
+```sql
+CREATE TABLE plant_species (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  common_name TEXT NOT NULL,
+  scientific_name TEXT NOT NULL
+)
+```
+
+### Táboa garden_plants
+
+Creouse unha táboa relacionada con `gardens` e `plant_species`.
+
+As relacións utilizan claves foráneas.
+
+A relación coa horta utiliza:
+
+```sql
+ON DELETE CASCADE
+```
+
+Isto significa que ao eliminar unha horta tamén se eliminan automaticamente as plantas concretas que pertencen a ela.
+
+A relación coa especie utiliza:
+
+```sql
+ON DELETE RESTRICT
+```
+
+Isto impide eliminar unha especie mentres exista algunha planta que a estea utilizando.
+
+### Activación das claves foráneas
+
+Engadiuse a configuración:
+
+```dart
+onConfigure: (db) async {
+  await db.execute('PRAGMA foreign_keys = ON');
+},
+```
+
+Esta configuración é necesaria para que SQLite aplique as restricións definidas mediante claves foráneas.
+
+### Comprobación de ON DELETE CASCADE
+
+Realizouse unha proba controlada creando datos temporais.
+
+Resultado:
+
+```text
+Plantas antes de eliminar a horta: 1
+Plantas despois de eliminar a horta: 0
+Proba finalizada. Datos temporais revertidos.
+```
+
+Confirmouse que eliminar unha horta elimina automaticamente as plantas asociadas.
+
+O código temporal da proba foi eliminado posteriormente.
+
+### Comprobación de ON DELETE RESTRICT
+
+Realizouse tamén unha proba controlada intentando eliminar unha especie utilizada por unha planta.
+
+Resultado:
+
+```text
+Correcto: SQLite impediu eliminar a especie en uso
+A especie segue existindo: true
+Proba finalizada. Datos temporais revertidos.
+```
+
+Confirmouse que SQLite impide eliminar unha especie referenciada por unha planta.
+
+O código temporal da proba foi eliminado posteriormente.
+
+### Repositories do módulo de plantas
+
+Creouse:
+
+```dart
+abstract class GardenPlantRepository
+```
+
+coas operacións:
+
+```text
+getPlantsByGardenId()
+addPlant()
+getPlantById()
+updatePlant()
+removePlant()
+```
+
+A consulta principal utiliza:
+
+```dart
+getPlantsByGardenId(gardenId)
+```
+
+porque as plantas concretas teñen sentido principalmente dentro do contexto dunha horta.
+
+Tamén se creou:
+
+```dart
+abstract class PlantSpeciesRepository
+```
+
+coas operacións necesarias para consultar e xestionar o catálogo de especies.
+
+Decidiuse manter `GardenPlantRepository` e `PlantSpeciesRepository` separados porque representan responsabilidades distintas.
+
+### Arquitectura preparada
+
+O módulo de plantas queda preparado actualmente ata a capa de contratos:
+
+    Views
+      ↓
+    ViewModel
+      ↓
+    Repository
+      ↑
+    SQLite Repository
+      ↓
+    DatabaseService
+      ↓
+    SQLite
+
+No módulo de hortas este fluxo xa está implementado completamente.
+
+No módulo de plantas están preparados:
+
+    GardenPlant
+    PlantSpecies
+    GardenPlantRepository
+    PlantSpeciesRepository
+
+e están pendentes as implementacións SQLite.
+
+### Skills Acquired
+
+- Deseñar relacións entre entidades do dominio.
+- Diferenciar unha especie dunha instancia concreta dunha planta.
+- Implementar claves foráneas en SQLite.
+- Comprender a necesidade de activar explicitamente a integridade referencial.
+- Escoller o comportamento adecuado ao eliminar entidades relacionadas.
+- Aplicar `CASCADE` e `RESTRICT`.
+- Realizar unha migración real conservando datos existentes.
+- Manter separados os tipos do dominio e os tipos utilizados pola persistencia.
+- Deseñar contratos Repository antes das súas implementacións.
+- Separar Repositories segundo a responsabilidade da entidade.
+
+### Documentation Updated
+
+- `DATABASE_DESIGN.md`
+- `ARCHITECTURE.md`
+- `LEARNING_NOTES.md`
+- `ROADMAP.md`
+- `PROJECT_CONTEXT.md`
+- `DEVELOPMENT_GUIDE.md`
+
+### Next Step
+
+A Session 15 comezará implementando:
+
+    SQLitePlantSpeciesRepository
+
+A idea será reutilizar o coñecemento adquirido con:
+
+    SQLiteGardenRepository
+
+pero sen copiar mecanicamente a implementación.
+
+Construiremos progresivamente as operacións do novo Repository comprendendo que parte é común ao patrón e que parte depende especificamente de `PlantSpecies`.
+
+Unha vez completado e probado:
+
+    SQLitePlantSpeciesRepository
+
+continuaremos con:
+
+    SQLiteGardenPlantRepository
+
+### Commit
+
+Pendente ao finalizar a actualización da documentación.
+
+### Notes
+
+A Session 14 supón a primeira evolución real do esquema SQLite de MARTOLA.
+
+Por primeira vez a base de datos deixa de conter unha única entidade independente e pasa a representar relacións reais entre entidades do dominio.
+
+A infraestrutura queda preparada para iniciar a persistencia funcional do módulo de plantas durante a seguinte sesión.

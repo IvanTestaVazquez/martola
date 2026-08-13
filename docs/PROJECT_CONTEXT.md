@@ -243,7 +243,7 @@ A composición actual é:
 
 Deste modo, `GardensViewModel` depende da abstracción `GardenRepository` e non necesita coñecer a tecnoloxía concreta utilizada para persistir os datos.
 
-Durante a sesión 13 completouse a primeira infraestrutura SQLite funcional.
+Durante as sesións 13 e 14 completouse e evolucionou a primeira infraestrutura SQLite funcional.
 
 Xa se completou:
 
@@ -252,19 +252,29 @@ Xa se completou:
 - Introdución de `Future`, `async` e `await` no fluxo de datos.
 - Carga inicial mediante `loadGardens()`.
 - Adaptación das operacións CRUD ao modelo asíncrono.
-- Instalación das dependencias SQLite multiplataforma.
-- Implementación inicial de `DatabaseService`.
+- Implementación de `DatabaseService`.
 - Apertura de `martola.db`.
-- Creación do esquema SQLite inicial.
-- Creación da táboa `gardens`.
-- Conversión entre `Garden` e `Map<String, Object?>`.
 - Implementación de `SQLiteGardenRepository`.
 - CRUD completo de hortas mediante SQLite.
 - Integración de `SQLiteGardenRepository` desde `main.dart`.
 - Recuperación das hortas persistidas ao iniciar a aplicación.
 - Verificación da persistencia entre reinicios.
+- Evolución do esquema SQLite á versión 2.
+- Implementación da primeira migración v1 → v2.
+- Conservación dos datos existentes durante a migración.
+- Creación de `plant_species`.
+- Creación de `garden_plants`.
+- Introdución e activación de claves foráneas.
+- Verificación de `ON DELETE CASCADE`.
+- Verificación de `ON DELETE RESTRICT`.
+- Creación do modelo `GardenPlant`.
+- Creación do modelo `PlantSpecies`.
+- Creación de `GardenPlantRepository`.
+- Creación de `PlantSpeciesRepository`.
 
-O seguinte paso é introducir o versionado e as migracións da base de datos antes de continuar evolucionando o esquema.
+A infraestrutura SQLite queda preparada para continuar o módulo de plantas.
+
+O seguinte paso é implementar `SQLitePlantSpeciesRepository` e posteriormente `SQLiteGardenPlantRepository`.
 
 ---
 
@@ -453,13 +463,13 @@ Plan de aprendizaxe e desenvolvemento progresivo de Flutter e Dart aplicado a MA
 
 ## Last Updated
 
-2026-08-12
+2026-08-13
 
 ## Current Phase
 
-A primeira infraestrutura de persistencia SQLite está completada.
+A infraestrutura de persistencia SQLite está operativa e evolucionou á versión 2.
 
-O módulo de hortas dispón actualmente dun CRUD persistente completo mediante:
+O módulo de hortas dispón dun CRUD persistente completo mediante:
 
     View
       ↓
@@ -475,13 +485,37 @@ O módulo de hortas dispón actualmente dun CRUD persistente completo mediante:
 
 A persistencia foi comprobada entre reinicios da aplicación.
 
-A base de datos utiliza actualmente o esquema:
+A base de datos utiliza actualmente:
 
-    version: 1
+    version: 2
 
-Tamén se definiu a estratexia conceptual para a futura evolución do esquema mediante versionado e migracións.
+O esquema físico implementado contén:
 
-Non existe aínda unha migración real porque o esquema continúa na versión 1.
+    gardens
+    plant_species
+    garden_plants
+
+Implementouse e comprobouse a primeira migración real:
+
+    v1 → v2
+
+A migración conserva os datos existentes e incorpora as primeiras relacións mediante claves foráneas.
+
+Están implementados os modelos:
+
+    Garden
+    GardenPlant
+    PlantSpecies
+
+Están definidos os contratos:
+
+    GardenRepository
+    GardenPlantRepository
+    PlantSpeciesRepository
+
+Actualmente `GardenRepository` dispón dunha implementación SQLite completa.
+
+As implementacións SQLite de plantas e especies son o seguinte paso do desenvolvemento.
 
 ---
 
@@ -559,7 +593,19 @@ Non existe aínda unha migración real porque o esquema continúa na versión 1.
 
 ✅ Estratexia para futuras migracións definida
 
-⬜ Primeira migración SQLite cando exista un cambio real de esquema
+✅ Primeira migración SQLite v1 → v2
+
+✅ Conservación dos datos existentes durante a migración
+
+✅ Introdución de claves foráneas
+
+✅ Creación de `GardenPlantRepository`
+
+✅ Creación de `PlantSpeciesRepository`
+
+⬜ Implementación de `SQLitePlantSpeciesRepository`
+
+⬜ Implementación de `SQLiteGardenPlantRepository`
 
 ---
 
@@ -595,7 +641,23 @@ Non existe aínda unha migración real porque o esquema continúa na versión 1.
 
 ✅ Estratexia de migracións acumulativas definida
 
-⬜ Primeira migración real cando o esquema evolucione a unha versión posterior
+✅ Evolución do esquema SQLite á versión 2
+
+✅ Primeira migración real v1 → v2
+
+✅ Conservación dos datos existentes durante a migración
+
+✅ Creación da táboa `plant_species`
+
+✅ Creación da táboa `garden_plants`
+
+✅ Activación de claves foráneas mediante `PRAGMA foreign_keys = ON`
+
+✅ Implementación de `ON DELETE CASCADE`
+
+✅ Implementación de `ON DELETE RESTRICT`
+
+✅ Verificación transaccional da integridade referencial
 
 ---
 
@@ -808,13 +870,37 @@ Non existe aínda unha migración real porque o esquema continúa na versión 1.
 
 ✅ Revisión e limpeza final de `DatabaseService`
 
-⬜ Primeira migración SQLite cando exista un cambio real de esquema
+✅ Evolución da base de datos á versión 2
+
+✅ Primeira migración SQLite v1 → v2
+
+✅ Creación do modelo `GardenPlant`
+
+✅ Creación do modelo `PlantSpecies`
+
+✅ Implementación de `GardenPlant.toMap()` e `GardenPlant.fromMap()`
+
+✅ Implementación de `PlantSpecies.toMap()` e `PlantSpecies.fromMap()`
+
+✅ Creación das táboas `plant_species` e `garden_plants`
+
+✅ Introdución de claves foráneas
+
+✅ Activación de `PRAGMA foreign_keys = ON`
+
+✅ Verificación de `ON DELETE CASCADE`
+
+✅ Verificación de `ON DELETE RESTRICT`
+
+✅ Creación de `GardenPlantRepository`
+
+✅ Creación de `PlantSpeciesRepository`
+
+⬜ Implementación de `SQLitePlantSpeciesRepository`
+
+⬜ Implementación de `SQLiteGardenPlantRepository`
 
 ⬜ Módulo funcional de plantas
-
-⬜ API meteorolóxica
-
-⬜ Layout Designer
 
 ---
 
@@ -869,6 +955,15 @@ Non existe aínda unha migración real porque o esquema continúa na versión 1.
 - Os Repositories específicos utilizarán `DatabaseService` para acceder á infraestrutura de persistencia.
 - A infraestrutura SQLite deberá soportar Android, Windows e Linux mediante a factoría apropiada para cada plataforma.
 - As rutas de ficheiros construiranse mediante `path` e os directorios da aplicación obteranse mediante `path_provider`.
+- Os identificadores poden manterse como `String` nos modelos de dominio aínda que SQLite utilice `INTEGER`; a conversión realizarase na fronteira coa persistencia.
+- As datas do dominio representadas mediante `DateTime` almacenaranse inicialmente en SQLite como `TEXT` utilizando ISO 8601.
+- `GardenPlant` e `PlantSpecies` serán entidades independentes para evitar duplicar información común dunha especie en cada planta concreta.
+- As plantas dunha horta accederanse principalmente mediante `getPlantsByGardenId(gardenId)` en lugar dunha consulta global.
+- `GardenPlantRepository` e `PlantSpeciesRepository` manteranse separados para preservar unha responsabilidade única por Repository.
+- As claves foráneas de SQLite activaranse mediante `PRAGMA foreign_keys = ON`.
+- A eliminación dunha horta utilizará `ON DELETE CASCADE` sobre as plantas asociadas.
+- A eliminación dunha especie utilizada por unha planta estará protexida mediante `ON DELETE RESTRICT`.
+- As migracións SQLite seguirán unha estratexia acumulativa baseada en comprobacións de `oldVersion`.
 
 ---
 
@@ -876,59 +971,83 @@ Non existe aínda unha migración real porque o esquema continúa na versión 1.
 
 ### Current Objective
 
-Iniciar a seguinte fase de desenvolvemento de MARTOLA partindo dunha infraestrutura de persistencia SQLite xa funcional.
+Continuar o módulo de plantas sobre a infraestrutura SQLite v2 xa implementada.
 
 ### Starting Point
 
-O módulo de hortas dispón actualmente de:
+O módulo de hortas dispón dun CRUD persistente completo.
 
-- Listado de hortas.
-- Creación mediante formulario validado.
-- Vista de detalle.
-- Edición.
-- Eliminación con confirmación.
-- Estado compartido mediante Provider.
-- `GardensViewModel`.
-- `GardenRepository` como abstracción.
-- `SQLiteGardenRepository` como implementación persistente.
-- `MemoryGardenRepository` como implementación alternativa.
-- `DatabaseService`.
-- Base de datos `martola.db`.
-- Táboa `gardens`.
-- CRUD SQLite completo.
-- Carga inicial mediante `loadGardens()`.
-- Persistencia entre reinicios.
-- Estratexia definida para o futuro versionado e migracións.
+A base de datos está actualmente en:
 
-A arquitectura actual é:
+    version: 2
 
-    View
-      ↓
-    GardensViewModel
-      ↓
+O esquema implementado contén:
+
+    gardens
+    plant_species
+    garden_plants
+
+A primeira migración:
+
+    v1 → v2
+
+está implementada e comprobada.
+
+As relacións actuais son:
+
+    Garden
+      1
+      │
+      N
+    GardenPlant
+      N
+      │
+      1
+    PlantSpecies
+
+A integridade referencial está activada e comprobouse o funcionamento de:
+
+    ON DELETE CASCADE
+    ON DELETE RESTRICT
+
+No dominio están implementados:
+
+    Garden
+    GardenPlant
+    PlantSpecies
+
+Na capa Repository están definidos:
+
     GardenRepository
-      ↑
+    GardenPlantRepository
+    PlantSpeciesRepository
+
+Actualmente existe:
+
     SQLiteGardenRepository
-      ↓
-    DatabaseService
-      ↓
-    SQLite
+
+e están pendentes:
+
+    SQLitePlantSpeciesRepository
+    SQLiteGardenPlantRepository
 
 ### Next Development Step
 
-O seguinte paso decidirase ao iniciar a seguinte sesión, tomando como base o roadmap actual do proxecto.
+A seguinte tarefa será implementar:
 
-Antes de ampliar o esquema SQLite, calquera modificación estrutural deberá considerar:
+    SQLitePlantSpeciesRepository
 
-- A versión actual da base de datos.
-- A compatibilidade cos datos existentes.
-- A necesidade dunha migración.
-- A actualización correspondente de `onCreate`.
-- A actualización correspondente de `onUpgrade`.
+Comezarase polo catálogo de especies porque `GardenPlant` depende dunha especie existente mediante `speciesId`.
+
+Unha vez implementado e comprobado o acceso persistente ás especies, continuarase con:
+
+    SQLiteGardenPlantRepository
+
+Posteriormente integrarase o módulo de plantas coa capa ViewModel e coa interface.
 
 ## Deliverable
 
-Primeira infraestrutura de persistencia de MARTOLA completada e preparada para servir de base aos seguintes módulos da aplicación.
+Primeira infraestrutura relacional de MARTOLA completada e módulo de plantas preparado a nivel de dominio, base de datos e contratos Repository para iniciar as súas implementacións SQLite.
 
 ---
 

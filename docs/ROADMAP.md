@@ -73,6 +73,21 @@ O seu obxectivo é:
 - Integración de `SQLiteGardenRepository` coa arquitectura existente.
 - Substitución de `MemoryGardenRepository` por `SQLiteGardenRepository` na composición da aplicación.
 - Persistencia de hortas verificada entre reinicios.
+- Creación do modelo `GardenPlant`.
+- Creación do modelo `PlantSpecies`.
+- Conversión `GardenPlant ↔ Map<String, Object?>`.
+- Conversión `PlantSpecies ↔ Map<String, Object?>`.
+- Evolución do esquema SQLite á versión 2.
+- Creación da táboa `plant_species`.
+- Creación da táboa `garden_plants`.
+- Introdución de claves foráneas.
+- Activación da integridade referencial mediante `PRAGMA foreign_keys = ON`.
+- Implementación da primeira migración SQLite v1 → v2.
+- Verificación da conservación dos datos existentes durante a migración.
+- Verificación de `ON DELETE CASCADE`.
+- Verificación de `ON DELETE RESTRICT`.
+- Creación de `GardenPlantRepository`.
+- Creación de `PlantSpeciesRepository`.
 
 ## In Progress
 
@@ -80,7 +95,7 @@ O seu obxectivo é:
 - Primeira iteración da interface.
 - Design System.
 - Navegación entre pantallas.
-- Módulo de hortas.
+- Módulo de plantas.
 
 ## Pending
 
@@ -251,7 +266,15 @@ Integrar SQLite e establecer a capa básica de persistencia.
 - [x] Comprender o funcionamento das migracións acumulativas.
 - [x] Definir a estratexia para futuras migracións.
 - [x] Manter a base de datos na versión 1 mentres non exista un cambio real de esquema.
-- [ ] Implementar a primeira migración cando o esquema necesite evolucionar.
+- [x] Evolucionar o esquema á versión 2.
+- [x] Implementar a primeira migración SQLite v1 → v2.
+- [x] Conservar os datos existentes durante a migración.
+- [x] Crear a táboa `plant_species`.
+- [x] Crear a táboa `garden_plants`.
+- [x] Introducir claves foráneas.
+- [x] Activar a integridade referencial mediante `PRAGMA foreign_keys = ON`.
+- [x] Verificar `ON DELETE CASCADE`.
+- [x] Verificar `ON DELETE RESTRICT`.
 
 ## Deliverable
 
@@ -259,9 +282,9 @@ Base de datos local funcional e accesible mediante unha capa de persistencia org
 
 ## Current Progress
 
-A infraestrutura SQLite inicial está operativa.
+A infraestrutura SQLite está operativa e o esquema evolucionou á versión 2.
 
-O fluxo actual é:
+O fluxo de persistencia do módulo de hortas continúa sendo:
 
     GardensViewModel
           ↓
@@ -275,15 +298,30 @@ O fluxo actual é:
           ↓
     martola.db
 
-A primeira versión do esquema inclúe a táboa:
+A versión 2 do esquema inclúe actualmente:
 
     gardens
+    plant_species
+    garden_plants
 
-O CRUD completo desta entidade funciona sobre SQLite e comprobouse a persistencia dos datos entre reinicios da aplicación.
+A migración:
 
-`MemoryGardenRepository` mantense como implementación alternativa do contrato, pero a aplicación utiliza actualmente `SQLiteGardenRepository`.
+    v1 → v2
 
-Queda pendente introducir formalmente os conceptos de versionado e migracións antes de evolucionar o esquema da base de datos.
+foi implementada mediante `onUpgrade` e comprobouse que conserva os datos existentes.
+
+As relacións entre as novas táboas utilizan claves foráneas e a integridade referencial está activada mediante:
+
+    PRAGMA foreign_keys = ON
+
+Comprobouse o comportamento de:
+
+    ON DELETE CASCADE
+    ON DELETE RESTRICT
+
+mediante probas transaccionais.
+
+A infraestrutura queda preparada para futuras migracións acumulativas.
 
 **Estado:** completada.
 
@@ -356,22 +394,62 @@ Módulo de hortas completo con operacións de creación, consulta, edición e el
 
 ## Objective
 
-Implementar a xestión de plantas.
+Implementar a xestión de plantas e especies asociadas ás hortas.
 
 ## Tasks
 
-- [ ] Crear modelo de planta.
-- [ ] Listar plantas.
-- [ ] Crear planta.
-- [ ] Editar planta.
-- [ ] Eliminar planta.
-- [ ] Asociar planta cunha horta.
-- [ ] Asociar especie.
-- [ ] Mostrar detalle.
+### Domain Model
+
+- [x] Crear modelo `GardenPlant`.
+- [x] Crear modelo `PlantSpecies`.
+- [x] Relacionar `GardenPlant` cunha horta mediante `gardenId`.
+- [x] Relacionar `GardenPlant` cunha especie mediante `speciesId`.
+- [x] Implementar conversión `GardenPlant ↔ Map<String, Object?>`.
+- [x] Implementar conversión `PlantSpecies ↔ Map<String, Object?>`.
+- [x] Definir a conversión de `DateTime` mediante ISO 8601.
+
+### Database
+
+- [x] Crear táboa `plant_species`.
+- [x] Crear táboa `garden_plants`.
+- [x] Definir claves foráneas.
+- [x] Configurar `ON DELETE CASCADE` para a relación coa horta.
+- [x] Configurar `ON DELETE RESTRICT` para a relación coa especie.
+- [x] Integrar as novas táboas no esquema SQLite v2.
+- [x] Implementar a migración v1 → v2.
+- [x] Verificar a integridade referencial.
+
+### Repository
+
+- [x] Crear contrato `GardenPlantRepository`.
+- [x] Crear contrato `PlantSpeciesRepository`.
+- [ ] Crear `SQLitePlantSpeciesRepository`.
+- [ ] Crear `SQLiteGardenPlantRepository`.
+- [ ] Implementar CRUD SQLite de especies.
+- [ ] Implementar CRUD SQLite de plantas.
+
+### State Management
+
+- [ ] Crear ViewModel para plantas.
+- [ ] Cargar as plantas dunha horta.
+- [ ] Integrar o ViewModel con Provider.
+- [ ] Sincronizar as Views co estado das plantas.
+
+### Interface
+
+- [ ] Crear `PlantListScreen`.
+- [ ] Crear `PlantDetailsScreen`.
+- [ ] Crear formulario de nova planta.
+- [ ] Crear fluxo de edición.
+- [ ] Crear fluxo de eliminación.
+- [ ] Permitir seleccionar unha especie.
+- [ ] Mostrar as plantas asociadas a unha horta.
 
 ## Deliverable
 
-Módulo de plantas funcional e integrado co módulo de hortas.
+Módulo de plantas funcional, persistido mediante SQLite e integrado co módulo de hortas.
+
+**Estado:** en progreso. Modelo de dominio, esquema SQLite e contratos Repository preparados. Pendentes as implementacións SQLite, o ViewModel e a interface.
 
 ---
 
@@ -505,35 +583,53 @@ Documentación final do TFC.
 
 # Current Development Milestone
 
-## Session 13 - Async Repository and SQLite Foundation
+## Session 14 - Plant Domain Model and SQLite Relationships
 
 **Estado:** completada.
 
 Completado:
 
-- Arquitectura Repository asíncrona.
-- Uso de `Future`, `async` e `await`.
-- Adaptación de `MemoryGardenRepository`.
-- Adaptación de `GardensViewModel` e das Views á asincronía.
-- Carga inicial mediante `loadGardens()`.
-- Configuración SQLite multiplataforma.
-- Implementación de `DatabaseService`.
-- Apertura de `martola.db`.
-- Creación do esquema SQLite v1.
-- Creación da táboa `gardens`.
-- Conversión `Garden ↔ Map<String, Object?>`.
-- Implementación de `SQLiteGardenRepository`.
-- CRUD persistente completo de hortas.
-- Integración de SQLite mediante inxección de dependencias.
-- Verificación da persistencia entre reinicios.
-- Introdución ao versionado do esquema SQLite.
-- Comprensión de `onCreate` e `onUpgrade`.
-- Introdución ás migracións acumulativas.
-- Revisión e limpeza final de `DatabaseService`.
+- Creación do modelo `GardenPlant`.
+- Creación do modelo `PlantSpecies`.
+- Definición da relación `Garden 1:N GardenPlant`.
+- Definición da relación `PlantSpecies 1:N GardenPlant`.
+- Conversión `GardenPlant ↔ Map<String, Object?>`.
+- Conversión `PlantSpecies ↔ Map<String, Object?>`.
+- Conversión de `DateTime` mediante ISO 8601.
+- Evolución do esquema SQLite da versión 1 á versión 2.
+- Creación da táboa `plant_species`.
+- Creación da táboa `garden_plants`.
+- Introdución de claves foráneas.
+- Activación de `PRAGMA foreign_keys = ON`.
+- Configuración de `ON DELETE CASCADE`.
+- Configuración de `ON DELETE RESTRICT`.
+- Primeira migración real mediante `onUpgrade`.
+- Verificación da conservación dos datos existentes.
+- Probas transaccionais de integridade referencial.
+- Verificación do comportamento `CASCADE`.
+- Verificación do comportamento `RESTRICT`.
+- Creación do contrato `GardenPlantRepository`.
+- Creación do contrato `PlantSpeciesRepository`.
 
-A base de datos permanece na versión 1.
+A base de datos atópase actualmente na:
 
-Non se implementou unha migración real porque aínda non existe ningún cambio de esquema que requira unha versión 2.
+    version: 2
+
+O esquema actual contén:
+
+    gardens
+    plant_species
+    garden_plants
+
+O seguinte paso será implementar:
+
+    SQLitePlantSpeciesRepository
+
+e posteriormente:
+
+    SQLiteGardenPlantRepository
+
+para proporcionar persistencia real ás novas entidades antes de introducir o ViewModel e as Views do módulo de plantas.
 
 ---
 

@@ -7286,3 +7286,801 @@ A separación:
     SQLite
 
 permite cambiar a implementación da persistencia mantendo desacopladas as capas superiores da aplicación.
+
+---
+
+---
+
+# Sesión 14 - Relacións, claves foráneas e primeira migración SQLite
+
+## Obxectivo
+
+Ampliar o modelo de datos de MARTOLA para introducir as primeiras entidades relacionadas coas plantas e aplicar na práctica o sistema de versionado e migracións SQLite estudado na sesión anterior.
+
+Durante esta sesión:
+
+- Creáronse os modelos `GardenPlant` e `PlantSpecies`.
+- Definíronse as relacións entre hortas, plantas e especies.
+- Ampliouse o esquema SQLite.
+- Introducíronse claves foráneas.
+- Implementouse a primeira migración real da base de datos.
+- Comprobouse a integridade referencial.
+- Definíronse os contratos Repository para plantas e especies.
+
+---
+
+## Separación entre planta e especie
+
+Unha especie vexetal e unha planta concreta representan conceptos diferentes.
+
+Por exemplo:
+
+    PlantSpecies
+        ↓
+    Tomate
+    Solanum lycopersicum
+
+representa información común á especie.
+
+En cambio:
+
+    GardenPlant
+        ↓
+    Tomateira concreta
+    pertencente a unha horta
+
+representa unha planta individual.
+
+Varias plantas poden pertencer á mesma especie:
+
+    PlantSpecies
+         1
+         │
+         │
+         N
+    GardenPlant
+
+Isto evita repetir en cada planta toda a información común da especie.
+
+---
+
+## Modelo `GardenPlant`
+
+Creouse o modelo:
+
+    GardenPlant
+
+cunha primeira implementación formada por:
+
+    id
+    gardenId
+    speciesId
+    customName
+    plantingDate
+
+O modelo mantén referencias tanto á horta como á especie:
+
+    GardenPlant
+       │
+       ├── gardenId
+       │      ↓
+       │    Garden
+       │
+       └── speciesId
+              ↓
+         PlantSpecies
+
+`id` é nullable porque unha planta pode existir no dominio antes de ser persistida.
+
+---
+
+## Modelo `PlantSpecies`
+
+Creouse:
+
+    PlantSpecies
+
+cunha primeira implementación mínima:
+
+    id
+    commonName
+    scientificName
+
+A responsabilidade deste modelo é representar a información compartida dunha especie vexetal.
+
+A primeira versión é deliberadamente pequena e poderá ampliarse posteriormente con información como:
+
+- Tipo de planta.
+- Necesidades de rega.
+- Exposición solar.
+- Tipo de solo.
+- Temperaturas recomendadas.
+- Notas.
+
+---
+
+## Relación entre Garden e GardenPlant
+
+Unha horta pode conter múltiples plantas:
+
+    Garden
+      1
+      │
+      │
+      N
+    GardenPlant
+
+Cada `GardenPlant`, pola contra, pertence a unha única horta.
+
+Por este motivo `GardenPlant` almacena:
+
+    gardenId
+
+en lugar de introducir unha colección de plantas directamente dentro de `Garden`.
+
+Isto mantén os modelos separados e evita cargar información innecesaria dentro dunha horta.
+
+---
+
+## Identificadores no dominio e en SQLite
+
+Os modelos continúan utilizando:
+
+    String?
+
+ou:
+
+    String
+
+para os identificadores.
+
+SQLite utiliza:
+
+    INTEGER
+
+para as claves primarias e foráneas.
+
+Esta diferenza non obriga a modificar os tipos utilizados polo dominio.
+
+A conversión pode realizarse na fronteira coa persistencia.
+
+Por exemplo, en `GardenPlant.toMap()`:
+
+    'garden_id': int.parse(gardenId),
+    'species_id': int.parse(speciesId),
+
+e ao recuperar os datos:
+
+    gardenId: map['garden_id'].toString(),
+    speciesId: map['species_id'].toString(),
+
+Conceptualmente:
+
+    Dominio
+    String
+      ↓
+    toMap()
+      ↓
+    int.parse()
+      ↓
+    SQLite INTEGER
+
+e:
+
+    SQLite INTEGER
+      ↓
+    fromMap()
+      ↓
+    toString()
+      ↓
+    Dominio String
+
+Isto permite manter o dominio menos acoplado á tecnoloxía concreta de persistencia.
+
+---
+
+## Conversión de DateTime
+
+`GardenPlant` utiliza:
+
+    DateTime plantingDate
+
+SQLite non dispón dun tipo `DateTime` equivalente ao utilizado por Dart.
+
+A data almacénase como texto utilizando:
+
+    plantingDate.toIso8601String()
+
+Fluxo:
+
+    DateTime
+       ↓
+    toIso8601String()
+       ↓
+    TEXT en SQLite
+
+Ao recuperar a planta:
+
+    DateTime.parse(
+      map['planting_date'] as String,
+    )
+
+Fluxo inverso:
+
+    TEXT
+       ↓
+    DateTime.parse()
+       ↓
+    DateTime
+
+---
+
+## GardenPlant.toMap()
+
+A conversión utilizada é:
+
+    Map<String, Object?> toMap() {
+      return {
+        'garden_id': int.parse(gardenId),
+        'species_id': int.parse(speciesId),
+        'custom_name': customName,
+        'planting_date': plantingDate.toIso8601String(),
+      };
+    }
+
+O `id` non se inclúe porque SQLite será responsable de xeralo mediante `AUTOINCREMENT`.
+
+---
+
+## GardenPlant.fromMap()
+
+A conversión inversa permite transformar unha fila SQLite nun obxecto do dominio:
+
+    factory GardenPlant.fromMap(
+      Map<String, Object?> map,
+    ) {
+      return GardenPlant(
+        id: map['id'].toString(),
+        gardenId: map['garden_id'].toString(),
+        speciesId: map['species_id'].toString(),
+        customName: map['custom_name'] as String,
+        plantingDate: DateTime.parse(
+          map['planting_date'] as String,
+        ),
+      );
+    }
+
+Deste xeito o resto da aplicación traballa con `GardenPlant` e non directamente con mapas SQLite.
+
+---
+
+## PlantSpecies e SQLite
+
+`PlantSpecies` utiliza o mesmo patrón:
+
+    PlantSpecies
+         ↓
+       toMap()
+         ↓
+    Map<String, Object?>
+         ↓
+       SQLite
+
+e:
+
+    SQLite
+       ↓
+    Map<String, Object?>
+       ↓
+    fromMap()
+       ↓
+    PlantSpecies
+
+Isto mantén a conversión entre dominio e persistencia encapsulada no modelo.
+
+---
+
+## Táboa `plant_species`
+
+A versión 2 incorpora:
+
+    CREATE TABLE plant_species (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      common_name TEXT NOT NULL,
+      scientific_name TEXT NOT NULL
+    )
+
+Esta táboa representa o catálogo de especies.
+
+Unha mesma fila de `plant_species` pode ser referenciada por múltiples plantas.
+
+---
+
+## Táboa `garden_plants`
+
+Tamén se incorpora:
+
+    CREATE TABLE garden_plants (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      garden_id INTEGER NOT NULL,
+      species_id INTEGER NOT NULL,
+      custom_name TEXT NOT NULL,
+      planting_date TEXT NOT NULL,
+
+      FOREIGN KEY (garden_id)
+        REFERENCES gardens(id)
+        ON DELETE CASCADE,
+
+      FOREIGN KEY (species_id)
+        REFERENCES plant_species(id)
+        ON DELETE RESTRICT
+    )
+
+Esta é a primeira táboa de MARTOLA que introduce relacións mediante claves foráneas.
+
+---
+
+## Clave foránea
+
+Unha clave foránea permite establecer unha relación entre filas de diferentes táboas.
+
+Por exemplo:
+
+    garden_plants.garden_id
+             ↓
+         gardens.id
+
+garante que o identificador da horta almacenado nunha planta corresponda cunha horta existente.
+
+Do mesmo xeito:
+
+    garden_plants.species_id
+             ↓
+       plant_species.id
+
+relaciona unha planta concreta coa súa especie.
+
+---
+
+## Integridade referencial
+
+A integridade referencial busca evitar relacións inconsistentes entre os datos.
+
+Por exemplo, non debería existir:
+
+    GardenPlant
+        ↓
+    garden_id = 25
+
+se non existe:
+
+    Garden
+        ↓
+    id = 25
+
+As claves foráneas permiten que SQLite axude a garantir estas regras.
+
+---
+
+## Activación das foreign keys en SQLite
+
+En SQLite a comprobación de claves foráneas debe activarse explicitamente para a conexión.
+
+Configurouse en `DatabaseService`:
+
+    onConfigure: (db) async {
+      await db.execute(
+        'PRAGMA foreign_keys = ON',
+      );
+    }
+
+`onConfigure` execútase ao configurar a conexión coa base de datos.
+
+A activación foi comprobada mediante:
+
+    PRAGMA foreign_keys
+
+obtendo:
+
+    foreign_keys: 1
+
+Isto confirma que as restricións están activas.
+
+---
+
+## ON DELETE CASCADE
+
+A relación entre `Garden` e `GardenPlant` utiliza:
+
+    ON DELETE CASCADE
+
+Conceptualmente:
+
+    eliminar Garden
+          ↓
+    existen GardenPlant asociadas
+          ↓
+    SQLite elimínaas automaticamente
+
+Isto ten sentido porque unha planta rexistrada dentro dunha horta non debe quedar almacenada sen a horta á que pertence.
+
+Realizouse unha proba transaccional:
+
+    Plantas antes de eliminar a horta: 1
+    Plantas despois de eliminar a horta: 0
+
+Polo tanto comprobouse que `CASCADE` funciona correctamente.
+
+---
+
+## ON DELETE RESTRICT
+
+A relación entre `PlantSpecies` e `GardenPlant` utiliza:
+
+    ON DELETE RESTRICT
+
+Conceptualmente:
+
+    intentar eliminar PlantSpecies
+              ↓
+    existen GardenPlant que a utilizan
+              ↓
+    SQLite bloquea a eliminación
+
+A especie representa información compartida e non debe desaparecer mentres existan plantas que dependan dela.
+
+A proba realizada confirmou:
+
+    SQLite impediu eliminar a especie en uso
+    A especie segue existindo
+
+Polo tanto `RESTRICT` funciona correctamente.
+
+---
+
+## Probas mediante transacción e rollback
+
+As probas de integridade referencial realizáronse dentro dunha transacción.
+
+Creáronse datos temporais:
+
+    especie de proba
+          ↓
+    horta de proba
+          ↓
+    planta de proba
+
+e posteriormente comprobáronse as restricións.
+
+Ao final provocouse un rollback intencionado.
+
+Conceptualmente:
+
+    BEGIN TRANSACTION
+          ↓
+    crear datos temporais
+          ↓
+    realizar proba
+          ↓
+       excepción
+          ↓
+       ROLLBACK
+          ↓
+    estado anterior restaurado
+
+Isto permitiu probar o comportamento real de SQLite sen deixar datos de proba permanentes.
+
+---
+
+## Orde de creación das táboas
+
+As táboas independentes deben existir antes de crear unha táboa que as referencie mediante claves foráneas.
+
+Na versión actual:
+
+    gardens
+       │
+       ├──────────┐
+       │          │
+       ↓          ↓
+    garden_plants ← plant_species
+
+Por claridade, `onCreate` crea:
+
+    1. gardens
+    2. plant_species
+    3. garden_plants
+
+`garden_plants` créase despois das táboas ás que fan referencia as súas claves foráneas.
+
+---
+
+## Primeira migración real de MARTOLA
+
+A base de datos evolucionou de:
+
+    version: 1
+
+a:
+
+    version: 2
+
+A versión 1 contiña:
+
+    gardens
+
+A versión 2 incorpora:
+
+    gardens
+    plant_species
+    garden_plants
+
+Esta é a primeira aplicación práctica do sistema de migracións estudado na sesión 13.
+
+---
+
+## onCreate e onUpgrade
+
+`onCreate` e `onUpgrade` resolven situacións diferentes.
+
+### Instalación nova
+
+Se a base de datos non existe:
+
+    openDatabase()
+         ↓
+      onCreate
+         ↓
+    crear directamente
+    esquema v2
+
+Créanse:
+
+    gardens
+    plant_species
+    garden_plants
+
+Non é necesario crear primeiro a versión 1 e migrala posteriormente.
+
+### Base de datos existente
+
+Se existe unha base de datos v1:
+
+    Base de datos v1
+          ↓
+    aplicación solicita v2
+          ↓
+       onUpgrade
+          ↓
+    oldVersion < 2
+          ↓
+    crear novas táboas
+          ↓
+    Base de datos v2
+
+Os datos existentes de `gardens` consérvanse.
+
+---
+
+## Migración acumulativa
+
+A primeira migración utiliza conceptualmente:
+
+    if (oldVersion < 2) {
+      // cambios introducidos na versión 2
+    }
+
+No futuro poderemos ter:
+
+    if (oldVersion < 2) {
+      // cambios v2
+    }
+
+    if (oldVersion < 3) {
+      // cambios v3
+    }
+
+    if (oldVersion < 4) {
+      // cambios v4
+    }
+
+Por exemplo, unha base de datos v1 que necesitase chegar directamente á v4 executaría:
+
+    oldVersion < 2
+    oldVersion < 3
+    oldVersion < 4
+
+Isto permite aplicar sucesivamente todas as transformacións necesarias.
+
+---
+
+## Migración v1 → v2 comprobada
+
+A migración executouse sobre a base de datos existente.
+
+Comprobouse que:
+
+- A aplicación arrinca correctamente.
+- Os datos anteriores de `gardens` permanecen almacenados.
+- Existe `plant_species`.
+- Existe `garden_plants`.
+- As claves foráneas están activadas.
+- `ON DELETE CASCADE` funciona.
+- `ON DELETE RESTRICT` funciona.
+
+Polo tanto, a primeira migración real de MARTOLA queda validada.
+
+---
+
+## GardenPlantRepository
+
+Definiuse un contrato independente para as plantas concretas dunha horta:
+
+    GardenPlantRepository
+
+A operación principal de colección é:
+
+    Future<List<GardenPlant>> getPlantsByGardenId(
+      String gardenId,
+    );
+
+En lugar de recuperar todas as plantas da aplicación, a consulta está contextualizada pola horta.
+
+Isto corresponde ao dominio:
+
+    Garden
+      1
+      │
+      N
+    GardenPlant
+
+O contrato inclúe:
+
+    getPlantsByGardenId()
+    addPlant()
+    getPlantById()
+    updatePlant()
+    removePlant()
+
+---
+
+## PlantSpeciesRepository
+
+O catálogo de especies ten unha responsabilidade diferente das plantas concretas.
+
+Por este motivo definiuse outro contrato:
+
+    PlantSpeciesRepository
+
+en lugar de introducir as operacións de especies dentro de `GardenPlantRepository`.
+
+O contrato inclúe:
+
+    getSpecies()
+    addSpecies()
+    getSpeciesById()
+    updateSpecies()
+    removeSpecies()
+
+Isto aplica novamente o principio de responsabilidade única:
+
+    GardenPlantRepository
+          ↓
+    plantas concretas dunha horta
+
+    PlantSpeciesRepository
+          ↓
+    catálogo de especies
+
+---
+
+## Un DatabaseService compartido
+
+Os diferentes Repositories SQLite non necesitan crear ou abrir bases de datos independentes.
+
+Todos poden utilizar a mesma infraestrutura:
+
+    SQLiteGardenRepository ───────────┐
+                                     │
+    SQLiteGardenPlantRepository ─────┼──→ DatabaseService
+                                     │          ↓
+    SQLitePlantSpeciesRepository ────┘        SQLite
+
+`DatabaseService` mantén a responsabilidade sobre a infraestrutura.
+
+Cada Repository mantén a responsabilidade sobre as operacións da súa entidade.
+
+---
+
+## Estado ao finalizar a sesión
+
+Ao finalizar a sesión 14:
+
+- `Garden` continúa persistido mediante `SQLiteGardenRepository`.
+- A base de datos está na versión 2.
+- A migración v1 → v2 está implementada e comprobada.
+- Os datos existentes consérvanse durante a migración.
+- `plant_species` está creada.
+- `garden_plants` está creada.
+- As claves foráneas están activadas.
+- `ON DELETE CASCADE` está comprobado.
+- `ON DELETE RESTRICT` está comprobado.
+- Existe o modelo `GardenPlant`.
+- Existe o modelo `PlantSpecies`.
+- Existe `GardenPlantRepository`.
+- Existe `PlantSpeciesRepository`.
+- As implementacións SQLite dos novos Repositories aínda están pendentes.
+
+O seguinte paso será iniciar:
+
+    SQLitePlantSpeciesRepository
+
+e posteriormente:
+
+    SQLiteGardenPlantRepository
+
+---
+
+## Conceptos clave da sesión
+
+- Relación 1:N.
+- Relación N:1.
+- Separación entre entidade concreta e información compartida.
+- `GardenPlant`.
+- `PlantSpecies`.
+- Claves primarias.
+- Claves foráneas.
+- Integridade referencial.
+- `FOREIGN KEY`.
+- `REFERENCES`.
+- `ON DELETE CASCADE`.
+- `ON DELETE RESTRICT`.
+- `PRAGMA foreign_keys = ON`.
+- `onConfigure`.
+- Conversión `String ↔ INTEGER` para identificadores.
+- `int.parse()`.
+- `toString()`.
+- `DateTime`.
+- ISO 8601.
+- `toIso8601String()`.
+- `DateTime.parse()`.
+- Relación entre modelos e táboas.
+- Versionado SQLite.
+- Primeira migración real.
+- Migración v1 → v2.
+- `onCreate`.
+- `onUpgrade`.
+- Migracións acumulativas.
+- Conservación de datos durante unha migración.
+- Transacción.
+- Rollback.
+- Probas de integridade referencial.
+- Separación de responsabilidades entre Repositories.
+- `GardenPlantRepository`.
+- `PlantSpeciesRepository`.
+
+---
+
+## Regra principal da sesión
+
+Unha base de datos relacional non só almacena entidades independentes: tamén debe protexer as relacións entre elas.
+
+En MARTOLA:
+
+    Garden ────────┐
+       │            │
+       │            ↓
+       └──────→ GardenPlant
+                    ↑
+                    │
+              PlantSpecies
+
+O dominio define as relacións.
+
+Os Repositories separan as responsabilidades de acceso aos datos.
+
+`DatabaseService` proporciona a infraestrutura.
+
+SQLite garante parte da integridade mediante claves foráneas.
+
+Esta separación permite que o modelo de datos medre mantendo unha arquitectura comprensible e consistente.
