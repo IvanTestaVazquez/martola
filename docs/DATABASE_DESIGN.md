@@ -387,15 +387,49 @@ Serán incorporadas progresivamente cando se desenvolvan os módulos corresponde
 
 ## Database Evolution
 
-A estrutura da base de datos evolucionará mediante versións e migracións.
+A estrutura da base de datos evolucionará mediante versións e migracións cando sexa necesario modificar o esquema existente.
 
 Actualmente utilízase:
 
     version: 1
 
-O sistema de migracións aínda non foi desenvolvido.
+Esta versión representa o primeiro esquema físico implementado en MARTOLA.
 
-Este será tratado antes de realizar cambios no esquema que deban conservar datos existentes.
+A versión da base de datos é independente da versión da aplicación e só debe incrementarse cando exista un cambio no esquema que requira actualizar bases de datos xa existentes.
+
+Para unha instalación nova:
+
+    onCreate
+        ↓
+    crea directamente o esquema actual
+
+Para unha base de datos existente que necesite actualizarse:
+
+    versión antiga
+        ↓
+    onUpgrade
+        ↓
+    migracións necesarias
+        ↓
+    nova versión do esquema
+
+As migracións deberán conservar os datos existentes sempre que sexa posible.
+
+Para permitir actualizacións desde versións antigas poderán utilizarse migracións acumulativas baseadas en `oldVersion`.
+
+Por exemplo:
+
+    if (oldVersion < 2) {
+      // cambios introducidos na versión 2
+    }
+
+    if (oldVersion < 3) {
+      // cambios introducidos na versión 3
+    }
+
+Actualmente non existe unha migración implementada porque o esquema de MARTOLA continúa na versión 1.
+
+`onUpgrade` introducirase cando se realice o primeiro cambio real no esquema que requira unha versión 2.
 
 ---
 

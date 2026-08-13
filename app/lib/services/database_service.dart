@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
-import 'package:flutter/foundation.dart';
 
 class DatabaseService {
   Database? _database;
@@ -51,19 +50,5 @@ class DatabaseService {
     _database ??= await _openDatabase();
 
     return _database!;
-  }
-
-  Future<void> testDatabase() async {
-    final db = await database;
-
-    final result = await db.rawQuery(
-      '''
-      SELECT name
-      FROM sqlite_master
-      WHERE type = 'table'
-      '''
-    );
-
-    debugPrint(result.toString());
   }
 }

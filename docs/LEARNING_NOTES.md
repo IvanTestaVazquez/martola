@@ -7061,33 +7061,150 @@ O fluxo actual é:
 
 ---
 
-## Estado actual da sesión 13
+## Versionado e migracións SQLite
 
-A sesión 13 continúa en progreso.
+Unha base de datos instalada pode conter datos que deben conservarse cando a aplicación evoluciona.
+
+Modificar un `CREATE TABLE` dentro de `onCreate` non modifica unha base de datos que xa existe.
+
+`onCreate` execútase cando a base de datos se crea por primeira vez.
+
+Conceptualmente:
+
+    base de datos non existe
+              ↓
+          onCreate()
+              ↓
+      creación do esquema
+
+Cando unha nova versión da aplicación necesita modificar o esquema dunha base de datos existente, increméntase a versión da base de datos.
+
+Por exemplo:
+
+    version: 1
+
+podería evolucionar no futuro a:
+
+    version: 2
+
+SQLite pode entón executar:
+
+    onUpgrade
+
+para transformar o esquema existente.
+
+Conceptualmente:
+
+    Base de datos v1
+           ↓
+    aplicación solicita v2
+           ↓
+       onUpgrade()
+           ↓
+       migración
+           ↓
+    Base de datos v2
+
+`onUpgrade` recibe:
+
+    oldVersion
+    newVersion
+
+Isto permite determinar que cambios necesita unha base de datos concreta.
+
+Un patrón posible para migracións sucesivas é:
+
+    if (oldVersion < 2) {
+      // cambios introducidos na versión 2
+    }
+
+    if (oldVersion < 3) {
+      // cambios introducidos na versión 3
+    }
+
+    if (oldVersion < 4) {
+      // cambios introducidos na versión 4
+    }
+
+Deste xeito unha base de datos antiga pode aplicar todos os cambios necesarios.
+
+Por exemplo, se:
+
+    oldVersion = 2
+    newVersion = 4
+
+executaríanse:
+
+    oldVersion < 3
+    oldVersion < 4
+
+pero non:
+
+    oldVersion < 2
+
+O obxectivo final é que a base de datos alcance o esquema correspondente á versión máis recente conservando os datos existentes.
+
+A versión da base de datos non ten que coincidir coa versión da aplicación.
+
+Por exemplo:
+
+    MARTOLA 0.1 → Database v1
+    MARTOLA 0.2 → Database v1
+    MARTOLA 0.3 → Database v1
+    MARTOLA 0.4 → Database v2
+
+A versión da base de datos só debe incrementarse cando cambia o esquema que necesita ser migrado.
+
+Actualmente MARTOLA continúa utilizando:
+
+    version: 1
+
+porque aínda non se realizou ningún cambio no esquema inicial.
+
+Por este motivo non se engadiu aínda un `onUpgrade` real. Introducirase cando exista unha migración necesaria.
+
+---
+
+## Estado final da sesión 13
+
+A sesión 13 queda completada.
+
+Durante esta sesión realizouse a transición desde unha fonte de datos temporal en memoria cara á primeira persistencia SQLite real de MARTOLA.
 
 Completouse:
 
 - Conversión do contrato `GardenRepository` a operacións asíncronas.
 - Adaptación de `MemoryGardenRepository`.
 - Adaptación de `GardensViewModel`.
-- Uso de `await` nas Views.
+- Uso de `Future`, `async` e `await`.
+- Carga inicial mediante `loadGardens()`.
+- Adaptación das Views ás operacións asíncronas.
 - Creación de `DatabaseService`.
 - Configuración multiplataforma de SQLite.
 - Apertura real de `martola.db`.
+- Creación do esquema SQLite inicial.
 - Creación da táboa `gardens`.
 - Conversión `Garden ↔ Map<String, Object?>`.
 - Implementación de `SQLiteGardenRepository`.
-- CRUD SQLite completo.
-- Substitución de `MemoryGardenRepository` por `SQLiteGardenRepository`.
-- Verificación da persistencia entre reinicios da aplicación.
-
-Queda para continuar a sesión:
-
-- Revisión final de `DatabaseService`.
+- Implementación do CRUD SQLite completo.
+- Substitución de `MemoryGardenRepository` por `SQLiteGardenRepository` como implementación utilizada pola aplicación.
+- Verificación do CRUD completo.
+- Verificación da persistencia entre reinicios.
 - Introdución ao versionado da base de datos.
-- Introdución ao concepto de migracións.
-- Revisión final da arquitectura de persistencia.
-- Peche formal da sesión 13.
+- Comprensión da diferenza entre `onCreate` e `onUpgrade`.
+- Introdución ao concepto de migración.
+- Comprensión das migracións acumulativas.
+- Revisión e limpeza final de `DatabaseService`.
+
+A base de datos permanece actualmente na:
+
+    version: 1
+
+Non se implementou unha migración real porque o esquema actual aínda non necesita evolucionar.
+
+`onUpgrade` introducirase cando exista un cambio real de esquema que requira unha nova versión da base de datos.
+
+A infraestrutura actual queda preparada conceptualmente para esa evolución.
 
 ---
 
@@ -7139,6 +7256,16 @@ Queda para continuar a sesión:
 - CRUD persistente.
 - Inxección de dependencias desde `main()`.
 - Persistencia entre reinicios.
+- Versión do esquema dunha base de datos.
+- `version` en `OpenDatabaseOptions`.
+- `onCreate`.
+- `onUpgrade`.
+- `oldVersion`.
+- `newVersion`.
+- Migración dunha base de datos.
+- Migracións acumulativas.
+- Evolución do esquema conservando datos.
+- Diferenza entre versión da aplicación e versión da base de datos.
 
 ---
 

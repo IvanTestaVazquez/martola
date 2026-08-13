@@ -81,8 +81,6 @@ O seu obxectivo é:
 - Design System.
 - Navegación entre pantallas.
 - Módulo de hortas.
-- Revisión e peche da infraestrutura SQLite inicial.
-- Versionado e migracións da base de datos.
 
 ## Pending
 
@@ -248,7 +246,12 @@ Integrar SQLite e establecer a capa básica de persistencia.
 - [x] Integrar a persistencia SQLite coa capa Repository.
 - [x] Substituír `MemoryGardenRepository` por `SQLiteGardenRepository` na composición da aplicación.
 - [x] Verificar a persistencia entre reinicios da aplicación.
-- [ ] Introducir o sistema de versionado e migracións.
+- [x] Comprender o versionado do esquema SQLite.
+- [x] Comprender a función de `onCreate` e `onUpgrade`.
+- [x] Comprender o funcionamento das migracións acumulativas.
+- [x] Definir a estratexia para futuras migracións.
+- [x] Manter a base de datos na versión 1 mentres non exista un cambio real de esquema.
+- [ ] Implementar a primeira migración cando o esquema necesite evolucionar.
 
 ## Deliverable
 
@@ -282,7 +285,7 @@ O CRUD completo desta entidade funciona sobre SQLite e comprobouse a persistenci
 
 Queda pendente introducir formalmente os conceptos de versionado e migracións antes de evolucionar o esquema da base de datos.
 
-**Estado:** practicamente completada. Pendentes versionado e migracións.
+**Estado:** completada.
 
 ---
 
@@ -504,37 +507,33 @@ Documentación final do TFC.
 
 ## Session 13 - Async Repository and SQLite Foundation
 
-**Estado:** en progreso.
+**Estado:** completada.
 
 Completado:
 
 - Arquitectura Repository asíncrona.
-- `MemoryGardenRepository` adaptado ao contrato asíncrono.
-- Estado cargado en `GardensViewModel`.
-- `loadGardens()`.
-- CRUD adaptado a `await`.
-- Dependencias SQLite instaladas.
-- `DatabaseService`.
-- Selección da estratexia SQLite multiplataforma.
+- Uso de `Future`, `async` e `await`.
+- Adaptación de `MemoryGardenRepository`.
+- Adaptación de `GardensViewModel` e das Views á asincronía.
+- Carga inicial mediante `loadGardens()`.
+- Configuración SQLite multiplataforma.
+- Implementación de `DatabaseService`.
 - Apertura de `martola.db`.
-- Creación do esquema SQLite inicial.
+- Creación do esquema SQLite v1.
 - Creación da táboa `gardens`.
 - Conversión `Garden ↔ Map<String, Object?>`.
 - Implementación de `SQLiteGardenRepository`.
-- Implementación de `SELECT`, `INSERT`, `UPDATE` e `DELETE`.
-- Integración de `SQLiteGardenRepository` coa arquitectura.
-- Substitución de `MemoryGardenRepository` como implementación utilizada pola aplicación.
-- Verificación manual do CRUD SQLite.
+- CRUD persistente completo de hortas.
+- Integración de SQLite mediante inxección de dependencias.
 - Verificación da persistencia entre reinicios.
+- Introdución ao versionado do esquema SQLite.
+- Comprensión de `onCreate` e `onUpgrade`.
+- Introdución ás migracións acumulativas.
+- Revisión e limpeza final de `DatabaseService`.
 
-Seguinte paso:
+A base de datos permanece na versión 1.
 
-- Revisar a implementación final de `DatabaseService`.
-- Introducir o versionado da base de datos.
-- Comprender o concepto de migración.
-- Preparar a evolución futura do esquema.
-- Revisar a arquitectura de persistencia resultante.
-- Pechar formalmente a sesión 13.
+Non se implementou unha migración real porque aínda non existe ningún cambio de esquema que requira unha versión 2.
 
 ---
 

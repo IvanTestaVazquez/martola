@@ -463,6 +463,48 @@ Non debe conter lóxica específica dunha entidade concreta.
 
 Por exemplo, `DatabaseService` non debería decidir como se crea un `Garden` ou como se actualiza unha planta.
 
+### Database Versioning and Migrations
+
+`DatabaseService` é tamén o punto responsable da futura evolución do esquema SQLite.
+
+A base de datos utiliza actualmente:
+
+    version: 1
+
+`onCreate` define o esquema que debe crearse cando `martola.db` non existe.
+
+Un cambio futuro no esquema requirirá incrementar a versión da base de datos e introducir a migración correspondente mediante `onUpgrade`.
+
+Conceptualmente:
+
+    Base de datos existente
+            ↓
+    versión antiga < versión actual
+            ↓
+         onUpgrade
+            ↓
+        migracións
+            ↓
+    esquema actualizado
+
+As migracións deberán permitir evolucionar o esquema conservando os datos existentes.
+
+Para soportar actualizacións desde versións antigas, as migracións poderán aplicarse de maneira acumulativa:
+
+    if (oldVersion < 2) {
+      // migración introducida na versión 2
+    }
+
+    if (oldVersion < 3) {
+      // migración introducida na versión 3
+    }
+
+Deste modo unha base de datos v1 poderá actualizarse directamente a unha versión posterior aplicando todos os cambios de esquema necesarios.
+
+Actualmente non existe `onUpgrade` porque MARTOLA continúa utilizando a versión 1 do esquema e aínda non se produciu ningún cambio que requira unha migración.
+
+Non se incrementará a versión da base de datos ata que exista un cambio real no esquema.
+
 ### Relación cos Repositories
 
 Os Repositories utilizan `DatabaseService` para acceder á infraestrutura SQLite.

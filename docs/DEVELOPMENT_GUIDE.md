@@ -1666,7 +1666,7 @@ A implementación continúa sendo deliberadamente sinxela e en memoria, pero a a
 
 ### Status
 
-🟡 In Progress
+✅ Completed
 
 ### Obxectivos
 
@@ -1716,6 +1716,16 @@ A implementación continúa sendo deliberadamente sinxela e en memoria, pero a a
 - Número de filas afectadas por unha operación SQL.
 - Separación entre Repository e infraestrutura de base de datos.
 - Persistencia local real.
+- Versionado do esquema SQLite.
+- Diferenza entre versión da aplicación e versión da base de datos.
+- `version` en `OpenDatabaseOptions`.
+- `onCreate`.
+- `onUpgrade`.
+- `oldVersion`.
+- `newVersion`.
+- Migracións de base de datos.
+- Migracións acumulativas.
+- Evolución do esquema conservando os datos existentes.
 
 ### Evolución do GardenRepository
 
@@ -2068,41 +2078,130 @@ Tras integrar SQLite comprobouse que:
 
 A persistencia real do primeiro módulo de MARTOLA queda así verificada.
 
-### Estado actual
+### Versionado e migracións
 
-A primeira integración SQLite está completada e funcionando.
+A base de datos de MARTOLA utiliza actualmente:
 
-O módulo de hortas dispón agora dun CRUD persistente completo:
+    version: 1
 
-    CREATE
+Esta versión identifica o esquema actual da base de datos e é independente da versión da aplicación.
+
+`onCreate` execútase cando a base de datos aínda non existe e é responsable de crear o esquema inicial.
+
+Modificar posteriormente o código de `onCreate` non modifica automaticamente unha base de datos que xa existe.
+
+Cando no futuro sexa necesario modificar o esquema, incrementarase a versión da base de datos e utilizarase `onUpgrade` para realizar a migración correspondente.
+
+Conceptualmente:
+
+    Base de datos v1
+          ↓
+    aplicación solicita v2
+          ↓
+       onUpgrade
+          ↓
+       migración
+          ↓
+    Base de datos v2
+
+`onUpgrade` recibe:
+
+    oldVersion
+    newVersion
+
+Isto permite determinar que cambios necesita a base de datos existente.
+
+As migracións poderán organizarse de maneira acumulativa:
+
+    if (oldVersion < 2) {
+      // cambios introducidos na versión 2
+    }
+
+    if (oldVersion < 3) {
+      // cambios introducidos na versión 3
+    }
+
+Deste modo unha base de datos antiga pode actualizarse directamente a unha versión posterior aplicando todos os cambios que lle falten.
+
+Por exemplo:
+
+    oldVersion = 2
+    newVersion = 4
+
+executaría os cambios correspondentes a:
+
+    oldVersion < 3
+    oldVersion < 4
+
+pero non os correspondentes a:
+
+    oldVersion < 2
+
+Actualmente non se implementou `onUpgrade` porque MARTOLA continúa utilizando o esquema v1.
+
+Non se creará unha versión 2 artificialmente. A primeira migración implementarase cando exista un cambio real no esquema que deba aplicarse conservando os datos existentes.
+
+### Estado final
+
+A Session 13 queda completada.
+
+Durante esta sesión MARTOLA realizou a transición desde unha fonte de datos temporal en memoria cara á primeira persistencia SQLite real.
+
+O fluxo final é:
+
+    View
       ↓
-    SQLiteGardenRepository.addGarden()
-
-    READ
-      ↓
-    SQLiteGardenRepository.getGardens()
-
-    UPDATE
-      ↓
-    SQLiteGardenRepository.updateGarden()
-
-    DELETE
-      ↓
-    SQLiteGardenRepository.removeGarden()
-
-A aplicación recupera automaticamente as hortas almacenadas ao iniciar mediante:
-
     GardensViewModel
-          ↓
-    loadGardens()
-          ↓
+      ↓
     GardenRepository
-          ↓
+      ↑
     SQLiteGardenRepository
-          ↓
+      ↓
+    DatabaseService
+      ↓
+    SQLite
+      ↓
     martola.db
 
-A persistencia foi comprobada pechando e volvendo iniciar a aplicación.
+O módulo de hortas dispón dun CRUD persistente completo:
+
+    CREATE → addGarden()
+    READ   → getGardens()
+    READ   → getGardenById()
+    UPDATE → updateGarden()
+    DELETE → removeGarden()
+
+Comprobouse manualmente que:
+
+- A aplicación arranca correctamente.
+- `martola.db` se crea e abre correctamente.
+- A táboa `gardens` funciona.
+- As hortas poden crearse.
+- As hortas poden recuperarse.
+- As hortas poden editarse.
+- As hortas poden eliminarse.
+- Os identificadores son xerados por SQLite.
+- Os datos permanecen despois de pechar e volver abrir MARTOLA.
+
+A arquitectura Repository permitiu substituír:
+
+    MemoryGardenRepository
+
+por:
+
+    SQLiteGardenRepository
+
+sen modificar as Views nin acoplar `GardensViewModel` a SQLite.
+
+Tamén se comprenderon os mecanismos necesarios para a futura evolución do esquema:
+
+- Versionado.
+- `onCreate`.
+- `onUpgrade`.
+- Migracións.
+- Migracións acumulativas.
+
+A base de datos permanece correctamente na versión 1 ata que exista un cambio real de esquema.
 
 ### Seguinte paso
 

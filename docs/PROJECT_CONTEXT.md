@@ -457,9 +457,31 @@ Plan de aprendizaxe e desenvolvemento progresivo de Flutter e Dart aplicado a MA
 
 ## Current Phase
 
-Primeira infraestrutura de persistencia SQLite funcional e CRUD persistente do módulo de hortas completado.
+A primeira infraestrutura de persistencia SQLite está completada.
 
-A sesión actual céntrase no peche da infraestrutura inicial mediante a introdución do versionado e das migracións da base de datos.
+O módulo de hortas dispón actualmente dun CRUD persistente completo mediante:
+
+    View
+      ↓
+    GardensViewModel
+      ↓
+    GardenRepository
+      ↑
+    SQLiteGardenRepository
+      ↓
+    DatabaseService
+      ↓
+    SQLite
+
+A persistencia foi comprobada entre reinicios da aplicación.
+
+A base de datos utiliza actualmente o esquema:
+
+    version: 1
+
+Tamén se definiu a estratexia conceptual para a futura evolución do esquema mediante versionado e migracións.
+
+Non existe aínda unha migración real porque o esquema continúa na versión 1.
 
 ---
 
@@ -533,7 +555,11 @@ A sesión actual céntrase no peche da infraestrutura inicial mediante a introdu
 
 ✅ Persistencia SQLite desacoplada do ViewModel mediante `GardenRepository`
 
-⏳ Versionado e migracións da base de datos
+✅ Estratexia de versionado da base de datos comprendida e documentada
+
+✅ Estratexia para futuras migracións definida
+
+⬜ Primeira migración SQLite cando exista un cambio real de esquema
 
 ---
 
@@ -563,9 +589,13 @@ A sesión actual céntrase no peche da infraestrutura inicial mediante a introdu
 
 ✅ Persistencia verificada entre reinicios
 
-⏳ Versionado da base de datos
+✅ Versionado do esquema comprendido e documentado
 
-⏳ Migracións
+✅ Funcionamento de `onCreate` e `onUpgrade` comprendido
+
+✅ Estratexia de migracións acumulativas definida
+
+⬜ Primeira migración real cando o esquema evolucione a unha versión posterior
 
 ---
 
@@ -604,10 +634,10 @@ A sesión actual céntrase no peche da infraestrutura inicial mediante a introdu
 ✅ Creación de `DashboardScreen`
 
 ✅ Creación dos widgets principais do Dashboard:
-- `WeatherCard`
-- `GardenCard`
-- `TasksCard`
-- `QuickActionsCard`
+    - `WeatherCard`
+    - `GardenCard`
+    - `TasksCard`
+    - `QuickActionsCard`
 
 ✅ Navegación do Dashboard aos módulos de hortas e tarefas
 
@@ -770,7 +800,15 @@ A sesión actual céntrase no peche da infraestrutura inicial mediante a introdu
 
 ✅ Persistencia dos datos verificada entre reinicios
 
-⏳ Versionado e migracións SQLite
+✅ Introdución ao versionado SQLite
+
+✅ Introdución a `onCreate` e `onUpgrade`
+
+✅ Introdución ás migracións acumulativas
+
+✅ Revisión e limpeza final de `DatabaseService`
+
+⬜ Primeira migración SQLite cando exista un cambio real de esquema
 
 ⬜ Módulo funcional de plantas
 
@@ -838,33 +876,36 @@ A sesión actual céntrase no peche da infraestrutura inicial mediante a introdu
 
 ### Current Objective
 
-Completar e consolidar a primeira infraestrutura SQLite de MARTOLA mediante a introdución do versionado e das migracións da base de datos.
+Iniciar a seguinte fase de desenvolvemento de MARTOLA partindo dunha infraestrutura de persistencia SQLite xa funcional.
 
 ### Starting Point
 
-Actualmente o módulo de hortas permite:
+O módulo de hortas dispón actualmente de:
 
-- Crear hortas mediante formulario validado.
-- Listar as hortas persistidas.
-- Consultar o detalle dunha horta mediante o seu identificador.
-- Editar unha horta existente.
-- Eliminar unha horta con confirmación previa.
-- Manter sincronizadas as diferentes Views mediante Provider.
-- Mostrar dinamicamente no Dashboard o número real de hortas.
-- Delegar as operacións de datos desde `GardensViewModel` a `GardenRepository`.
-- Substituír implementacións concretas do Repository mediante inxección de dependencias.
-- Traballar cun contrato Repository asíncrono.
-- Cargar o estado inicial mediante `loadGardens()`.
-- Esperar polas operacións de persistencia mediante `await`.
-- Persistir as hortas mediante SQLite.
-- Recuperar os datos despois de reiniciar a aplicación.
+- Listado de hortas.
+- Creación mediante formulario validado.
+- Vista de detalle.
+- Edición.
+- Eliminación con confirmación.
+- Estado compartido mediante Provider.
+- `GardensViewModel`.
+- `GardenRepository` como abstracción.
+- `SQLiteGardenRepository` como implementación persistente.
+- `MemoryGardenRepository` como implementación alternativa.
+- `DatabaseService`.
+- Base de datos `martola.db`.
+- Táboa `gardens`.
+- CRUD SQLite completo.
+- Carga inicial mediante `loadGardens()`.
+- Persistencia entre reinicios.
+- Estratexia definida para o futuro versionado e migracións.
 
-O fluxo actual é:
+A arquitectura actual é:
 
     View
       ↓
     GardensViewModel
-      ↓ async
+      ↓
     GardenRepository
       ↑
     SQLiteGardenRepository
@@ -872,39 +913,23 @@ O fluxo actual é:
     DatabaseService
       ↓
     SQLite
-      ↓
-    martola.db
 
-A persistencia básica do módulo de hortas está operativa.
+### Next Development Step
 
-A seguinte cuestión técnica é preparar a base de datos para poder evolucionar o seu esquema sen perder os datos existentes.
+O seguinte paso decidirase ao iniciar a seguinte sesión, tomando como base o roadmap actual do proxecto.
 
-### Implementation Tasks
+Antes de ampliar o esquema SQLite, calquera modificación estrutural deberá considerar:
 
-- [x] Comprender `Future`, `async` e `await`.
-- [x] Adaptar `GardenRepository` ao modelo asíncrono.
-- [x] Adaptar `MemoryGardenRepository`.
-- [x] Preparar `GardensViewModel` para unha fonte asíncrona.
-- [x] Implementar `loadGardens()`.
-- [x] Configurar as dependencias necesarias para SQLite.
-- [x] Crear `DatabaseService`.
-- [x] Abrir `martola.db`.
-- [x] Crear o esquema inicial da base de datos.
-- [x] Crear `SQLiteGardenRepository`.
-- [x] Implementar o CRUD SQLite das hortas.
-- [x] Recuperar as hortas persistidas ao iniciar a aplicación.
-- [x] Substituír os identificadores temporais polos identificadores SQLite.
-- [x] Inxectar `SQLiteGardenRepository` desde `main.dart`.
-- [x] Verificar que os datos sobreviven ao reinicio da aplicación.
-- [ ] Comprender o versionado da base de datos.
-- [ ] Comprender o proceso de migración.
-- [ ] Preparar a estrutura necesaria para futuras migracións.
-- [ ] Revisar a arquitectura final de persistencia.
-- [ ] Pechar a sesión 13.
+- A versión actual da base de datos.
+- A compatibilidade cos datos existentes.
+- A necesidade dunha migración.
+- A actualización correspondente de `onCreate`.
+- A actualización correspondente de `onUpgrade`.
 
 ## Deliverable
 
-Infraestrutura SQLite inicial consolidada, con CRUD persistente para o módulo de hortas e preparada conceptualmente para evolucionar o esquema mediante versións e migracións.
+Primeira infraestrutura de persistencia de MARTOLA completada e preparada para servir de base aos seguintes módulos da aplicación.
+
 ---
 
 # Future Improvements
