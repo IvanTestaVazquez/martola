@@ -52,14 +52,15 @@ class GardensViewModel extends ChangeNotifier {
       return;
     }
 
-    for(final currentGarden in _gardens){
-      if (currentGarden.id == gardenId) {
-        final index = _gardens.indexOf(currentGarden);
-        _gardens[index] = garden;
+    final index = _gardens.indexWhere(
+      (garden) => garden.id == gardenId,
+    );
 
-        break;
-      }
-    }       
+    if (index == -1) {
+      return;
+    }
+
+    _gardens[index] = garden;
 
     notifyListeners();
   }

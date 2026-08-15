@@ -1,11 +1,14 @@
-import 'package:app/repositories/garden_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'services/database_service.dart';
 import 'repositories/sqlite_garden_repository.dart';
+import 'repositories/sqlite_garden_plant_repository.dart';
+import 'repositories/sqlite_plant_species_repository.dart';
 
 import 'viewmodels/gardens_viewmodel.dart';
+import 'viewmodels/plant_species_viewmodel.dart';
+import 'viewmodels/plants_viewmodel.dart';
 
 import 'views/home/home_screen.dart';
 
@@ -16,10 +19,22 @@ void main() {
   final gardenRepository = SQLiteGardenRepository(
     databaseService: databaseService,
   );
+
+  final plantSpeciesRepository =
+      SQLitePlantSpeciesRepository(
+    databaseService: databaseService,
+  );
+
+  final gardenPlantRepository =
+      SQLiteGardenPlantRepository(
+    databaseService: databaseService,
+  );
   
   runApp(
     MartolaApp(
-      gardenRepository: gardenRepository,      
+      gardenRepository: gardenRepository,
+      plantSpeciesRepository: plantSpeciesRepository,
+      gardenPlantRepository: gardenPlantRepository,
     ),
   );
 }
@@ -28,16 +43,37 @@ class MartolaApp extends StatelessWidget {
   const MartolaApp({
     super.key,
     required this.gardenRepository,
+    required this.gardenPlantRepository,
+    required this.plantSpeciesRepository,
+    
     });
 
   final SQLiteGardenRepository gardenRepository;
+  final SQLitePlantSpeciesRepository plantSpeciesRepository;
+  final SQLiteGardenPlantRepository gardenPlantRepository;
+
   
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => GardensViewModel(
-        repository: gardenRepository,
-      )..loadGardens(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => GardensViewModel(
+          repository: gardenRepository,
+          )..loadGardens(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => PlantSpeciesViewModel(
+          plantSpeciesRepository: plantSpeciesRepository,
+          )..loadSpecies(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => PlantsViewModel(
+          gardenPlantRepository: gardenPlantRepository,
+          ),
+        ),
+      ]
+      ,
       child: MaterialApp(
         title: 'MARTOLA',
         debugShowCheckedModeBanner: false,

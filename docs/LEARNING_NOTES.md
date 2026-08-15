@@ -8084,3 +8084,1182 @@ Os Repositories separan as responsabilidades de acceso aos datos.
 SQLite garante parte da integridade mediante claves foráneas.
 
 Esta separación permite que o modelo de datos medre mantendo unha arquitectura comprensible e consistente.
+
+---
+
+# Sesión 15 - Repositories SQLite, ViewModels e CRUD persistente de plantas
+
+## Obxectivo
+
+Completar a primeira funcionalidade relacional de MARTOLA de extremo a extremo.
+
+Partiuse dos contratos e táboas creados na sesión anterior e implementáronse:
+
+- `SQLitePlantSpeciesRepository`.
+- `SQLiteGardenPlantRepository`.
+- `PlantSpeciesViewModel`.
+- `PlantsViewModel`.
+- Integración mediante `MultiProvider`.
+- Seed inicial do catálogo de especies.
+- Listado de plantas dunha horta.
+- Creación de plantas.
+- Detalle dunha planta.
+- Edición de plantas.
+- Eliminación de plantas.
+
+Ao finalizar a sesión, o módulo de plantas dispón dun CRUD completo e persistente.
+
+---
+
+## Reutilizar un patrón arquitectónico
+
+Na sesión anterior xa existía:
+
+```text
+GardenRepository
+        ↑
+SQLiteGardenRepository
+        ↓
+DatabaseService
+        ↓
+SQLite
+```
+
+Na sesión 15 aplicouse o mesmo patrón a novas entidades:
+
+```text
+PlantSpeciesRepository
+        ↑
+SQLitePlantSpeciesRepository
+        ↓
+DatabaseService
+        ↓
+SQLite
+```
+
+e:
+
+```text
+GardenPlantRepository
+        ↑
+SQLiteGardenPlantRepository
+        ↓
+DatabaseService
+        ↓
+SQLite
+```
+
+A idea importante non é copiar código, senón recoñecer unha estrutura coñecida e adaptala á responsabilidade da nova entidade.
+
+### Regra
+
+> Cando unha arquitectura xa resolve correctamente un tipo de problema, primeiro debemos comprobar se o novo problema encaixa nese mesmo patrón antes de inventar unha solución diferente.
+
+---
+
+## SQLitePlantSpeciesRepository
+
+`SQLitePlantSpeciesRepository` implementa o contrato:
+
+```text
+PlantSpeciesRepository
+```
+
+e utiliza `DatabaseService` para acceder a SQLite.
+
+As operacións implementadas son:
+
+```text
+getSpecies()
+addSpecies()
+getSpeciesById()
+updateSpecies()
+removeSpecies()
+```
+
+O Repository é responsable de traducir entre:
+
+```text
+SQLite
+  ↕
+Map<String, Object?>
+  ↕
+PlantSpecies
+```
+
+As Views e o ViewModel non necesitan coñecer os nomes das táboas nin as consultas SQLite.
+
+---
+
+## SQLiteGardenPlantRepository
+
+`SQLiteGardenPlantRepository` implementa:
+
+```text
+GardenPlantRepository
+```
+
+As operacións son:
+
+```text
+getPlantsByGardenId()
+addPlant()
+getPlantById()
+updatePlant()
+removePlant()
+```
+
+A consulta principal está contextualizada por horta:
+
+```dart
+getPlantsByGardenId(gardenId)
+```
+
+Isto representa directamente a relación:
+
+```text
+Garden
+  1
+  │
+  N
+GardenPlant
+```
+
+Non sempre é necesario cargar todas as entidades dunha táboa. A consulta debe responder á necesidade real do dominio e da interface.
+
+---
+
+## PlantSpeciesViewModel
+
+Creouse:
+
+```text
+PlantSpeciesViewModel
+```
+
+que mantén en memoria o catálogo de especies xa cargado.
+
+Estado interno:
+
+```dart
+final List<PlantSpecies> _species = [];
+```
+
+Exposición:
+
+```dart
+List<PlantSpecies> get species =>
+    List.unmodifiable(_species);
+```
+
+Isto conserva o principio aprendido con `GardensViewModel`:
+
+```text
+View
+  ↓ lectura
+ViewModel
+  ↓
+estado privado
+```
+
+As Views poden consultar o estado, pero non modificar directamente a colección.
+
+---
+
+## Consulta local mediante getSpeciesById()
+
+Unha vez cargadas as especies no ViewModel, non é necesario consultar SQLite cada vez que unha pantalla necesita mostrar o nome dunha especie.
+
+Pode utilizarse:
+
+```dart
+PlantSpecies? getSpeciesById(String id)
+```
+
+sobre a colección xa cargada.
+
+Fluxo:
+
+```text
+speciesId
+   ↓
+PlantSpeciesViewModel
+   ↓
+_species
+   ↓
+PlantSpecies
+```
+
+Isto permite resolver, por exemplo:
+
+```text
+GardenPlant.speciesId
+        ↓
+PlantSpecies.commonName
+```
+
+sen acoplar a View ao Repository ou á base de datos.
+
+---
+
+## indexWhere()
+
+`indexWhere()` permite buscar a posición do primeiro elemento dunha colección que cumpra unha condición.
+
+Exemplo conceptual:
+
+```dart
+final index = _species.indexWhere(
+  (species) => species.id == updatedSpecies.id,
+);
+```
+
+O resultado é:
+
+```text
+índice >= 0
+    ↓
+elemento atopado
+
+-1
+    ↓
+elemento non atopado
+```
+
+É especialmente útil cando necesitamos substituír un elemento concreto dunha lista.
+
+Exemplo:
+
+```dart
+_species[index] = updatedSpecies;
+```
+
+### Regra práctica
+
+- Se necesitamos o **elemento**, podemos buscalo polo seu ID.
+- Se necesitamos **substituílo dentro da lista**, necesitamos coñecer a súa posición.
+- `indexWhere()` resolve precisamente esa segunda necesidade.
+
+---
+
+## removeWhere()
+
+`removeWhere()` elimina dunha colección todos os elementos que cumpren unha condición.
+
+Exemplo:
+
+```dart
+_plants.removeWhere(
+  (plant) => plant.id == id,
+);
+```
+
+Neste caso a condición identifica a planta eliminada.
+
+Fluxo:
+
+```text
+Repository elimina en SQLite
+        ↓
+resultado correcto
+        ↓
+removeWhere()
+        ↓
+estado local actualizado
+        ↓
+notifyListeners()
+```
+
+---
+
+## Estado contextual
+
+`PlantsViewModel` introduce un concepto novo respecto a `GardensViewModel`.
+
+Non mantén simplemente todas as plantas da aplicación.
+
+Mantén as plantas da horta actualmente cargada:
+
+```dart
+String? _currentGardenId;
+final List<GardenPlant> _plants = [];
+```
+
+Ao executar:
+
+```dart
+loadPlants(gardenId)
+```
+
+o ViewModel:
+
+1. Garda `gardenId` en `_currentGardenId`.
+2. Consulta o Repository.
+3. Baleira `_plants`.
+4. Engade as plantas recuperadas.
+5. Notifica ás Views.
+
+Fluxo:
+
+```text
+Horta seleccionada
+        ↓
+gardenId
+        ↓
+PlantsViewModel
+        ↓
+_currentGardenId
+        ↓
+GardenPlantRepository
+        ↓
+plantas desa horta
+        ↓
+_plants
+```
+
+### Por que baleirar a colección?
+
+Se simplemente engadísemos os novos resultados:
+
+```dart
+_plants.addAll(...)
+```
+
+sen limpar previamente o estado, poderiamos mesturar plantas de diferentes hortas.
+
+Por iso:
+
+```text
+cambiar de contexto
+      ↓
+substituír o subconxunto cargado
+```
+
+e non:
+
+```text
+cambiar de contexto
+      ↓
+acumular datos anteriores
+```
+
+---
+
+## Estado global e estado contextual
+
+Nesta fase aparecen dous tipos de estado compartido.
+
+### Estado global do módulo
+
+Exemplo:
+
+```text
+PlantSpeciesViewModel
+```
+
+O catálogo de especies pode ser útil desde diferentes partes da aplicación.
+
+### Estado contextual
+
+Exemplo:
+
+```text
+PlantsViewModel
+```
+
+A colección visible depende da horta seleccionada.
+
+Isto permite distinguir:
+
+```text
+Estado compartido
+    ├── global
+    └── contextual
+```
+
+Compartido non significa necesariamente que todos os datos da aplicación deban estar cargados ao mesmo tempo.
+
+---
+
+## MultiProvider
+
+Ao existir varios `ChangeNotifier`, utilizouse:
+
+```dart
+MultiProvider
+```
+
+Estrutura conceptual:
+
+```text
+MultiProvider
+├── GardensViewModel
+├── PlantSpeciesViewModel
+└── PlantsViewModel
+    ↓
+MaterialApp
+    ↓
+resto da aplicación
+```
+
+`MultiProvider` permite declarar varios Providers sen crear unha árbore difícil de ler de Providers aniñados manualmente.
+
+Conceptualmente é equivalente a proporcionar varias dependencias por enriba da aplicación.
+
+---
+
+## Inxección de dependencias no punto de composición
+
+As dependencias créanse nun punto central.
+
+Exemplo conceptual:
+
+```text
+DatabaseService
+    ↓
+Repositories
+    ↓
+ViewModels
+    ↓
+Providers
+    ↓
+Views
+```
+
+Isto mantén claras as dependencias:
+
+```text
+View
+  ↓
+ViewModel
+  ↓
+Repository
+  ↓
+DatabaseService
+```
+
+Unha View non crea o seu propio Repository.
+
+Un ViewModel non crea a súa propia base de datos.
+
+As dependencias entréganse desde fóra.
+
+---
+
+## Carga inicial e carga contextual
+
+Non todos os ViewModels deben cargar os datos no mesmo momento.
+
+### GardensViewModel
+
+Pode cargar as hortas ao crear o Provider.
+
+### PlantSpeciesViewModel
+
+Pode cargar o catálogo de especies ao crear o Provider.
+
+### PlantsViewModel
+
+Non pode saber que plantas cargar ata coñecer unha horta.
+
+Por iso a carga realízase cando aparece ese contexto:
+
+```dart
+loadPlants(gardenId)
+```
+
+### Regra
+
+> Un dato debe cargarse cando xa existe a información necesaria para determinar que dato necesitamos.
+
+---
+
+## initState()
+
+`GardenDetailsScreen` converteuse en `StatefulWidget` para poder iniciar a carga asociada á horta.
+
+En:
+
+```dart
+initState()
+```
+
+execútase:
+
+```dart
+context.read<PlantsViewModel>()
+    .loadPlants(widget.gardenId);
+```
+
+`initState()` execútase unha vez cando se crea o `State`.
+
+É apropiado para iniciar traballo asociado á entrada nunha pantalla cando non queremos executalo en cada `build()`.
+
+### Por que non en build()?
+
+`build()` pode executarse moitas veces.
+
+Se unha carga se inicia indiscriminadamente dentro de `build()`, cada reconstrución podería volver solicitar os datos.
+
+---
+
+## widget dentro dun State
+
+Nun `StatefulWidget` existe unha separación entre:
+
+```text
+Widget
+  ↓ configuración
+State
+  ↓ estado e ciclo de vida
+```
+
+Desde o `State` podemos acceder á configuración recibida polo widget mediante:
+
+```dart
+widget
+```
+
+Por exemplo:
+
+```dart
+widget.gardenId
+```
+
+Isto permite utilizar en `initState()` os datos recibidos polo `StatefulWidget`.
+
+---
+
+## context.read(), watch() e select() nesta fase
+
+Os tres mecanismos estudados anteriormente aparecen agora nun fluxo real.
+
+### read
+
+Para executar unha acción sen subscribirse:
+
+```dart
+context.read<PlantsViewModel>()
+```
+
+Exemplo:
+
+```text
+cargar plantas
+crear planta
+editar planta
+eliminar planta
+```
+
+### watch
+
+Para reconstruír unha View cando cambia o estado:
+
+```dart
+context.watch<PlantsViewModel>()
+```
+
+Exemplo:
+
+```text
+PlantListScreen
+```
+
+### select
+
+Para observar só un valor concreto:
+
+```dart
+context.select<PlantsViewModel, int>(
+  (viewModel) => viewModel.plants.length,
+)
+```
+
+Pode empregarse cando unha pantalla só necesita, por exemplo, o número de plantas.
+
+---
+
+## DropdownButtonFormField
+
+Para seleccionar a especie dunha planta utilizouse:
+
+```dart
+DropdownButtonFormField<String>
+```
+
+Combina:
+
+```text
+Dropdown
++
+FormField
+```
+
+Polo tanto permite:
+
+- Mostrar unha lista de opcións.
+- Gardar o valor seleccionado.
+- Integrarse nun `Form`.
+- Aplicar validación.
+
+Cada opción representa unha especie, pero o valor almacenado é o seu identificador.
+
+Conceptualmente:
+
+```text
+Usuario ve
+"Tomate"
+
+Aplicación almacena
+speciesId
+```
+
+Isto permite mostrar información comprensible mantendo correctamente a relación entre entidades.
+
+---
+
+## Identificador fronte a texto visible
+
+Unha relación entre entidades non debe depender do texto que mostramos na interface.
+
+Gardamos:
+
+```text
+speciesId
+```
+
+e non:
+
+```text
+"Tomate"
+```
+
+A interface pode resolver posteriormente:
+
+```text
+speciesId
+   ↓
+PlantSpecies
+   ↓
+commonName
+```
+
+### Razón
+
+O nome visible pode cambiar.
+
+O identificador representa a identidade da entidade.
+
+---
+
+## showDatePicker()
+
+Para seleccionar a data de plantación utilizouse:
+
+```dart
+showDatePicker()
+```
+
+A función abre un selector de data e devolve un resultado asíncrono:
+
+```text
+Future<DateTime?>
+```
+
+Pode ocorrer:
+
+```text
+usuario selecciona unha data
+        ↓
+DateTime
+
+usuario cancela
+        ↓
+null
+```
+
+Por iso o resultado debe comprobarse antes de actualizar o estado.
+
+---
+
+## Estado local do formulario
+
+A selección dunha especie e dunha data son estado da propia pantalla de formulario.
+
+Exemplos:
+
+```dart
+String? _selectedSpeciesId;
+DateTime? _plantingDate;
+```
+
+Non todo dato relacionado cunha planta debe introducirse inmediatamente no ViewModel.
+
+Mentres o usuario está cubrindo o formulario, estes valores pertencen á interacción local da pantalla.
+
+Só ao gardar se constrúe ou actualiza a entidade.
+
+---
+
+## late final
+
+Na pantalla de edición, un `TextEditingController` necesita inicializarse utilizando datos de:
+
+```dart
+widget.plant
+```
+
+Eses datos non están dispoñibles no momento de inicializar directamente os campos do `State`.
+
+Por iso pode declararse:
+
+```dart
+late final TextEditingController _customNameController;
+```
+
+e inicializarse posteriormente en:
+
+```dart
+initState()
+```
+
+Exemplo:
+
+```dart
+_customNameController =
+    TextEditingController(
+      text: widget.plant.customName,
+    );
+```
+
+### Significado
+
+```text
+late
+↓
+o valor asignarase máis tarde
+
+final
+↓
+unha vez asignado non poderá substituírse por outra referencia
+```
+
+---
+
+## Formulario de creación fronte a formulario de edición
+
+Os dous formularios comparten moitos conceptos:
+
+```text
+Form
+TextEditingController
+DropdownButtonFormField
+showDatePicker
+validator
+```
+
+A diferenza principal é o estado inicial.
+
+### Crear
+
+```text
+campos inicialmente baleiros
+```
+
+### Editar
+
+```text
+campos inicializados desde a entidade existente
+```
+
+Por exemplo:
+
+```dart
+_selectedSpeciesId = widget.plant.speciesId;
+_plantingDate = widget.plant.plantingDate;
+```
+
+---
+
+## Resolución de relacións na interface
+
+`GardenPlant` contén:
+
+```text
+speciesId
+```
+
+pero a pantalla de detalle debe mostrar un nome comprensible.
+
+Fluxo:
+
+```text
+GardenPlant
+    ↓
+speciesId
+    ↓
+PlantSpeciesViewModel
+    ↓
+getSpeciesById()
+    ↓
+PlantSpecies
+    ↓
+commonName
+```
+
+A View coordina información xa dispoñible nos ViewModels.
+
+Non consulta directamente SQLite.
+
+---
+
+## Seed de datos
+
+O catálogo de especies necesita datos para poder utilizar o selector desde o primeiro momento.
+
+Engadiuse un seed inicial.
+
+Antes de inserir compróbase:
+
+```sql
+SELECT COUNT(*) AS count
+FROM plant_species
+```
+
+Se existen rexistros:
+
+```text
+count > 0
+↓
+non inserir
+```
+
+Se a táboa está baleira:
+
+```text
+count == 0
+↓
+inserir catálogo inicial
+```
+
+Isto evita duplicar os mesmos datos en cada arranque.
+
+---
+
+## Seed fronte a migración
+
+Son conceptos relacionados coa inicialización da base de datos, pero non son o mesmo.
+
+### Migración
+
+Transforma a estrutura ou os datos dunha versión existente para adaptalos a unha versión nova.
+
+```text
+v1
+↓
+onUpgrade
+↓
+v2
+```
+
+### Seed
+
+Introduce datos iniciais necesarios ou útiles cando aínda non existen.
+
+```text
+táboa baleira
+↓
+seed
+↓
+datos iniciais
+```
+
+Un seed debe deseñarse para non duplicar datos ao executarse de novo.
+
+---
+
+## CRUD persistente e sincronización do estado
+
+Agora unha operación non modifica unicamente unha lista en memoria.
+
+Exemplo de creación:
+
+```text
+View
+  ↓
+PlantsViewModel.addPlant()
+  ↓
+GardenPlantRepository.addPlant()
+  ↓
+SQLite
+  ↓
+GardenPlant persistida
+  ↓
+_plants.add(...)
+  ↓
+notifyListeners()
+  ↓
+View actualizada
+```
+
+A orde é importante.
+
+Primeiro se realiza a operación na fonte persistente.
+
+Despois actualízase o estado observable co resultado.
+
+---
+
+## Actualización dunha entidade
+
+Para editar unha planta:
+
+```text
+EditPlantScreen
+      ↓
+PlantsViewModel.updatePlant()
+      ↓
+Repository.updatePlant()
+      ↓
+SQLite
+      ↓
+entidade actualizada
+      ↓
+indexWhere()
+      ↓
+substitución en _plants
+      ↓
+notifyListeners()
+```
+
+O modelo é inmutable.
+
+Non se modifica directamente o obxecto existente.
+
+Substitúese pola nova versión.
+
+---
+
+## Eliminación dunha entidade
+
+Para eliminar:
+
+```text
+PlantDetailsScreen
+      ↓
+confirmación
+      ↓
+PlantsViewModel.removePlant()
+      ↓
+Repository.removePlant()
+      ↓
+SQLite
+      ↓
+removeWhere()
+      ↓
+notifyListeners()
+```
+
+A confirmación pertence á interface.
+
+A eliminación dos datos pertence ao ViewModel e ao Repository segundo a responsabilidade de cada capa.
+
+---
+
+## Confirmación antes dunha acción destrutiva
+
+Eliminar datos é unha acción destrutiva.
+
+Antes de executala, a interface solicita confirmación.
+
+Conceptualmente:
+
+```text
+usuario pulsa Eliminar
+        ↓
+diálogo de confirmación
+    ↙           ↘
+cancelar      confirmar
+                 ↓
+             removePlant()
+```
+
+Isto evita que unha pulsación accidental elimine inmediatamente información persistente.
+
+---
+
+## notifyListeners() como final dunha modificación observable
+
+Unha modificación do estado interno non actualiza por si soa as Views.
+
+Despois de cambiar a colección:
+
+```dart
+notifyListeners();
+```
+
+comunica aos widgets subscritos que deben reconstruírse.
+
+Fluxo:
+
+```text
+estado cambia
+    ↓
+notifyListeners()
+    ↓
+watch/select
+    ↓
+rebuild
+```
+
+`notifyListeners()` non garda datos en SQLite.
+
+A súa responsabilidade é comunicar cambios do estado observable.
+
+---
+
+## Fluxo completo do módulo de plantas
+
+Ao finalizar a sesión:
+
+```text
+GardenDetailsScreen
+        ↓
+PlantListScreen
+    ├── AddPlantScreen
+    │       ↓
+    │   PlantsViewModel
+    │       ↓
+    │   Repository
+    │       ↓
+    │     SQLite
+    │
+    └── PlantDetailsScreen
+            ├── EditPlantScreen
+            │       ↓
+            │   PlantsViewModel
+            │       ↓
+            │   Repository
+            │       ↓
+            │     SQLite
+            │
+            └── eliminar
+                    ↓
+                PlantsViewModel
+                    ↓
+                Repository
+                    ↓
+                  SQLite
+```
+
+A interface non accede directamente á base de datos.
+
+---
+
+## Estado ao finalizar a sesión
+
+Ao finalizar a sesión 15:
+
+- `SQLitePlantSpeciesRepository` está implementado.
+- `SQLiteGardenPlantRepository` está implementado.
+- `PlantSpeciesViewModel` está implementado.
+- `PlantsViewModel` está implementado.
+- Os tres ViewModels están dispoñibles mediante `MultiProvider`.
+- O catálogo inicial de especies pode sementarse automaticamente.
+- As especies poden resolverse polo seu ID.
+- As plantas cárganse segundo a horta seleccionada.
+- Existe `PlantListScreen`.
+- Existe `AddPlantScreen`.
+- Existe `PlantDetailsScreen`.
+- Existe `EditPlantScreen`.
+- As plantas poden crearse.
+- As plantas poden consultarse.
+- As plantas poden editarse.
+- As plantas poden eliminarse.
+- Os datos permanecen en SQLite.
+- As Views reaccionan aos cambios mediante Provider.
+- O estado de plantas non mestura datos de diferentes hortas.
+
+O CRUD persistente do módulo de plantas queda completado.
+
+---
+
+## Conceptos clave da sesión
+
+- Reutilización de patróns arquitectónicos.
+- `SQLitePlantSpeciesRepository`.
+- `SQLiteGardenPlantRepository`.
+- `PlantSpeciesViewModel`.
+- `PlantsViewModel`.
+- Estado contextual.
+- `_currentGardenId`.
+- Subconxuntos de datos.
+- `indexWhere()`.
+- `removeWhere()`.
+- Consulta local sobre estado xa cargado.
+- `MultiProvider`.
+- Inxección de dependencias.
+- Carga inicial.
+- Carga contextual.
+- `initState()`.
+- `widget` dentro dun `State`.
+- `context.read()`.
+- `context.watch()`.
+- `context.select()`.
+- `DropdownButtonFormField`.
+- Identificadores como relación entre entidades.
+- `showDatePicker()`.
+- `Future<DateTime?>`.
+- Estado local dun formulario.
+- `late final`.
+- Formularios de creación e edición.
+- Seed de datos.
+- Diferenza entre seed e migración.
+- Sincronización entre persistencia e estado.
+- CRUD persistente.
+- Confirmación de accións destrutivas.
+- `notifyListeners()`.
+- Resolución de relacións na interface.
+
+---
+
+## Regra principal da sesión
+
+O estado da interface e a persistencia son responsabilidades diferentes, pero deben permanecer sincronizadas.
+
+En MARTOLA:
+
+```text
+View
+  ↓
+ViewModel
+  ↓
+Repository
+  ↓
+SQLite
+```
+
+e, cando a operación modifica datos:
+
+```text
+SQLite
+  ↓
+resultado
+  ↓
+estado do ViewModel
+  ↓
+notifyListeners()
+  ↓
+View
+```
+
+As relacións entre entidades mantéñense mediante identificadores.
+
+Os ViewModels proporcionan á interface o estado que necesita.
+
+Os Repositories ocultan os detalles de persistencia.
+
+`DatabaseService` mantén a infraestrutura común.
+
+Esta separación permite completar un CRUD relacional sen romper as responsabilidades definidas pola arquitectura.
+

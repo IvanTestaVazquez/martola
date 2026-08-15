@@ -13,7 +13,7 @@ Non pretende definir o deseño visual final da aplicación. O seu obxectivo é s
 - Organización da navegación
 - Identificación de widgets reutilizables
 
----
+**---**
 
 # General Layout Rules
 
@@ -23,7 +23,7 @@ Resolución base:
 
 390 x 844
 
----
+**---**
 
 ## Spacing System
 
@@ -35,7 +35,7 @@ Valores base:
 - LG = 24
 - XL = 32
 
----
+**---**
 
 ## Horizontal Padding
 
@@ -43,7 +43,7 @@ Padding estándar:
 
 16 px
 
----
+**---**
 
 ## Border Radius
 
@@ -51,7 +51,7 @@ Tarxetas e elementos principais:
 
 12 px
 
----
+**---**
 
 # Reusable Widgets
 
@@ -59,7 +59,7 @@ Os widgets reutilizables poden ser globais ou específicos dunha funcionalidade.
 
 Os widgets específicos dun módulo permanecerán dentro do directorio dese módulo mentres non exista unha necesidade real de reutilización global.
 
----
+**---**
 
 ## MartolaLogo
 
@@ -75,7 +75,7 @@ Representa o elemento visual de identidade de MARTOLA.
 
 ✅ Implementado
 
----
+**---**
 
 ## WeatherCard
 
@@ -99,7 +99,7 @@ Mostra un resumo da información meteorolóxica.
 
 A información será substituída posteriormente por datos procedentes do módulo meteorolóxico.
 
----
+**---**
 
 ## GardenCard
 
@@ -126,7 +126,7 @@ O número de hortas mostrado procede do estado compartido de `GardensViewModel`.
 
 `GardenCard` non accede directamente ao ViewModel e mantense desacoplado da xestión do estado.
 
----
+**---**
 
 ## TasksCard
 
@@ -147,7 +147,7 @@ Mostra un resumo das tarefas pendentes.
 
 ✅ Implementado con datos ficticios.
 
----
+**---**
 
 ## QuickActionsCard
 
@@ -170,7 +170,7 @@ Agrupa accesos directos ás accións máis frecuentes desde o Dashboard.
 
 As accións dependentes dunha horta concreta, como engadir unha planta, non se mostrarán neste widget global e estarán dispoñibles dentro do contexto da horta correspondente.
 
----
+**---**
 
 ## GardenListItem
 
@@ -202,7 +202,7 @@ final void Function(Garden) onTap;
 
 ✅ Implementado
 
----
+**---**
 
 ## PlantCard
 
@@ -224,7 +224,7 @@ Representará unha planta concreta.
 
 ⬜ Pendente
 
----
+**---**
 
 ## ActionCard
 
@@ -247,7 +247,7 @@ Tarxeta prevista para proporcionar acceso rápido ás funcionalidades dunha hort
 
 ⬜ Pendente
 
----
+**---**
 
 ## MainBottomNavigation
 
@@ -261,7 +261,7 @@ Posible barra principal de navegación para dispositivos móbiles.
 
 A navegación actual utiliza `Navigator` estándar entre pantallas.
 
----
+**---**
 
 # Screens
 
@@ -288,9 +288,9 @@ Pantalla inicial de entrada á aplicación.
 
 ```text
 HomeScreen
-    ↓
-  Entrar
-    ↓
+    ↓
+  Entrar
+    ↓
 DashboardScreen
 ```
 
@@ -298,7 +298,7 @@ DashboardScreen
 
 ✅ Implementada
 
----
+**---**
 
 ## DashboardScreen
 
@@ -325,14 +325,14 @@ Panel principal da aplicación e punto central de acceso aos diferentes módulos
 ```text
 DashboardScreen
 ├── GardenCard
-│      └── GardensScreen
+│      └── GardensScreen
 │
 ├── TasksCard
-│      └── TasksScreen
+│      └── TasksScreen
 │
 └── QuickActionsCard
-       ├── CreateGardenScreen
-       └── CreateTaskScreen
+       ├── CreateGardenScreen
+       └── CreateTaskScreen
 ```
 
 ### Estado
@@ -347,7 +347,7 @@ A información mostrada combina actualmente datos reais do estado da aplicación
 
 Os datos ficticios substituiranse progresivamente polos módulos funcionais correspondentes.
 
----
+**---**
 
 ## GardensScreen
 
@@ -385,13 +385,13 @@ Para navegar ao detalle utilízase a identidade da horta:
 
 ```text
 GardensScreen
-      ↓
+      ↓
 GardenListItem
-      ↓
+      ↓
 onTap(garden)
-      ↓
+      ↓
 garden.id
-      ↓
+      ↓
 GardenDetailsScreen
 ```
 
@@ -401,9 +401,9 @@ GardenDetailsScreen
 
 ✅ Funcional con estado compartido mediante Provider.
 
-⏳ Persistencia mediante SQLite pendente.
+✅ Persistencia mediante SQLite integrada.
 
----
+**---**
 
 ## GardenDetailsScreen
 
@@ -441,14 +441,14 @@ O fluxo é:
 
 ```text
 GardenDetailsScreen
-        ↓
-    gardenId
-        ↓
+        ↓
+    gardenId
+        ↓
 GardensViewModel
-        ↓
- getGardenById()
-        ↓
-   Garden actual
+        ↓
+ getGardenById()
+        ↓
+   Garden actual
 ```
 
 Deste xeito, se a horta é modificada, a pantalla pode reconstruírse mostrando a nova instancia almacenada no ViewModel.
@@ -468,11 +468,11 @@ Se o usuario confirma:
 
 ```text
 GardenDetailsScreen
-        ↓
+        ↓
 removeGarden(gardenId)
-        ↓
+        ↓
 GardensViewModel
-        ↓
+        ↓
 eliminación do estado
 ```
 
@@ -494,7 +494,7 @@ eliminación do estado
 
 ⏳ Funcionalidades específicas de plantas, meteoroloxía, evolución e deseño pendentes.
 
----
+**---**
 
 ## CreateGardenScreen
 
@@ -541,28 +541,29 @@ Cando os datos son válidos:
 
 ```dart
 context
-    .read<GardensViewModel>()
-    .addGarden(garden);
+    .read<GardensViewModel>()
+    .addGarden(garden);
 ```
 
-4. `GardensViewModel` asigna un identificador temporal á entidade.
-5. A nova horta incorpórase ao estado compartido.
-6. `notifyListeners()` informa ás Views subscritas.
-7. A pantalla péchase mediante `Navigator.pop()`.
+4. `GardensViewModel` delega a creación no `GardenRepository`.
+5. SQLite xera o identificador persistente.
+6. A entidade devolta polo Repository incorpórase ao estado compartido.
+7. `notifyListeners()` informa ás Views subscritas.
+8. A pantalla péchase mediante `Navigator.pop()`.
 
 O fluxo actual é:
 
 ```text
 CreateGardenScreen
-        ↓
-    Garden
-        ↓
+        ↓
+    Garden
+        ↓
 GardensViewModel
-        ↓
-   addGarden()
-        ↓
+        ↓
+   addGarden()
+        ↓
 estado compartido
-        ↓
+        ↓
 notifyListeners()
 ```
 
@@ -572,9 +573,9 @@ notifyListeners()
 
 ✅ Integrado coa xestión de estado mediante Provider.
 
-⏳ Persistencia mediante Repository e SQLite pendente.
+✅ Persistencia mediante Repository e SQLite integrada.
 
----
+**---**
 
 ## EditGardenScreen
 
@@ -602,11 +603,11 @@ Os `TextEditingController` inicialízanse en `initState()` utilizando os valores
 
 ```text
 Garden
-  ↓
+  ↓
 initState()
-  ↓
+  ↓
 TextEditingController
-  ↓
+  ↓
 formulario cuberto
 ```
 
@@ -629,13 +630,13 @@ Cando os datos son válidos:
 
 ```text
 EditGardenScreen
-       ↓
+       ↓
 updatedGarden
-       ↓
+       ↓
 GardensViewModel
-       ↓
+       ↓
 updateGarden()
-       ↓
+       ↓
 notifyListeners()
 ```
 
@@ -647,9 +648,9 @@ A actualización non modifica directamente a instancia existente porque o modelo
 
 ✅ Integrado con `GardensViewModel`.
 
-⏳ Persistencia dos cambios en SQLite pendente.
+✅ Persistencia dos cambios mediante Repository e SQLite integrada.
 
----
+**---**
 
 ## TasksScreen
 
@@ -663,7 +664,7 @@ Mostrar as tarefas pendentes do usuario.
 
 A implementación funcional realizarase nunha fase posterior.
 
----
+**---**
 
 ## CreateTaskScreen
 
@@ -677,7 +678,7 @@ Permitir crear unha nova tarefa.
 
 O formulario funcional implementarase nunha fase posterior.
 
----
+**---**
 
 ## PlantDetailScreen
 
@@ -702,7 +703,7 @@ Seguemento dunha planta.
 
 ⬜ Pendente
 
----
+**---**
 
 ## LayoutDesignerScreen
 
@@ -727,7 +728,7 @@ Representación visual da horta.
 
 ⬜ Pendente
 
----
+**---**
 
 # Current UI Flow
 
@@ -735,39 +736,39 @@ O fluxo actualmente implementado é:
 
 ```text
 HomeScreen
-    ↓
+    ↓
 DashboardScreen
-    │
-    ├── GardensScreen
-    │       ↓
-    │  GardenListItem
-    │       ↓
-    │  GardenDetailsScreen
-    │       ├── EditGardenScreen
-    │       └── Eliminar horta
-    │
-    ├── TasksScreen
-    │
-    ├── CreateGardenScreen
-    │       ↓
-    │  GardensViewModel
-    │       ↓
-    │  estado compartido
-    │
-    └── CreateTaskScreen
+    │
+    ├── GardensScreen
+    │       ↓
+    │  GardenListItem
+    │       ↓
+    │  GardenDetailsScreen
+    │       ├── EditGardenScreen
+    │       └── Eliminar horta
+    │
+    ├── TasksScreen
+    │
+    ├── CreateGardenScreen
+    │       ↓
+    │  GardensViewModel
+    │       ↓
+    │  estado compartido
+    │
+    └── CreateTaskScreen
 ```
 
 O módulo de hortas utiliza actualmente Provider para compartir o estado entre as diferentes pantallas.
 
 ```text
 DashboardScreen ────────┐
-                        │
+                        │
 GardensScreen ──────────┼──→ GardensViewModel
-                        │
+                        │
 GardenDetailsScreen ────┤
-                        │
+                        │
 CreateGardenScreen ─────┤
-                        │
+                        │
 EditGardenScreen ───────┘
 ```
 
@@ -777,7 +778,7 @@ Provider encárgase da sincronización do estado; Navigator encárgase do moveme
 
 A persistencia dos datos continúa pendente.
 
----
+**---**
 
 # Desktop Adaptation
 
@@ -788,7 +789,7 @@ A navegación inferior substituirase por:
 - NavigationRail
 - Sidebar
 
----
+**---**
 
 ## Layout
 
@@ -803,7 +804,7 @@ Especialmente en:
 - GardenDetailsScreen
 - LayoutDesignerScreen
 
----
+**---**
 
 # Future Screens
 
@@ -815,11 +816,13 @@ Pantallas previstas para futuras versións:
 - NotificationsScreen
 - StatisticsScreen
 
----
+**---**
 
 # Notes
 
-A implementación inicial priorizará funcionalidade fronte a deseño visual.
+A implementación actual continúa priorizando funcionalidade fronte a deseño visual.
+
+Os módulos de hortas e plantas dispoñen xa dunha primeira interface funcional, polo que os refinamentos visuais poderán realizarse posteriormente sen alterar o fluxo básico de navegación.
 
 O deseño definitivo definirase posteriormente mediante o Design System e os mockups de Figma.
 

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../viewmodels/gardens_viewmodel.dart';
-import '../../models/garden.dart';
-
+import '../plants/plant_list_screen.dart';
 import 'edit_garden_screen.dart';
 
-class GardenDetailsScreen extends StatelessWidget {
+import '../../viewmodels/gardens_viewmodel.dart';
+import '../../viewmodels/plants_viewmodel.dart';
+import '../../models/garden.dart';
+import '../../models/garden_plant.dart';
+
+class GardenDetailsScreen extends StatefulWidget {
  
   const GardenDetailsScreen({
     super.key,
@@ -15,11 +18,31 @@ class GardenDetailsScreen extends StatelessWidget {
 
   final String gardenId;
 
+   @override
+  State<GardenDetailsScreen> createState(){
+    return _GardenDetailsScreenState();
+  }  
+}
+
+class _GardenDetailsScreenState  extends State<GardenDetailsScreen> {
+
+  @override
+  void initState(){
+    super.initState();
+
+    context.read<PlantsViewModel>().loadPlants(widget.gardenId);
+  }
+
+
   @override
   Widget build(BuildContext context) {
 
     final garden = context.select<GardensViewModel, Garden?>(
-      (viewModel) => viewModel.getGardenById(gardenId),);
+      (viewModel) => viewModel.getGardenById(widget.gardenId),);
+
+    final plants = context.select<PlantsViewModel, List<GardenPlant>>(
+      (viewModel) => viewModel.plants,
+    );
 
     if (garden == null) {
       return const Scaffold(
@@ -42,6 +65,10 @@ class GardenDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              'Plantas: ${plants.length}',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
             Text(
               'Localización: ${garden.location}',
               style: Theme.of(context).textTheme.bodyLarge,
@@ -81,7 +108,7 @@ class GardenDetailsScreen extends StatelessWidget {
                         ),
                         FilledButton(
                           onPressed: () async {                            
-                            await context.read<GardensViewModel>().removeGarden(gardenId);
+                            await context.read<GardensViewModel>().removeGarden(widget.gardenId);
                             
                             if(!context.mounted || !dialogContext.mounted) return;
 
@@ -96,9 +123,21 @@ class GardenDetailsScreen extends StatelessWidget {
                 );
               }, 
               child: const Text('Eliminar horta')),
+               const SizedBox(height: 16),
+            FilledButton(
+              onPressed: (){
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => PlantListScreen(gardenId: widget.gardenId,),
+                    )
+                );
+              }, 
+              child: const Text('Lista de plantas')
+            ),
           ],
         )
       )
     );
   }
+  
 }

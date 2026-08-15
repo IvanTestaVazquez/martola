@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
@@ -105,8 +104,10 @@ class DatabaseService {
             );
           }
         },
-      )
+      ),
     );
+
+    await _seedPlantSpecies(database);
 
     return database;
   }
@@ -116,5 +117,65 @@ class DatabaseService {
 
     return _database!;
   }
+
+  Future<void> _seedPlantSpecies(Database db) async {
+  final result = await db.rawQuery(
+    'SELECT COUNT(*) AS count FROM plant_species',
+  );
+  final count = result.first['count'] as int;
+
+  if (count > 0) {
+    return;
+  }
+
+  await db.insert(
+    'plant_species',
+    {
+      'common_name': 'Tomate',
+      'scientific_name': 'Solanum lycopersicum',
+    },
+  );
+
+  await db.insert(
+    'plant_species',
+    {
+      'common_name': 'Leituga',
+      'scientific_name': 'Lactuca sativa',
+    },
+  );
+
+  await db.insert(
+    'plant_species',
+    {
+      'common_name': 'Pemento',
+      'scientific_name': 'Capsicum annuum',
+    },
+  );
+
+  await db.insert(
+    'plant_species',
+    {
+      'common_name': 'Cenoria',
+      'scientific_name': 'Daucus carota',
+    },
+  );
+
+  await db.insert(
+    'plant_species',
+    {
+      'common_name': 'Amorodo',
+      'scientific_name': 'Fragaria × ananassa',
+    },
+  );
+
+  await db.insert(
+    'plant_species',
+    {
+      'common_name': 'Alfábega',
+      'scientific_name': 'Ocimum basilicum',
+    },
+  );
+
+}
   
 }

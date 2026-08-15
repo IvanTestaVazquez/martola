@@ -11,7 +11,7 @@ O seu obxectivo é:
 - Facilitar o seguemento do progreso.
 - Evitar bloqueos durante o desenvolvemento.
 
----
+**---**
 
 # Current Status
 
@@ -88,6 +88,27 @@ O seu obxectivo é:
 - Verificación de `ON DELETE RESTRICT`.
 - Creación de `GardenPlantRepository`.
 - Creación de `PlantSpeciesRepository`.
+- Implementación de `SQLitePlantSpeciesRepository`.
+- Implementación do CRUD SQLite de especies.
+- Implementación de `SQLiteGardenPlantRepository`.
+- Implementación do CRUD SQLite de plantas.
+- Consulta de plantas mediante `gardenId`.
+- Creación de `PlantSpeciesViewModel`.
+- Creación de `PlantsViewModel`.
+- Integración dos novos ViewModels mediante `MultiProvider`.
+- Carga do catálogo de especies mediante `loadSpecies()`.
+- Carga das plantas dunha horta mediante `loadPlants(gardenId)`.
+- Mantemento da horta activa mediante `_currentGardenId`.
+- Catálogo inicial local de especies.
+- Creación de `PlantListScreen`.
+- Creación de `AddPlantScreen`.
+- Creación de `PlantDetailsScreen`.
+- Creación de `EditPlantScreen`.
+- Selección de especie mediante `DropdownButtonFormField`.
+- Selección da data de plantación mediante `showDatePicker`.
+- Creación, consulta, edición e eliminación de plantas desde a interface.
+- Resolución do nome da especie no detalle dunha planta.
+- CRUD completo do módulo de plantas integrado con SQLite.
 
 ## In Progress
 
@@ -95,16 +116,14 @@ O seu obxectivo é:
 - Primeira iteración da interface.
 - Design System.
 - Navegación entre pantallas.
-- Módulo de plantas.
 
 ## Pending
 
-- Módulo de plantas.
 - Seguemento da evolución das plantas.
 - API meteorolóxica.
 - Layout Designer.
 
----
+**---**
 
 # Phase 1 - Project Setup
 
@@ -128,7 +147,7 @@ Aplicación Flutter funcional cunha estrutura inicial organizada, tema global e 
 
 **Estado:** completada.
 
----
+**---**
 
 # Phase 2 - Navigation and Screens
 
@@ -145,8 +164,8 @@ Construír a navegación principal e as pantallas base da aplicación.
 - [x] CreateGardenScreen.
 - [x] TasksScreen inicial.
 - [x] CreateTaskScreen inicial.
-- [ ] PlantListScreen.
-- [ ] PlantDetailsScreen.
+- [x] PlantListScreen.
+- [x] PlantDetailsScreen.
 - [ ] LayoutDesignerScreen.
 - [ ] SettingsScreen.
 - [ ] Completar os fluxos de navegación pendentes.
@@ -159,7 +178,7 @@ Nesta fase poden empregarse datos ficticios, sen necesidade de persistencia real
 
 **Estado:** en progreso.
 
----
+**---**
 
 # Phase 3 - State Management
 
@@ -178,6 +197,12 @@ Introducir unha xestión de estado organizada e desacoplar os datos das pantalla
 - [x] Diferenciar o uso de `context.read`, `context.watch` e `context.select`.
 - [x] Encapsular a colección de hortas.
 - [x] Establecer `GardensViewModel` como punto de acceso ao estado das hortas desde as Views.
+- [x] Crear `PlantSpeciesViewModel`.
+- [x] Crear `PlantsViewModel`.
+- [x] Integrar os tres ViewModels mediante `MultiProvider`.
+- [x] Manter o catálogo de especies no estado compartido.
+- [x] Manter no `PlantsViewModel` as plantas da horta actualmente cargada.
+- [x] Sincronizar as Views de plantas mediante `notifyListeners()`.
 
 ## Deliverable
 
@@ -185,7 +210,7 @@ Xestión de estado funcional mediante Provider seguindo o enfoque MVVM simplific
 
 **Estado:** completada para a infraestrutura inicial. Poderán engadirse novos ViewModels segundo se desenvolvan os restantes módulos.
 
----
+**---**
 
 # Phase 4 - Repository Foundation
 
@@ -217,15 +242,15 @@ Separación funcional entre a xestión do estado e o acceso aos datos.
 
 Fluxo actual:
 
-    View
-      ↓
-    GardensViewModel
-      ↓ async
-    GardenRepository
-      ↑
-    MemoryGardenRepository
-      ↓
-    Memoria
+    View
+      ↓
+    GardensViewModel
+      ↓ async
+    GardenRepository
+      ↑
+    MemoryGardenRepository
+      ↓
+    Memoria
 
 O ViewModel mantén o estado xa cargado para que as Views poidan consultalo de maneira síncrona.
 
@@ -233,7 +258,7 @@ A arquitectura permite substituír `MemoryGardenRepository` por unha implementac
 
 **Estado:** completada.
 
----
+**---**
 
 # Phase 5 - Database Foundation
 
@@ -275,6 +300,12 @@ Integrar SQLite e establecer a capa básica de persistencia.
 - [x] Activar a integridade referencial mediante `PRAGMA foreign_keys = ON`.
 - [x] Verificar `ON DELETE CASCADE`.
 - [x] Verificar `ON DELETE RESTRICT`.
+- [x] Crear `SQLitePlantSpeciesRepository`.
+- [x] Crear `SQLiteGardenPlantRepository`.
+- [x] Implementar CRUD SQLite de especies.
+- [x] Implementar CRUD SQLite de plantas.
+- [x] Consultar plantas mediante `gardenId`.
+- [x] Engadir un catálogo inicial local de especies cando a táboa está baleira.
 
 ## Deliverable
 
@@ -286,38 +317,38 @@ A infraestrutura SQLite está operativa e o esquema evolucionou á versión 2.
 
 O fluxo de persistencia do módulo de hortas continúa sendo:
 
-    GardensViewModel
-          ↓
-    GardenRepository
-          ↑
-    SQLiteGardenRepository
-          ↓
-    DatabaseService
-          ↓
-    SQLite
-          ↓
-    martola.db
+    GardensViewModel
+          ↓
+    GardenRepository
+          ↑
+    SQLiteGardenRepository
+          ↓
+    DatabaseService
+          ↓
+    SQLite
+          ↓
+    martola.db
 
 A versión 2 do esquema inclúe actualmente:
 
-    gardens
-    plant_species
-    garden_plants
+    gardens
+    plant_species
+    garden_plants
 
 A migración:
 
-    v1 → v2
+    v1 → v2
 
 foi implementada mediante `onUpgrade` e comprobouse que conserva os datos existentes.
 
 As relacións entre as novas táboas utilizan claves foráneas e a integridade referencial está activada mediante:
 
-    PRAGMA foreign_keys = ON
+    PRAGMA foreign_keys = ON
 
 Comprobouse o comportamento de:
 
-    ON DELETE CASCADE
-    ON DELETE RESTRICT
+    ON DELETE CASCADE
+    ON DELETE RESTRICT
 
 mediante probas transaccionais.
 
@@ -325,7 +356,7 @@ A infraestrutura queda preparada para futuras migracións acumulativas.
 
 **Estado:** completada.
 
----
+**---**
 
 # Phase 6 - Gardens Module
 
@@ -388,7 +419,7 @@ Módulo de hortas completo con operacións de creación, consulta, edición e el
 
 **Estado:** funcional a nivel de CRUD e persistencia. Pendentes refinamentos da interface e futuras ampliacións do modelo.
 
----
+**---**
 
 # Phase 7 - Plants Module
 
@@ -451,7 +482,7 @@ Módulo de plantas funcional, persistido mediante SQLite e integrado co módulo 
 
 **Estado:** en progreso. Modelo de dominio, esquema SQLite e contratos Repository preparados. Pendentes as implementacións SQLite, o ViewModel e a interface.
 
----
+**---**
 
 # Phase 8 - Plant Evolution Module
 
@@ -471,7 +502,7 @@ Implementar o seguemento das plantas.
 
 Seguemento da evolución dunha planta ao longo do tempo.
 
----
+**---**
 
 # Phase 9 - Weather Module
 
@@ -492,7 +523,7 @@ Integrar información meteorolóxica.
 
 Sistema meteorolóxico funcional e integrado coas hortas.
 
----
+**---**
 
 # Phase 10 - Layout Designer
 
@@ -512,7 +543,7 @@ Implementar a representación visual da horta.
 
 Primeira versión funcional do deseñador visual.
 
----
+**---**
 
 # Phase 11 - UI Improvement
 
@@ -535,7 +566,7 @@ Mellorar a experiencia visual e consolidar o Design System.
 
 Interface consistente, usable e responsive.
 
----
+**---**
 
 # Phase 12 - Testing
 
@@ -558,7 +589,7 @@ Validar o funcionamento.
 
 Versión candidata á entrega.
 
----
+**---**
 
 # Phase 13 - Documentation
 
@@ -579,7 +610,7 @@ Completar a documentación final.
 
 Documentación final do TFC.
 
----
+**---**
 
 # Current Development Milestone
 
@@ -613,25 +644,25 @@ Completado:
 
 A base de datos atópase actualmente na:
 
-    version: 2
+    version: 2
 
 O esquema actual contén:
 
-    gardens
-    plant_species
-    garden_plants
+    gardens
+    plant_species
+    garden_plants
 
 O seguinte paso será implementar:
 
-    SQLitePlantSpeciesRepository
+    SQLitePlantSpeciesRepository
 
 e posteriormente:
 
-    SQLiteGardenPlantRepository
+    SQLiteGardenPlantRepository
 
 para proporcionar persistencia real ás novas entidades antes de introducir o ViewModel e as Views do módulo de plantas.
 
----
+**---**
 
 # MVP Definition
 
@@ -641,12 +672,12 @@ A primeira versión mínima viable de MARTOLA debe incluír:
 - [x] Xestión de estado.
 - [x] SQLite.
 - [x] Xestión de hortas persistente.
-- [ ] Xestión de plantas.
+- [x] Xestión de plantas.
 - [ ] Rexistros de evolución.
 
 O resto considerarase ampliación ou funcionalidade adicional segundo o tempo dispoñible.
 
----
+**---**
 
 # Future Features
 
@@ -660,7 +691,7 @@ Funcionalidades opcionais:
 - IA para recomendacións.
 - Integración con sensores.
 
----
+**---**
 
 # Success Criteria
 
