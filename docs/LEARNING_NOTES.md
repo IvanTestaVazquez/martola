@@ -9263,3 +9263,1033 @@ Os Repositories ocultan os detalles de persistencia.
 
 Esta separación permite completar un CRUD relacional sen romper as responsabilidades definidas pola arquitectura.
 
+
+---
+
+# Sesión 16 - Evolución das plantas: modelo, persistencia, estado e CRUD
+
+## Obxectivo
+
+Implementar o seguemento persistente da evolución dunha planta aplicando os patróns xa empregados nos módulos de hortas e plantas.
+
+Durante esta sesión completouse unha nova funcionalidade de extremo a extremo:
+
+```text
+View
+  ↓
+PlantEvolutionViewModel
+  ↓
+PlantEvolutionRecordRepository
+  ↓
+SQLitePlantEvolutionRecordRepository
+  ↓
+DatabaseService
+  ↓
+SQLite
+```
+
+A sesión permitiu reutilizar conceptos xa aprendidos e, ao mesmo tempo, introducir novos detalles sobre campos opcionais, relacións 1:N, migracións sucesivas e estado contextual.
+
+---
+
+## PlantEvolutionRecord
+
+Creouse o modelo `PlantEvolutionRecord` para representar unha observación da evolución dunha planta nunha data concreta.
+
+Conceptualmente:
+
+```text
+PlantEvolutionRecord
+├── id
+├── plantId
+├── date
+├── height
+└── notes
+```
+
+`height` e `notes` son opcionais porque un rexistro pode conter só parte desa información.
+
+```dart
+double? height;
+String? notes;
+```
+
+Isto permite representar correctamente a ausencia dun dato mediante `null`, en lugar de inventar valores como `0.0` ou unha cadea baleira.
+
+### Regra
+
+> Se a ausencia dun valor ten significado no dominio, debe representarse explicitamente como ausencia e non mediante un valor artificial.
+
+---
+
+## NULL en SQLite
+
+SQLite pode almacenar `NULL` directamente.
+
+Se un `Map<String, Object?>` contén:
+
+```dart
+'height': null,
+'notes': null,
+```
+
+SQLite almacena eses campos como `NULL` sempre que a columna o permita.
+
+Non transforma automaticamente:
+
+```text
+null → 0.0
+null → ''
+```
+
+Isto encaixa coa null safety de Dart e permite conservar a diferenza entre:
+
+```text
+altura descoñecida
+```
+
+e:
+
+```text
+altura = 0
+```
+
+---
+
+## REAL en SQLite
+
+Para valores decimais utilizouse:
+
+```sql
+height REAL
+```
+
+SQLite non necesita un tipo `DOUBLE` específico para este caso.
+
+Na aplicación:
+
+```text
+SQLite REAL
+    ↕
+Dart double
+```
+
+---
+
+## Relación planta → rexistros de evolución
+
+Unha planta pode ter múltiples rexistros de evolución.
+
+```text
+GardenPlant 1 ───── N PlantEvolutionRecord
+```
+
+Cada rexistro pertence a unha única planta mediante:
+
+```text
+plant_id
+```
+
+A táboa creada é:
+
+```text
+plant_evolution_records
+```
+
+con clave foránea cara a:
+
+```text
+garden_plants(id)
+```
+
+---
+
+## ON DELETE CASCADE no histórico
+
+Configurouse:
+
+```sql
+FOREIGN KEY (plant_id)
+  REFERENCES garden_plants(id)
+  ON DELETE CASCADE
+```
+
+A decisión responde ao dominio:
+
+```text
+eliminar planta
+      ↓
+rexistros de evolución quedan sen entidade pai
+      ↓
+SQLite elimínaos automaticamente
+```
+
+Se no futuro se quere conservar o histórico antes de eliminar unha planta, poderá incorporarse unha funcionalidade de exportación.
+
+A persistencia non debe conservar datos orfos que xa non teñen sentido dentro do modelo actual.
+
+---
+
+## Segunda migración real de MARTOLA
+
+O esquema evolucionou de:
+
+```text
+version: 2
+```
+
+a:
+
+```text
+version: 3
+```
+
+A versión 3 incorpora:
+
+```text
+plant_evolution_records
+```
+
+A migración engadiuse a `onUpgrade()` mediante o patrón acumulativo xa estudado:
+
+```dart
+if (oldVersion < 2) {
+  // cambios da versión 2
+}
+
+if (oldVersion < 3) {
+  // cambios da versión 3
+}
+```
+
+Isto confirmou na práctica unha idea importante:
+
+> Unha migración debe transformar unha base de datos existente sen obrigar a borrar os datos anteriores.
+
+Comprobouse que as hortas e plantas xa almacenadas continuaban existindo despois da actualización á versión 3.
+
+---
+
+## PlantEvolutionRecordRepository
+
+Creouse un contrato específico para a persistencia dos rexistros de evolución.
+
+Operacións principais:
+
+```text
+getRecordsByPlantId()
+addRecord()
+getRecordById()
+updateRecord()
+removeRecord()
+```
+
+O Repository non xestiona a interface nin o estado visual.
+
+A súa responsabilidade é definir as operacións de acceso aos datos desta entidade.
+
+---
+
+## SQLitePlantEvolutionRecordRepository
+
+Creouse a implementación SQLite do contrato.
+
+```text
+PlantEvolutionRecordRepository
+              ↑
+SQLitePlantEvolutionRecordRepository
+              ↓
+DatabaseService
+              ↓
+SQLite
+```
+
+A implementación converte entre:
+
+```text
+PlantEvolutionRecord
+        ↕
+Map<String, Object?>
+        ↕
+SQLite
+```
+
+O CRUD foi comprobado directamente antes de conectar a interface.
+
+A proba verificou:
+
+```text
+CREATE
+READ BY PLANT
+READ BY ID
+UPDATE
+DELETE
+```
+
+### Aprendizaxe
+
+Probar primeiro unha capa illada facilita localizar erros antes de engadir novas capas por enriba.
+
+```text
+Repository correcto
+      ↓
+ViewModel
+      ↓
+Views
+```
+
+é máis fácil de depurar que intentar comprobar todas as capas simultaneamente desde o principio.
+
+---
+
+## Consulta por relación
+
+A evolución non se carga como unha colección global de todos os rexistros existentes.
+
+Utilízase:
+
+```text
+getRecordsByPlantId(plantId)
+```
+
+porque a pantalla traballa dentro do contexto dunha planta concreta.
+
+Conceptualmente:
+
+```text
+plantId
+   ↓
+Repository
+   ↓
+WHERE plant_id = ?
+   ↓
+rexistros desa planta
+```
+
+Isto reproduce no novo módulo o patrón xa utilizado para cargar plantas dunha horta.
+
+---
+
+## PlantEvolutionViewModel
+
+Creouse `PlantEvolutionViewModel` para manter o estado observable da evolución.
+
+A colección interna é:
+
+```dart
+final List<PlantEvolutionRecord> _records = [];
+```
+
+e exponse sen permitir modificación directa desde as Views.
+
+O ViewModel implementa:
+
+```text
+loadRecords()
+addRecord()
+getRecordById()
+updateRecord()
+removeRecord()
+```
+
+---
+
+## Estado contextual mediante _currentPlantId
+
+Un rexistro de evolución necesita saber a que planta pertence.
+
+En lugar de solicitar repetidamente `plantId` ao usuario ou a cada formulario, o ViewModel conserva o contexto actual:
+
+```dart
+String? _currentPlantId;
+```
+
+Ao entrar na evolución dunha planta:
+
+```text
+PlantEvolutionListScreen
+        ↓
+loadRecords(plantId)
+        ↓
+_currentPlantId = plantId
+```
+
+Posteriormente:
+
+```text
+AddPlantEvolutionRecordScreen
+        ↓
+addRecord(...)
+        ↓
+_currentPlantId
+```
+
+permite asociar automaticamente o novo rexistro coa planta correcta.
+
+### Regra
+
+> Se unha acción ocorre dentro dun contexto xa coñecido, non é necesario volver pedir ao usuario información que a aplicación xa coñece.
+
+Este patrón é equivalente ao empregado en `PlantsViewModel` coa horta activa.
+
+---
+
+## MultiProvider con varios ViewModels
+
+A aplicación utiliza xa varios ViewModels compartidos:
+
+```text
+GardensViewModel
+PlantSpeciesViewModel
+PlantsViewModel
+PlantEvolutionViewModel
+```
+
+`MultiProvider` permite proporcionar todos eles desde un punto común da árbore.
+
+Isto evita encadear manualmente múltiples `ChangeNotifierProvider` e mantén a configuración de dependencias máis lexible.
+
+---
+
+## Carga inicial desde initState
+
+`PlantEvolutionListScreen` necesita cargar os rexistros da planta cando se abre.
+
+Utilizouse `initState()` porque esa carga debe iniciarse unha vez ao crear o estado da pantalla:
+
+```dart
+@override
+void initState() {
+  super.initState();
+
+  context
+      .read<PlantEvolutionViewModel>()
+      .loadRecords(widget.plantId);
+}
+```
+
+`read()` é apropiado porque a chamada inicia unha acción; non se utiliza para subscribirse aos cambios.
+
+A subscrición real da interface realízase posteriormente mediante `watch()`.
+
+---
+
+## Separar iniciar unha acción de observar o resultado
+
+Na lista de evolución aparecen dous usos diferentes de Provider:
+
+```text
+initState
+   ↓
+context.read()
+   ↓
+iniciar loadRecords()
+```
+
+mentres que en `build()`:
+
+```text
+context.watch()
+   ↓
+observar records
+   ↓
+rebuild cando cambien
+```
+
+### Regra práctica
+
+```text
+read  → quero facer algo
+watch → quero reaccionar aos cambios
+select → quero reaccionar a unha parte concreta
+```
+
+---
+
+## Formulario con campos opcionais
+
+`AddPlantEvolutionRecordScreen` introduciu unha diferenza importante respecto aos formularios anteriores.
+
+Non todos os campos son obrigatorios.
+
+A altura pode estar baleira.
+
+Por tanto, o validator debe distinguir:
+
+```text
+campo baleiro
+    ↓
+válido → null
+```
+
+fronte a:
+
+```text
+campo con texto
+    ↓
+intentar double.tryParse()
+    ↓
+valor válido ou erro
+```
+
+Un campo opcional non significa que calquera contido sexa válido.
+
+Significa que pode non existir valor, pero se existe debe cumprir as regras do seu tipo.
+
+---
+
+## Conversión dun campo baleiro a null
+
+Antes de crear o modelo:
+
+```dart
+final heightText = _heightController.text.trim();
+
+final height = heightText.isEmpty
+    ? null
+    : double.parse(heightText);
+```
+
+O mesmo criterio pode aplicarse ás notas:
+
+```dart
+final notesText = _notesController.text.trim();
+
+final notes = notesText.isEmpty
+    ? null
+    : notesText;
+```
+
+Isto mantén coherencia entre:
+
+```text
+Formulario
+   ↓
+Dart nullable
+   ↓
+Map<String, Object?>
+   ↓
+SQLite NULL
+```
+
+---
+
+## showDatePicker reutilizado
+
+A data do rexistro selecciónase mediante `showDatePicker()`.
+
+O patrón xa coñecido é:
+
+```text
+abrir selector
+    ↓
+Future<DateTime?>
+    ↓
+await
+    ↓
+usuario cancela → null
+usuario escolle → DateTime
+```
+
+Se existe unha nova data:
+
+```dart
+setState(() {
+  _date = selectedDate;
+});
+```
+
+Neste caso `setState()` xestiona estado local do formulario, non estado compartido do dominio.
+
+---
+
+## Estado local e estado compartido no mesmo fluxo
+
+A sesión reforzou que ambos tipos de estado poden coexistir.
+
+### Estado local
+
+```text
+_date
+_heightController
+_notesController
+```
+
+pertencen ao formulario.
+
+### Estado compartido
+
+```text
+_records
+_currentPlantId
+```
+
+pertence a `PlantEvolutionViewModel`.
+
+A pregunta non é simplemente "uso Provider ou setState?".
+
+A pregunta correcta é:
+
+> Quen necesita coñecer e conservar este estado?
+
+---
+
+## Pantalla de detalle por identificador
+
+`PlantEvolutionDetailsScreen` recibe:
+
+```text
+recordId
+```
+
+e consulta a versión actual mediante:
+
+```text
+PlantEvolutionViewModel.getRecordById(recordId)
+```
+
+Isto permite que, despois dunha edición, a pantalla de detalle reconstrúa a información desde o estado compartido actualizado.
+
+O mesmo principio xa se empregara cos detalles dunha planta.
+
+---
+
+## Tratamento de entidade non atopada
+
+Un método como:
+
+```text
+getRecordById(recordId)
+```
+
+pode devolver:
+
+```text
+PlantEvolutionRecord?
+```
+
+A View debe contemplar explicitamente:
+
+```text
+record == null
+```
+
+antes de acceder aos seus campos.
+
+Isto evita asumir que un identificador sempre corresponde cunha entidade existente.
+
+---
+
+## Scope dunha variable en Dart
+
+Durante a implementación de detalles de planta apareceu un caso no que unha variable creada dentro dun `if` non estaba dispoñible fóra del.
+
+Conceptualmente:
+
+```dart
+if (plant != null) {
+  final species = ...;
+}
+
+// species xa non existe aquí
+```
+
+Unha variable declarada dentro dun bloque pertence ao scope dese bloque.
+
+Se debe utilizarse posteriormente, pode declararse antes:
+
+```dart
+PlantSpecies? species;
+
+if (plant != null) {
+  species = ...;
+}
+```
+
+### Regra
+
+> O lugar no que se declara unha variable determina desde onde pode accederse a ela.
+
+---
+
+## Null safety na interface
+
+Os campos opcionais non deben mostrarse directamente se iso produce textos como:
+
+```text
+Altura: null
+Notas: null
+```
+
+A interface traduce a ausencia de dato a unha mensaxe comprensible:
+
+```text
+Altura: sen rexistrar
+Notas: sen notas
+```
+
+A null safety non é só evitar erros de compilación; tamén obriga a decidir como debe representarse a ausencia de información para o usuario.
+
+---
+
+## crossAxisAlignment e texto no detalle
+
+Nunha `Column`, o eixe principal é vertical e o secundario é horizontal.
+
+Para aliñar o contido ao inicio horizontal utilizouse:
+
+```dart
+crossAxisAlignment: CrossAxisAlignment.start
+```
+
+Isto reforzou a regra xa aprendida:
+
+```text
+Column
+main axis  → vertical
+cross axis → horizontal
+```
+
+Non se debe deducir o comportamento polo nome da propiedade illadamente, senón pola responsabilidade do widget pai.
+
+---
+
+## Edición con initState
+
+`EditPlantEvolutionRecordScreen` recibe un rexistro existente.
+
+Os valores iniciais do formulario deben establecerse unha única vez cando se crea o `State`.
+
+Por iso utilízase `initState()` para inicializar:
+
+```text
+_heightController
+_notesController
+_date
+```
+
+Este patrón é o mesmo utilizado previamente en `EditGardenScreen` e `EditPlantScreen`.
+
+---
+
+## null.toString() e formularios de edición
+
+Nun campo opcional hai que ter coidado con:
+
+```dart
+widget.record.height.toString()
+```
+
+Se `height` é `null`, o resultado textual sería:
+
+```text
+"null"
+```
+
+pero iso non representa un campo baleiro para o usuario.
+
+Conceptualmente debe transformarse:
+
+```text
+null → ''
+valor → valor.toString()
+```
+
+A representación visual dun valor nullable pode ser distinta da súa representación interna.
+
+---
+
+## update fronte a add
+
+Nun formulario de edición a operación debe corresponder coa intención do usuario.
+
+```text
+crear → addRecord()
+editar → updateRecord()
+```
+
+A semellanza visual entre dous formularios non implica que realicen a mesma operación de dominio.
+
+Esta distinción reforza a importancia de revisar o fluxo completo e non só a interface.
+
+---
+
+## Confirmación de eliminación
+
+`PlantEvolutionDetailsScreen` utiliza `AlertDialog` antes de eliminar un rexistro.
+
+O patrón é:
+
+```text
+Eliminar
+   ↓
+showDialog()
+   ↓
+AlertDialog
+   ├── Cancelar → pop diálogo
+   └── Eliminar
+          ↓
+      removeRecord()
+          ↓
+      pop diálogo
+          ↓
+      pop detalle
+```
+
+A confirmación pertence á interface.
+
+A eliminación persistente pertence ao ViewModel e Repository.
+
+---
+
+## context.mounted e dialogContext.mounted
+
+Despois dunha operación asíncrona pode ser necesario comprobar que os contextos seguen sendo válidos antes de navegar.
+
+Nun diálogo existen dous contextos relevantes:
+
+```text
+context
+```
+
+da pantalla e:
+
+```text
+dialogContext
+```
+
+do propio diálogo.
+
+Antes de executar `pop()` tras un `await`, comprobouse que ambos continúan montados.
+
+Isto reforza a regra:
+
+> Despois dun `await`, non se debe asumir automaticamente que o widget ou contexto segue formando parte da árbore.
+
+---
+
+## Fluxo reactivo completo da evolución
+
+A creación dun rexistro segue:
+
+```text
+AddPlantEvolutionRecordScreen
+          ↓
+PlantEvolutionViewModel.addRecord()
+          ↓
+Repository.addRecord()
+          ↓
+SQLite INSERT
+          ↓
+rexistro con ID
+          ↓
+_records.add()
+          ↓
+notifyListeners()
+          ↓
+PlantEvolutionListScreen rebuild
+```
+
+A edición segue:
+
+```text
+EditPlantEvolutionRecordScreen
+          ↓
+PlantEvolutionViewModel.updateRecord()
+          ↓
+Repository.updateRecord()
+          ↓
+SQLite UPDATE
+          ↓
+substitución en _records
+          ↓
+notifyListeners()
+          ↓
+Views reconstruídas
+```
+
+A eliminación segue:
+
+```text
+PlantEvolutionDetailsScreen
+          ↓
+removeRecord()
+          ↓
+SQLite DELETE
+          ↓
+_records.removeWhere()
+          ↓
+notifyListeners()
+```
+
+---
+
+## Reutilización da arquitectura
+
+A sesión 16 confirmou que a arquitectura pode crecer mantendo o mesmo patrón.
+
+```text
+HORTAS
+View → GardensViewModel → GardenRepository → SQLite
+
+PLANTAS
+View → PlantsViewModel → GardenPlantRepository → SQLite
+
+EVOLUCIÓN
+View → PlantEvolutionViewModel → PlantEvolutionRecordRepository → SQLite
+```
+
+Non se deseñou unha arquitectura nova para cada módulo.
+
+Reutilizouse unha estrutura coñecida e adaptouse ao dominio correspondente.
+
+---
+
+## Estado actual do esquema SQLite
+
+Ao finalizar a sesión 16:
+
+```text
+version: 3
+```
+
+Táboas:
+
+```text
+gardens
+plant_species
+garden_plants
+plant_evolution_records
+```
+
+Relación principal:
+
+```text
+Garden
+  │
+  └── 1:N GardenPlant
+             │
+             ├── N:1 PlantSpecies
+             │
+             └── 1:N PlantEvolutionRecord
+```
+
+As claves foráneas están activadas mediante:
+
+```sql
+PRAGMA foreign_keys = ON
+```
+
+---
+
+## Estado ao finalizar a sesión 16
+
+O módulo de evolución permite actualmente:
+
+1. Crear rexistros de evolución.
+2. Asocialos automaticamente á planta activa.
+3. Gardar data, altura opcional e notas opcionais.
+4. Persistir os rexistros en SQLite.
+5. Listar os rexistros dunha planta.
+6. Consultar un rexistro polo seu identificador.
+7. Editar un rexistro existente.
+8. Eliminar un rexistro con confirmación.
+9. Actualizar automaticamente as Views mediante Provider.
+10. Eliminar automaticamente o histórico dunha planta mediante `ON DELETE CASCADE` cando a planta é eliminada.
+
+O fluxo funcional é:
+
+```text
+GardenDetailsScreen
+        ↓
+PlantListScreen
+        ↓
+PlantDetailsScreen
+        ↓
+PlantEvolutionListScreen
+    ├── AddPlantEvolutionRecordScreen
+    └── PlantEvolutionDetailsScreen
+            ├── EditPlantEvolutionRecordScreen
+            └── Eliminar rexistro
+```
+
+O núcleo local actual de MARTOLA dispón xa de CRUD persistente para:
+
+```text
+Hortas
+Plantas
+Evolución das plantas
+```
+
+---
+
+## Conceptos clave da sesión 16
+
+- `PlantEvolutionRecord`.
+- Campos opcionais no dominio.
+- `NULL` en SQLite.
+- `REAL` en SQLite.
+- Relación 1:N planta → evolución.
+- `ON DELETE CASCADE` aplicado ao histórico.
+- SQLite `version: 3`.
+- Migración v2 → v3.
+- Migracións acumulativas.
+- Conservación dos datos existentes.
+- `PlantEvolutionRecordRepository`.
+- `SQLitePlantEvolutionRecordRepository`.
+- CRUD probado por capas.
+- Consulta mediante `plantId`.
+- `PlantEvolutionViewModel`.
+- `_currentPlantId` como estado contextual.
+- `MultiProvider` con varios ViewModels.
+- `initState()` para iniciar unha carga contextual.
+- `context.read()` para accións.
+- `context.watch()` para observar coleccións.
+- `context.select()` para observar unha entidade concreta.
+- Formularios con campos opcionais.
+- Conversión de campo baleiro a `null`.
+- `showDatePicker()`.
+- Estado local fronte a estado compartido.
+- Scope de variables.
+- Tratamento explícito de `record == null`.
+- Representación visual de valores nullable.
+- `CrossAxisAlignment.start` nunha `Column`.
+- Inicialización de formularios de edición.
+- Diferenza entre `addRecord()` e `updateRecord()`.
+- `AlertDialog` para confirmar accións destrutivas.
+- `context.mounted` despois de operacións asíncronas.
+- Sincronización Repository → ViewModel → View.
+
+---
+
+## Regra principal da sesión 16
+
+Un módulo novo non require necesariamente unha arquitectura nova.
+
+Se o problema encaixa nun patrón xa probado, pode reutilizarse a mesma separación de responsabilidades:
+
+```text
+View
+  ↓
+ViewModel
+  ↓
+Repository
+  ↓
+SQLite
+```
+
+engadindo unicamente as regras propias do novo dominio.
+
+No módulo de evolución esas regras son principalmente:
+
+```text
+unha planta
+    ↓
+ten moitos rexistros
+    ↓
+os rexistros poden conter datos opcionais
+    ↓
+a súa vida depende da planta
+```
+
+A arquitectura mantense estable mentres o dominio evoluciona.

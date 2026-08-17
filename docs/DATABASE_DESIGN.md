@@ -13,8 +13,9 @@ O seu obxectivo é:
 - Servir como guía para SQLite.
 - Facilitar futuras migracións.
 - Apoiar a elaboración da memoria final do proxecto.
+- Distinguir entre o modelo obxectivo da aplicación e o esquema físico realmente implementado en cada fase.
 
-**---**
+---
 
 # Database Technology
 
@@ -28,33 +29,65 @@ SQLite foi seleccionada debido a:
 
 - Integración sinxela con Flutter.
 - Funcionamento local sen servidor.
-- Bo rendemento en dispositivos móbiles.
+- Bo rendemento en dispositivos móbiles e escritorio.
 - Simplicidade de implementación.
+- Adecuación ao enfoque Local First.
 - Posibilidade de evolucionar posteriormente cara a solucións cloud.
 
-**---**
+A infraestrutura utilizada actualmente inclúe:
+
+- `sqflite`
+- `sqflite_common_ffi`
+- `path`
+- `path_provider`
+
+---
 
 # Entity Relationship Overview
 
+Modelo obxectivo:
+
+```text
 users
 │
 └── gardens
-     │
-     ├── garden_plants
-     │      │
-     │      └── plant_evolution_records
-     │
-     ├── weather_records
-     │
-     └── garden_layout_items
+     │
+     ├── garden_plants
+     │      │
+     │      └── plant_evolution_records
+     │
+     ├── weather_records
+     │
+     └── garden_layout_items
 
 plant_species
 │
 └── garden_plants
+```
 
-**---**
+Relacións implementadas actualmente:
 
-# Entities
+```text
+gardens
+   │
+   │ 1:N
+   ▼
+garden_plants
+   ▲
+   │ N:1
+   │
+plant_species
+
+garden_plants
+   │
+   │ 1:N
+   ▼
+plant_evolution_records
+```
+
+---
+
+# Conceptual Entities
 
 ## users
 
@@ -62,174 +95,207 @@ Representa os usuarios da aplicación.
 
 ### Fields
 
-\| Field | Type | Description |
-\|---------|---------|---------|
-\| id | INTEGER | Primary Key |
-\| name | TEXT | User name |
-\| email | TEXT | Email address |
-\| password_hash | TEXT | Password hash |
-\| created_at | TEXT | Creation date |
+| Field | Type | Description |
+|---|---|---|
+| id | INTEGER | Primary Key |
+| name | TEXT | User name |
+| email | TEXT | Email address |
+| password_hash | TEXT | Password hash |
+| created_at | TEXT | Creation date |
 
-### Relationships
+### Status
 
-- One user can own multiple gardens.
+⬜ Non implementada no esquema físico actual.
 
-**---**
+---
 
 ## gardens
 
 Representa unha horta ou xardín.
 
-### Fields
+### Target Fields
 
-\| Field       | Type    | Description |
-\| ----------- | ------- | ----------- |
-\| id          | INTEGER | Primary Key |
-\| user_id     | INTEGER | User owner |
-\| name        | TEXT    | Garden name |
-\| description | TEXT    | Optional description |
-\| location    | TEXT    | Location name |
-\| area        | REAL    | Surface area in square metres |
-\| latitude    | REAL    | Geographic latitude |
-\| longitude   | REAL    | Geographic longitude |
-\| created_at  | TEXT    | Creation date |
+| Field | Type | Description |
+|---|---|---|
+| id | INTEGER | Primary Key |
+| user_id | INTEGER | User owner |
+| name | TEXT | Garden name |
+| description | TEXT | Optional description |
+| location | TEXT | Location name |
+| area | REAL | Surface area in square metres |
+| latitude | REAL | Geographic latitude |
+| longitude | REAL | Geographic longitude |
+| created_at | TEXT | Creation date |
 
-### Relationships
+### Current Implemented Fields
 
-- Belongs to one user.
-- Contains multiple plants.
-- Contains weather records.
-- Contains layout elements.
+- `id`
+- `name`
+- `location`
+- `area`
 
-**---**
+---
 
 ## plant_species
 
 Información xeral dunha especie vexetal.
 
-### Fields
+### Target Fields
 
-\| Field | Type |
-\|---------|---------|
-\| id | INTEGER |
-\| common_name | TEXT |
-\| scientific_name | TEXT |
-\| plant_type | TEXT |
-\| watering_frequency | TEXT |
-\| sunlight | TEXT |
-\| soil_type | TEXT |
-\| ideal_temperature_min | REAL |
-\| ideal_temperature_max | REAL |
-\| notes | TEXT |
+| Field | Type |
+|---|---|
+| id | INTEGER |
+| common_name | TEXT |
+| scientific_name | TEXT |
+| plant_type | TEXT |
+| watering_frequency | TEXT |
+| sunlight | TEXT |
+| soil_type | TEXT |
+| ideal_temperature_min | REAL |
+| ideal_temperature_max | REAL |
+| notes | TEXT |
 
-### Relationships
+### Current Implemented Fields
 
-- One species can be used by multiple plants.
+- `id`
+- `common_name`
+- `scientific_name`
 
-**---**
+Outros campos incorporaranse só cando sexan necesarios para o MVP ou futuras ampliacións.
+
+---
 
 ## garden_plants
 
 Representa unha planta concreta dentro dunha horta.
 
-### Fields
+### Target Fields
 
-\| Field | Type |
-\|---------|---------|
-\| id | INTEGER |
-\| garden_id | INTEGER |
-\| species_id | INTEGER |
-\| custom_name | TEXT |
-\| planting_date | TEXT |
-\| status | TEXT |
-\| notes | TEXT |
-\| created_at | TEXT |
+| Field | Type |
+|---|---|
+| id | INTEGER |
+| garden_id | INTEGER |
+| species_id | INTEGER |
+| custom_name | TEXT |
+| planting_date | TEXT |
+| status | TEXT |
+| notes | TEXT |
+| created_at | TEXT |
 
-### Relationships
+### Current Implemented Fields
 
-- Belongs to one garden.
-- References one species.
-- Has multiple evolution records.
+- `id`
+- `garden_id`
+- `species_id`
+- `custom_name`
+- `planting_date`
 
-**---**
+---
 
 ## plant_evolution_records
 
-Histórico de evolución dunha planta.
+Representa un rexistro histórico da evolución dunha planta concreta.
 
-### Fields
+### Current Implemented Fields
 
-\| Field | Type |
-\|---------|---------|
-\| id | INTEGER |
-\| garden_plant_id | INTEGER |
-\| record_date | TEXT |
-\| height_cm | REAL |
-\| growth_stage | TEXT |
-\| health_status | TEXT |
-\| has_flowers | INTEGER |
-\| has_fruits | INTEGER |
-\| notes | TEXT |
-\| photo_path | TEXT |
+| Field | Type | Null | Description |
+|---|---|---|---|
+| id | INTEGER | No | Primary Key |
+| plant_id | INTEGER | No | Foreign Key to `garden_plants` |
+| date | TEXT | No | Record date in ISO 8601 |
+| height | REAL | Yes | Optional plant height |
+| notes | TEXT | Yes | Optional notes |
 
-### Relationships
+### Domain Model
 
-- Belongs to one plant.
+```dart
+class PlantEvolutionRecord {
+  final String? id;
+  final String plantId;
+  final DateTime date;
+  final double? height;
+  final String? notes;
+}
+```
 
-**---**
+### Domain Semantics
+
+- `id == null` pode indicar que o rexistro aínda non foi persistido.
+- `height == null` significa que non se realizou unha medición de altura.
+- `notes == null` significa que non se rexistraron notas.
+
+A ausencia de altura ou notas é válida no dominio.
+
+### Possible Future Fields
+
+O deseño inicial contemplaba tamén campos como:
+
+- `growth_stage`
+- `health_status`
+- `has_flowers`
+- `has_fruits`
+- `photo_path`
+
+Non forman parte da implementación actual.
+
+As fotografías quedan fóra do primeiro incremento do módulo de evolución porque implican xestión adicional de ficheiros e rutas.
+
+---
 
 ## weather_records
 
 Histórico meteorolóxico.
 
-### Fields
+### Target Fields
 
-\| Field | Type |
-\|---------|---------|
-\| id | INTEGER |
-\| garden_id | INTEGER |
-\| record_date | TEXT |
-\| temperature | REAL |
-\| humidity | REAL |
-\| rainfall | REAL |
-\| wind_speed | REAL |
-\| weather_description | TEXT |
-\| source | TEXT |
+| Field | Type |
+|---|---|
+| id | INTEGER |
+| garden_id | INTEGER |
+| record_date | TEXT |
+| temperature | REAL |
+| humidity | REAL |
+| rainfall | REAL |
+| wind_speed | REAL |
+| weather_description | TEXT |
+| source | TEXT |
 
-### Relationships
+### Status
 
-- Belongs to one garden.
+⬜ Non implementada.
 
-**---**
+---
 
 ## garden_layout_items
 
 Elementos visuais do deseño dunha horta.
 
-### Fields
+### Target Fields
 
-\| Field | Type |
-\|---------|---------|
-\| id | INTEGER |
-\| garden_id | INTEGER |
-\| garden_plant_id | INTEGER |
-\| x_position | REAL |
-\| y_position | REAL |
-\| width | REAL |
-\| height | REAL |
-\| rotation | REAL |
-\| color | TEXT |
-\| icon | TEXT |
+| Field | Type |
+|---|---|
+| id | INTEGER |
+| garden_id | INTEGER |
+| garden_plant_id | INTEGER |
+| x_position | REAL |
+| y_position | REAL |
+| width | REAL |
+| height | REAL |
+| rotation | REAL |
+| color | TEXT |
+| icon | TEXT |
 
-### Relationships
+### Status
 
-- Belongs to one garden.
-- References one plant.
+⬜ Non implementada.
 
-**---**
+---
 
 # Relationship Summary
 
+Modelo obxectivo:
+
+```text
 users 1:N gardens
 
 gardens 1:N garden_plants
@@ -243,516 +309,702 @@ gardens 1:N weather_records
 gardens 1:N garden_layout_items
 
 garden_plants 1:1 garden_layout_items
+```
 
-**---**
+Relacións fisicamente implementadas:
+
+```text
+gardens 1:N garden_plants
+
+plant_species 1:N garden_plants
+
+garden_plants 1:N plant_evolution_records
+```
+
+---
 
 # SQLite Type Mapping
 
-\| SQLite | Dart |
-\|----------|----------|
-\| INTEGER | int |
-\| TEXT | String |
-\| REAL | double |
-\| INTEGER (0/1) | bool |
-\| TEXT (ISO Date) | DateTime |
+| SQLite | Dart |
+|---|---|
+| INTEGER | int |
+| TEXT | String |
+| REAL | double |
+| INTEGER (0/1) | bool |
+| TEXT (ISO Date) | DateTime |
 
-**---**
+Os identificadores mantéñense como `String` nos modelos actuais, aínda que SQLite utiliza `INTEGER`.
+
+A conversión realízase na fronteira coa persistencia.
+
+---
 
 # Current SQLite Implementation
-
-O modelo descrito neste documento representa o deseño previsto da base de datos completa de MARTOLA.
-
-A implementación real da base de datos realizarase de maneira incremental a medida que se desenvolvan os diferentes módulos da aplicación.
-
-Actualmente está implementada a infraestrutura SQLite v2 e a persistencia completa dos módulos de hortas, especies e plantas.
 
 ## Database
 
 A base de datos local utiliza:
 
-    martola.db
+```text
+martola.db
+```
 
-A apertura e creación da base de datos está centralizada en:
+A apertura, configuración, creación e migración centralízanse en:
 
-    DatabaseService
+```text
+DatabaseService
+```
 
-A versión actual da base de datos é:
+## Current Version
 
-    version: 2
+```text
+version: 3
+```
 
-A versión 2 introduce a primeira ampliación real do esquema SQLite de MARTOLA.
+## Implemented Migrations
 
-A evolución realizada é:
+```text
+v1 → v2
+v2 → v3
+```
 
-    version 1
-        │
-        │ migración v1 → v2
-        ▼
-    version 2
+Ambas migracións foron executadas e comprobadas conservando os datos existentes.
 
-A migración conserva os datos existentes da táboa `gardens` e incorpora as táboas necesarias para iniciar o módulo de plantas.
+A estratexia é acumulativa:
 
-## Implemented Tables
+```dart
+if (oldVersion < 2) {
+  // cambios da versión 2
+}
 
-Actualmente están implementadas as seguintes táboas:
+if (oldVersion < 3) {
+  // cambios da versión 3
+}
+```
 
-    gardens
-    plant_species
-    garden_plants
+Isto permite que unha instalación antiga aplique todos os pasos necesarios ata alcanzar a versión actual.
 
-### gardens
+---
 
-Representa as hortas e xardíns creados polo usuario.
+# Implemented Tables
 
-O esquema físico actual é:
+Actualmente existen:
 
-    CREATE TABLE gardens (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      location TEXT NOT NULL,
-      area REAL NOT NULL
-    )
+```text
+gardens
+plant_species
+garden_plants
+plant_evolution_records
+```
 
-Actualmente están implementados:
+## gardens
 
-- `id`
-- `name`
-- `location`
-- `area`
+```sql
+CREATE TABLE gardens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  location TEXT NOT NULL,
+  area REAL NOT NULL
+)
+```
 
-Permanecen previstos para fases posteriores:
+---
 
-- `user_id`
-- `description`
-- `latitude`
-- `longitude`
-- `created_at`
+## plant_species
 
-### plant_species
+```sql
+CREATE TABLE plant_species (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  common_name TEXT NOT NULL,
+  scientific_name TEXT NOT NULL
+)
+```
 
-Representa o catálogo de especies vexetais que poden ser utilizadas polas plantas dunha horta.
+A implementación é deliberadamente mínima.
 
-O esquema físico actual é:
+A táboa dispón dun catálogo inicial local que se insire só cando está baleira.
 
-    CREATE TABLE plant_species (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      common_name TEXT NOT NULL,
-      scientific_name TEXT NOT NULL
-    )
+---
 
-A primeira implementación é deliberadamente mínima.
+## garden_plants
 
-Actualmente están implementados:
+```sql
+CREATE TABLE garden_plants (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  garden_id INTEGER NOT NULL,
+  species_id INTEGER NOT NULL,
+  custom_name TEXT NOT NULL,
+  planting_date TEXT NOT NULL,
 
-- `id`
-- `common_name`
-- `scientific_name`
+  FOREIGN KEY (garden_id)
+    REFERENCES gardens(id)
+    ON DELETE CASCADE,
 
-Outros campos definidos no modelo obxectivo incorporaranse progresivamente cando sexan necesarios.
+  FOREIGN KEY (species_id)
+    REFERENCES plant_species(id)
+    ON DELETE RESTRICT
+)
+```
 
-A táboa dispón ademais dun pequeno catálogo inicial local utilizado polo MVP.
-
-`DatabaseService` comproba durante a apertura da base de datos se `plant_species` está baleira. Só nese caso insire as especies iniciais, evitando duplicados nos sucesivos arranques da aplicación.
-
-### garden_plants
-
-Representa unha planta concreta pertencente a unha horta.
-
-O esquema físico actual é:
-
-    CREATE TABLE garden_plants (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      garden_id INTEGER NOT NULL,
-      species_id INTEGER NOT NULL,
-      custom_name TEXT NOT NULL,
-      planting_date TEXT NOT NULL,
-
-      FOREIGN KEY (garden_id)
-        REFERENCES gardens(id)
-        ON DELETE CASCADE,
-
-      FOREIGN KEY (species_id)
-        REFERENCES plant_species(id)
-        ON DELETE RESTRICT
-    )
-
-Actualmente están implementados:
-
-- `id`
-- `garden_id`
-- `species_id`
-- `custom_name`
-- `planting_date`
-
-`garden_id` relaciona cada planta coa horta á que pertence.
+`garden_id` relaciona cada planta coa súa horta.
 
 `species_id` relaciona cada planta coa súa especie.
 
-A data de plantación almacénase como `TEXT` en formato ISO 8601 e represéntase mediante `DateTime` no modelo Dart.
+`planting_date` almacénase como `TEXT` en formato ISO 8601.
 
-## Referential Integrity
+---
 
-A versión 2 introduce as primeiras claves foráneas da base de datos.
+## plant_evolution_records
 
-As relacións implementadas son:
+```sql
+CREATE TABLE plant_evolution_records (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  plant_id INTEGER NOT NULL,
+  date TEXT NOT NULL,
+  height REAL,
+  notes TEXT,
 
-    gardens
-       │
-       │ 1:N
-       ▼
-    garden_plants
-       ▲
-       │ N:1
-       │
-    plant_species
+  FOREIGN KEY (plant_id)
+    REFERENCES garden_plants(id)
+    ON DELETE CASCADE
+)
+```
 
-SQLite require que a comprobación de claves foráneas estea activada para cada conexión.
+`plant_id` identifica a planta á que pertence o rexistro.
 
-`DatabaseService` realiza esta configuración mediante:
+`date` é obrigatoria.
 
-    PRAGMA foreign_keys = ON
+`height` e `notes` permiten `NULL`.
 
-### Garden deletion
+---
 
-A relación:
+# Referential Integrity
 
-    garden_plants.garden_id
-        ↓
-    gardens.id
+SQLite require activar explicitamente a comprobación das claves foráneas para cada conexión:
 
-utiliza:
+```sql
+PRAGMA foreign_keys = ON
+```
 
-    ON DELETE CASCADE
+`DatabaseService` realiza esta configuración en `onConfigure`.
 
-Se unha horta é eliminada, SQLite elimina automaticamente as plantas asociadas a ela.
+## Garden → GardenPlant
 
-Este comportamento foi comprobado mediante unha proba transaccional:
+```text
+garden_plants.garden_id
+        ↓
+gardens.id
+```
 
-    plantas antes de eliminar a horta: 1
-    plantas despois de eliminar a horta: 0
+Utiliza:
 
-### Plant species deletion
+```text
+ON DELETE CASCADE
+```
 
-A relación:
+Ao eliminar unha horta, SQLite elimina automaticamente as plantas asociadas.
 
-    garden_plants.species_id
-        ↓
-    plant_species.id
+Este comportamento foi comprobado.
 
-utiliza:
+---
 
-    ON DELETE RESTRICT
+## PlantSpecies → GardenPlant
 
-Unha especie non pode ser eliminada mentres exista algunha planta que a utilice.
+```text
+garden_plants.species_id
+        ↓
+plant_species.id
+```
 
-Este comportamento tamén foi comprobado mediante unha proba transaccional.
+Utiliza:
 
-As probas temporais utilizaron rollback para evitar modificar permanentemente os datos da aplicación.
+```text
+ON DELETE RESTRICT
+```
 
-## Identifiers
+Unha especie non pode eliminarse mentres exista unha planta que a utilice.
+
+Este comportamento foi comprobado.
+
+---
+
+## GardenPlant → PlantEvolutionRecord
+
+```text
+plant_evolution_records.plant_id
+        ↓
+garden_plants.id
+```
+
+Utiliza:
+
+```text
+ON DELETE CASCADE
+```
+
+Ao eliminar unha planta, elimínanse automaticamente os seus rexistros de evolución.
+
+Esta decisión evita conservar históricos orfos dunha entidade que xa non existe.
+
+Unha futura funcionalidade de exportación podería permitir conservar esa información fóra da base funcional antes da eliminación.
+
+---
+
+# Identifiers
 
 As táboas implementadas utilizan:
 
-    INTEGER PRIMARY KEY AUTOINCREMENT
+```text
+INTEGER PRIMARY KEY AUTOINCREMENT
+```
 
-para os seus identificadores.
+SQLite xera automaticamente o identificador durante os `INSERT`.
 
-SQLite é responsable de xerar automaticamente o identificador durante os `INSERT`.
+Nos modelos Dart actuais utilízase:
 
-Na representación actual dos modelos Dart, os identificadores mantéñense como `String?`.
+```dart
+String? id;
+```
 
-Por este motivo, os Repositories SQLite encapsulan a conversión entre os identificadores `INTEGER` da base de datos e os `String` utilizados no dominio.
+Por este motivo, os Repositories realizan as conversións necesarias.
 
-No caso das claves foráneas de `GardenPlant`, `toMap()` converte:
+Exemplo:
 
-    gardenId  → int.parse(gardenId)
-    speciesId → int.parse(speciesId)
+```text
+SQLite INTEGER
+    ↕
+String no dominio
+```
 
-e `fromMap()` realiza a conversión inversa mediante `toString()`.
+As claves foráneas tamén se converten na fronteira coa persistencia.
 
-Esta diferenza de representación permanece encapsulada na capa de acceso aos datos.
+Exemplo:
 
+```dart
+int.parse(plantId)
+```
 
-## Model Mapping
+---
 
-O modelo `Garden` incorpora conversións entre a representación utilizada pola aplicación e a utilizada pola base de datos.
+# Model Mapping
 
-Lectura desde SQLite:
+## Garden
 
-    Map<String, Object?>
-            ↓
-    Garden.fromMap()
-            ↓
-          Garden
-
-Escritura en SQLite:
-
-          Garden
-            ↓
-        toMap()
-            ↓
-    Map<String, Object?>
-
-`toMap()` non inclúe o identificador.
-
-Durante un `INSERT`, SQLite xera o `id` mediante `AUTOINCREMENT`.
-
-Durante un `UPDATE`, o identificador utilízase na condición `WHERE` para localizar a fila, pero non forma parte dos valores que se modifican.
-Os novos modelos `GardenPlant` e `PlantSpecies` aplican o mesmo patrón de conversión.
-
-`GardenPlant` utiliza:
-
-    GardenPlant
-        ↓ toMap()
-    Map<String, Object?>
-        ↓
-    SQLite
+```text
+Garden
+  ↓ toMap()
+Map<String, Object?>
+  ↓
+SQLite
+```
 
 e:
 
-    SQLite
-        ↓
-    Map<String, Object?>
-        ↓ GardenPlant.fromMap()
-    GardenPlant
+```text
+SQLite
+  ↓
+Map<String, Object?>
+  ↓ fromMap()
+Garden
+```
 
-Os identificadores continúan representándose como `String` no dominio, aínda que SQLite utiliza `INTEGER`.
+---
 
-Por este motivo, `GardenPlant.toMap()` converte:
+## GardenPlant
 
-    gardenId  → int.parse(gardenId)
-    speciesId → int.parse(speciesId)
+Convértense:
 
-e `GardenPlant.fromMap()` realiza a conversión inversa mediante `toString()`.
+```text
+gardenId  → INTEGER
+speciesId → INTEGER
+```
 
-`plantingDate` utiliza:
+A data utiliza:
 
-    DateTime
-        ↓ toIso8601String()
-    TEXT
-        ↓ DateTime.parse()
-    DateTime
+```text
+DateTime
+  ↓ toIso8601String()
+TEXT
+  ↓ DateTime.parse()
+DateTime
+```
 
-`PlantSpecies` utiliza tamén `toMap()` e `fromMap()` para converter entre a representación do dominio e a representación SQLite.
+---
 
-## Implemented CRUD Operations
+## PlantSpecies
 
-As tres implementacións SQLite dispoñen actualmente das operacións persistentes necesarias para os módulos implementados.
+Utiliza igualmente:
 
-### Gardens
+- `toMap()`
+- `fromMap()`
 
-`SQLiteGardenRepository` implementa:
+---
 
-    CREATE → addGarden()      → INSERT
-    READ   → getGardens()     → SELECT
-    READ   → getGardenById()  → SELECT ... WHERE
-    UPDATE → updateGarden()   → UPDATE ... WHERE
-    DELETE → removeGarden()   → DELETE ... WHERE
+## PlantEvolutionRecord
 
-### Plant species
+`toMap()` non inclúe `id`.
 
-`SQLitePlantSpeciesRepository` implementa:
+Converte:
 
-    CREATE → addSpecies()      → INSERT
-    READ   → getSpecies()      → SELECT
-    READ   → getSpeciesById()  → SELECT ... WHERE
-    UPDATE → updateSpecies()   → UPDATE ... WHERE
-    DELETE → removeSpecies()   → DELETE ... WHERE
+```text
+plantId → INTEGER
+date    → TEXT ISO 8601
+height  → REAL ou NULL
+notes   → TEXT ou NULL
+```
 
-### Garden plants
+`fromMap()` converte de novo:
 
-`SQLiteGardenPlantRepository` implementa:
+```text
+id       → String
+plant_id → String
+date     → DateTime
+height   → double?
+notes    → String?
+```
 
-    CREATE → addPlant()              → INSERT
-    READ   → getPlantsByGardenId()   → SELECT ... WHERE garden_id
-    READ   → getPlantById()          → SELECT ... WHERE id
-    UPDATE → updatePlant()           → UPDATE ... WHERE
-    DELETE → removePlant()           → DELETE ... WHERE
+Para `height` utilízase unha conversión compatible con `INTEGER`, `REAL` ou `NULL`:
 
-A lectura principal das plantas está contextualizada pola horta mediante `gardenId`, polo que non é necesario cargar globalmente todas as plantas da aplicación.
+```dart
+(map['height'] as num?)?.toDouble()
+```
 
-As operacións son asíncronas e devolven `Future`.
+---
 
-A persistencia do módulo de hortas foi comprobada creando, consultando, modificando e eliminando datos e verificando a súa conservación entre execucións.
+# Implemented Repository Operations
 
-Durante a sesión 15 comprobouse tamén o CRUD de especies e plantas e integrouse co fluxo real da interface mediante os seus respectivos ViewModels e Repositories.
+## Gardens
 
+`SQLiteGardenRepository`:
 
-## Pending Tables
+```text
+CREATE → addGarden()
+READ   → getGardens()
+READ   → getGardenById()
+UPDATE → updateGarden()
+DELETE → removeGarden()
+```
 
-As seguintes táboas do deseño previsto aínda non están implementadas:
+---
 
-- `users`
-- `plant_evolution_records`
-- `weather_records`
-- `garden_layout_items`
+## Plant Species
 
-Serán incorporadas progresivamente cando se desenvolvan os módulos correspondentes.
+`SQLitePlantSpeciesRepository`:
 
-## Database Evolution
+```text
+CREATE → addSpecies()
+READ   → getSpecies()
+READ   → getSpeciesById()
+UPDATE → updateSpecies()
+DELETE → removeSpecies()
+```
 
-A estrutura da base de datos evoluciona mediante versións e migracións cando é necesario modificar o esquema existente.
+---
 
-Actualmente utilízase:
+## Garden Plants
 
-    version: 2
+`SQLiteGardenPlantRepository`:
 
-### Version 1
+```text
+CREATE → addPlant()
+READ   → getPlantsByGardenId()
+READ   → getPlantById()
+UPDATE → updatePlant()
+DELETE → removePlant()
+```
 
-A versión 1 constituíu o primeiro esquema físico de MARTOLA e incluía:
+A lectura principal está contextualizada mediante `gardenId`.
 
-    gardens
+---
 
-### Version 2
+## Plant Evolution Records
 
-A versión 2 introduce:
+`SQLitePlantEvolutionRecordRepository`:
 
-    plant_species
-    garden_plants
+```text
+CREATE → addRecord()
+READ   → getRecordsByPlantId()
+READ   → getRecordById()
+UPDATE → updateRecord()
+DELETE → removeRecord()
+```
 
-e as primeiras relacións mediante claves foráneas.
+A lectura principal está contextualizada mediante `plantId`.
 
-A evolución do esquema é:
+Os rexistros poden ordenarse por data para representar correctamente o historial.
 
-    v1
-    │
-    │ CREATE TABLE plant_species
-    │ CREATE TABLE garden_plants
-    ▼
-    v2
+---
 
-### New installations
+# CRUD Verification
 
-Nunha instalación nova, `onCreate` crea directamente o esquema completo correspondente á versión actual:
+## Gardens
 
-    gardens
-    plant_species
-    garden_plants
+Comprobouse:
 
-Non é necesario crear primeiro o esquema v1 e posteriormente migralo.
+- CREATE.
+- READ.
+- UPDATE.
+- DELETE.
+- Persistencia entre reinicios.
 
-### Existing installations
+## Plant Species
 
-Nunha base de datos existente en versión 1, `onUpgrade` executa a primeira migración real de MARTOLA.
+Comprobouse o CRUD contra SQLite.
 
-A migración utiliza:
+## Garden Plants
 
-    if (oldVersion < 2) {
-      // cambios introducidos na versión 2
-    }
+Comprobouse:
 
-Dentro desta migración créanse:
+- CREATE.
+- READ BY GARDEN.
+- READ BY ID.
+- UPDATE.
+- DELETE.
+- `ON DELETE CASCADE`.
+- `ON DELETE RESTRICT` no fluxo relacionado coas especies.
 
-    plant_species
-    garden_plants
+## Plant Evolution Records
 
-A táboa `gardens` non se crea novamente porque xa existe nas bases de datos v1.
+Comprobouse directamente contra SQLite:
 
-A migración v1 → v2 foi executada e comprobada correctamente.
+```text
+CREATE               ✅
+READ BY PLANT        ✅
+READ BY ID           ✅
+UPDATE               ✅
+DELETE               ✅
+AFTER DELETE = null  ✅
+```
 
-A aplicación arrancou coa base de datos actualizada e conservou os datos existentes de `gardens`.
+Tamén se comprobou o CRUD completo desde a interface mediante `PlantEvolutionViewModel`.
 
-### Migration Strategy
+---
 
-As futuras migracións seguirán un modelo acumulativo:
+# Database Evolution
 
-    if (oldVersion < 2) {
-      // cambios da versión 2
-    }
+## Version 1
 
-    if (oldVersion < 3) {
-      // cambios da versión 3
-    }
+Contiña:
 
-    if (oldVersion < 4) {
-      // cambios da versión 4
-    }
+```text
+gardens
+```
 
-Isto permitirá que unha base de datos antiga aplique todos os cambios necesarios ata alcanzar o esquema actual.
+---
 
-A versión da base de datos seguirá sendo independente da versión da aplicación e só se incrementará cando exista un cambio real no esquema.
+## Version 2
 
-**---**
+Engadiu:
+
+```text
+plant_species
+garden_plants
+```
+
+e as primeiras claves foráneas.
+
+Migración:
+
+```text
+v1
+ ↓
+v2
+```
+
+Foi comprobada conservando os datos existentes.
+
+---
+
+## Version 3
+
+Engadiu:
+
+```text
+plant_evolution_records
+```
+
+Migración:
+
+```text
+v2
+ ↓
+CREATE TABLE plant_evolution_records
+ ↓
+v3
+```
+
+A migración foi comprobada sobre unha base existente en v2.
+
+Despois da actualización seguían dispoñibles todas as hortas e plantas previamente almacenadas.
+
+---
+
+## New Installations
+
+Nunha instalación nova, `onCreate()` crea directamente o esquema completo correspondente á versión 3:
+
+```text
+gardens
+plant_species
+garden_plants
+plant_evolution_records
+```
+
+Non é necesario executar as migracións históricas nunha instalación nova.
+
+---
+
+## Existing Installations
+
+Unha instalación v1 que pase directamente a v3 executará:
+
+```text
+oldVersion < 2
+→ crea plant_species
+→ crea garden_plants
+
+oldVersion < 3
+→ crea plant_evolution_records
+```
+
+Unha instalación v2 executará unicamente:
+
+```text
+oldVersion < 3
+→ crea plant_evolution_records
+```
+
+---
+
+## Migration Strategy
+
+As futuras migracións manterán o modelo acumulativo:
+
+```dart
+if (oldVersion < 2) {
+  // cambios v2
+}
+
+if (oldVersion < 3) {
+  // cambios v3
+}
+
+if (oldVersion < 4) {
+  // cambios v4
+}
+```
+
+A versión da base de datos é independente da versión da aplicación e só debe incrementarse cando cambia o esquema físico.
+
+---
 
 # Initial Dataset
 
-A primeira versión da aplicación incluirá unha pequena colección de especies vexetais predefinidas:
+A aplicación dispón actualmente dun pequeno catálogo inicial de especies:
 
-- Tomate
-- Leituga
-- Pemento
-- Cenoria
-- Amorodo
-- Albahaca
+- Tomate — `Solanum lycopersicum`
+- Leituga — `Lactuca sativa`
+- Pemento — `Capsicum annuum`
+- Cenoria — `Daucus carota`
+- Amorodo — `Fragaria × ananassa`
+- Alfábega — `Ocimum basilicum`
 
-Estas especies almacenaranse localmente.
+Antes da inserción compróbase:
 
-**---**
+```sql
+SELECT COUNT(*) AS count
+FROM plant_species
+```
+
+Se existen rexistros, non se realiza o seed.
+
+Isto evita duplicados nos sucesivos arranques.
+
+---
+
+# Pending Tables
+
+As seguintes táboas do deseño obxectivo aínda non están implementadas:
+
+- `users`
+- `weather_records`
+- `garden_layout_items`
+
+Serán incorporadas cando se desenvolvan os seus módulos.
+
+`plant_evolution_records` xa forma parte do esquema físico v3.
+
+---
 
 # Future Improvements
 
-Posibles ampliacións futuras:
+Posibles ampliacións:
 
+- Campos adicionais de evolución.
+- Fotografías asociadas aos rexistros.
+- Exportación de históricos.
 - API botánica externa.
 - Sincronización cloud.
 - Compartición de hortas.
 - Sistema multiusuario.
 - Fotografías almacenadas remotamente.
 - Integración con sensores ambientais.
+- Estatísticas de crecemento.
 
-**---**
+---
 
-# Notes
+# Current Implementation Note
 
-O deseño da base de datos segue un enfoque modular e escalable.
+A infraestrutura SQLite está actualmente operativa na versión 3.
 
-A estrutura proposta permite implementar unha primeira versión completamente funcional utilizando SQLite e facilita futuras ampliacións sen modificar significativamente o modelo de datos.
+A arquitectura de persistencia é:
 
-**---**
+```text
+View
+  ↓
+ViewModel
+  ↓
+Repository
+  ↓
+DatabaseService
+  ↓
+SQLite
+```
 
-## Current Implementation Note
+Implementacións activas:
 
-A infraestrutura SQLite está actualmente implementada e operativa na versión 2.
+```text
+SQLiteGardenRepository
+SQLitePlantSpeciesRepository
+SQLiteGardenPlantRepository
+SQLitePlantEvolutionRecordRepository
+```
 
-O módulo de hortas utiliza:
+Táboas activas:
 
-    SQLiteGardenRepository
-            ↓
-    DatabaseService
-            ↓
-          SQLite
-            ↓
-        martola.db
+```text
+gardens
+plant_species
+garden_plants
+plant_evolution_records
+```
 
-A táboa `gardens` dispón dun CRUD persistente completo.
+O esquema actual xa permite persistir a cadea relacional principal do MVP:
 
-Tamén están creadas e validadas estruturalmente:
+```text
+Garden
+  ↓
+GardenPlant
+  ↓
+PlantEvolutionRecord
 
-    plant_species
-    garden_plants
+PlantSpecies
+  ↓
+GardenPlant
+```
 
-Os modelos Dart correspondentes son:
+O CRUD de hortas, plantas e rexistros de evolución está integrado coa interface e comprobado.
 
-    PlantSpecies
-    GardenPlant
+A base de datos seguirá evolucionando incrementalmente segundo se implementen meteoroloxía, deseño visual ou outras funcionalidades.
 
-Ambos dispoñen de conversión entre modelos de dominio e representación SQLite mediante `toMap()` e `fromMap()`.
-
-Están definidos os contratos:
-
-    PlantSpeciesRepository
-    GardenPlantRepository
-
-As implementacións SQLite destes novos repositorios aínda non están desenvolvidas.
-
-A seguinte tarefa prevista é iniciar:
-
-    SQLitePlantSpeciesRepository
-
-As relacións entre `gardens`, `garden_plants` e `plant_species` están protexidas mediante claves foráneas e comprobáronse os comportamentos `ON DELETE CASCADE` e `ON DELETE RESTRICT`.
-
-`MemoryGardenRepository` mantense como implementación alternativa de `GardenRepository`, pero non constitúe o mecanismo principal de almacenamento.
-
-A implementación continuará de maneira incremental.
-
-O deseño completo documentado neste ficheiro representa o modelo obxectivo de MARTOLA, mentres que `Current SQLite Implementation` documenta o subconxunto que existe realmente en cada fase do desenvolvemento.
+O deseño completo documentado neste ficheiro representa o modelo obxectivo de MARTOLA, mentres que as seccións de implementación actual documentan exclusivamente o esquema físico realmente existente.

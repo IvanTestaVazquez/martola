@@ -27,7 +27,7 @@ class DatabaseService {
     final database = await _databaseFactory.openDatabase(
       databasePath,
       options: OpenDatabaseOptions(
-        version: 2,
+        version: 3,
         onConfigure: (db) async{
           await db.execute('PRAGMA foreign_keys = ON');
         },
@@ -69,7 +69,22 @@ class DatabaseService {
                 ON DELETE RESTRICT
             )
             ''',
-          );
+          );          
+            await db.execute(
+              '''
+              CREATE TABLE plant_evolution_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plant_id INTEGER NOT NULL,
+                date TEXT NOT NULL,
+                height REAL,
+                notes TEXT,
+
+                FOREIGN KEY (plant_id)
+                  REFERENCES garden_plants(id)
+                  ON DELETE CASCADE
+              )
+              ''',
+            );
         },
         onUpgrade: (db, oldVersion, newVersion) async {
           if (oldVersion < 2) {
@@ -101,8 +116,27 @@ class DatabaseService {
                   ON DELETE RESTRICT
               )
               ''',
+            );            
+          }
+
+          if (oldVersion <3){
+            await db.execute(
+              '''
+              CREATE TABLE plant_evolution_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plant_id INTEGER NOT NULL,
+                date TEXT NOT NULL,
+                height REAL,
+                notes TEXT,
+
+                FOREIGN KEY (plant_id)
+                  REFERENCES garden_plants(id)
+                  ON DELETE CASCADE
+              )
+              ''',
             );
           }
+
         },
       ),
     );

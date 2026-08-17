@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'edit_plant_screen.dart';
+import 'plant_evolution_list_screen.dart';
 
 import '../../viewmodels/plants_viewmodel.dart';
 import '../../viewmodels/plant_species_viewmodel.dart';
+import '../../viewmodels/plant_evolution_viewmodel.dart';
 
 import '../../models/garden_plant.dart';
 import '../../models/plant_species.dart';
+import '../../models/plant_evolution_record.dart';
 
-class PlantDetailsScreen extends StatelessWidget{
+class PlantDetailsScreen extends StatefulWidget{
   final String plantId;
 
   const PlantDetailsScreen({
@@ -18,9 +21,27 @@ class PlantDetailsScreen extends StatelessWidget{
   });
 
   @override
+  State<StatefulWidget> createState() {
+    return _PlantDetailsScreen();
+  }  
+}
+class _PlantDetailsScreen extends State<PlantDetailsScreen>{
+
+  @override
+  void initState(){
+    super.initState();
+
+    context.read<PlantEvolutionViewModel>().loadRecords(widget.plantId);
+  }
+  
+  @override
   Widget build(BuildContext context) {
     final plant = context.select<PlantsViewModel, GardenPlant?>(
-      (viewModel) => viewModel.getPlantById(plantId),
+      (viewModel) => viewModel.getPlantById(widget.plantId),
+    );
+
+    final records = context.select<PlantEvolutionViewModel, List<PlantEvolutionRecord>>(
+      (viewModel) => viewModel.records,
     );
 
     PlantSpecies? species;
@@ -65,6 +86,11 @@ class PlantDetailsScreen extends StatelessWidget{
                 '${plant.plantingDate.year}',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
+              const SizedBox(height: 8),
+              Text(
+                 'Rexistros de evolución: ${records.length}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: (){
@@ -75,6 +101,19 @@ class PlantDetailsScreen extends StatelessWidget{
                   );
                 }, 
                 child: const Text('Editar planta')
+              ),
+              const SizedBox(height: 8),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => PlantEvolutionListScreen(
+                         plantId: widget.plantId,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('Ver evolución'),
               ),
               const SizedBox(height: 16),
               FilledButton(
@@ -121,5 +160,6 @@ class PlantDetailsScreen extends StatelessWidget{
           ))
 
     );
-  }  
+  }
 }
+  

@@ -4,51 +4,57 @@
 
 ## Project Name
 
-MARTOLA
+**MARTOLA**
 
-**\*\*Modelo Avanzado de Rexistro e Tratamento de Organización de Leiras e Agricultura\*\***
+**Modelo Avanzado de Rexistro e Tratamento de Organización de Leiras e
+Agricultura**
 
 ## Project Type
 
-Traballo de Fin de Ciclo (TFC)
-DAM Dual Intensiva
-CIFP A Carballeira Marcos Valcárcel
+-   Traballo de Fin de Ciclo (TFC)
+-   DAM Dual Intensiva
+-   CIFP A Carballeira Marcos Valcárcel
 
 ## Project Summary
 
-MARTOLA é unha aplicación multiplataforma para a xestión de hortas e xardíns desenvolvida con Flutter.
+MARTOLA é unha aplicación multiplataforma desenvolvida con Flutter para
+a xestión de hortas e xardíns.
 
 A aplicación permitirá:
 
-- Crear e administrar hortas e xardíns.
-- Rexistrar plantas.
-- Consultar información meteorolóxica.
-- Almacenar históricos climáticos.
-- Realizar seguemento da evolución das plantas.
-- Deseñar visualmente a distribución dunha horta.
-- Servir como ferramenta de apoio á planificación e mantemento de cultivos.
+-   Crear, editar e eliminar hortas e xardíns.
+-   Rexistrar, editar e eliminar plantas.
+-   Manter un catálogo de especies vexetais.
+-   Realizar seguemento da evolución das plantas mediante rexistros
+    históricos.
+-   Consultar información meteorolóxica.
+-   Almacenar históricos climáticos.
+-   Deseñar visualmente a distribución dunha horta.
+-   Servir como ferramenta de apoio á planificación e mantemento de
+    cultivos.
 
-O proxecto está pensado para funcionar inicialmente en:
+O proxecto está pensado inicialmente para:
 
-- Android
-- Windows
-- Linux
-- Tablets
+-   Android
+-   Windows
+-   Linux
+-   Tablets
 
 Posible soporte futuro:
 
-- Web
-- Sincronización cloud
+-   Web
+-   Sincronización cloud
 
-iOS descártase inicialmente debido ás limitacións e custos asociados ao desenvolvemento para a plataforma Apple.
+iOS descártase inicialmente debido ás limitacións e custos asociados ao
+desenvolvemento para a plataforma Apple.
 
-**---**
+------------------------------------------------------------------------
 
 # Project Documentation
 
 ## Documentation Structure
 
-```text
+``` text
 docs/
 ├── PROJECT_CONTEXT.md
 ├── UI_REFERENCE.md
@@ -61,65 +67,70 @@ docs/
 
 ## Purpose
 
-Esta documentación constitúe o sistema principal de seguemento e contexto do proxecto.
+Esta documentación constitúe o sistema principal de seguemento e
+contexto do proxecto.
 
-Todos os cambios relevantes deberán reflectirse nestes documentos para facilitar:
+Todos os cambios relevantes deberán reflectirse nestes documentos para
+facilitar:
 
-- Desenvolvemento.
-- Mantemento.
-- Elaboración da memoria final.
-- Recuperación de contexto.
-- Seguemento da evolución do proxecto.
+-   Desenvolvemento.
+-   Mantemento.
+-   Elaboración da memoria final.
+-   Recuperación de contexto.
+-   Seguemento da evolución do proxecto.
 
-**---**
+------------------------------------------------------------------------
 
 # Technical Stack
 
 ## Frontend
 
-- Flutter
-- Dart
+-   Flutter
+-   Dart
 
 ## Architecture
 
-- MVVM simplificado
-- Repository Pattern
+-   MVVM simplificado
+-   Repository Pattern
 
 ## State Management
 
-- Provider
+-   Provider
+-   `ChangeNotifier`
+-   `MultiProvider`
 
 ## Database
 
-- SQLite
-- `sqflite`
-- `sqflite_common_ffi`
-- `path`
-- `path_provider`
+-   SQLite
+-   `sqflite`
+-   `sqflite_common_ffi`
+-   `path`
+-   `path_provider`
 
-A infraestrutura de persistencia está deseñada para soportar Android, Windows e Linux.
+A infraestrutura de persistencia está deseñada para soportar Android,
+Windows e Linux.
 
 ## APIs
 
-- OpenWeatherMap (prevista)
+-   OpenWeatherMap (prevista)
 
 ## Design Tools
 
-- Figma
-- draw.io
+-   Figma
+-   draw.io
 
 ## Version Control
 
-- Git
-- GitHub
+-   Git
+-   GitHub
 
-**---**
+------------------------------------------------------------------------
 
 # Architecture
 
 ## Folder Structure
 
-```text
+``` text
 lib/
 ├── core/
 ├── models/
@@ -135,15 +146,15 @@ lib/
 
 ## Architecture Flow
 
-```text
+``` text
 View
- ↓
+  ↓
 ViewModel
- ↓
+  ↓
 Repository
- ↓
+  ↓
 DatabaseService
- ↓
+  ↓
 SQLite
 ```
 
@@ -151,148 +162,107 @@ SQLite
 
 Arquitectura MVVM simplificada orientada a:
 
-- Separación de responsabilidades.
-- Mantemento sinxelo.
-- Escalabilidade futura.
-- Curva de aprendizaxe moderada.
+-   Separación de responsabilidades.
+-   Mantemento sinxelo.
+-   Escalabilidade futura.
+-   Curva de aprendizaxe moderada.
+-   Independencia entre interface, estado e persistencia.
 
 ## Current Implementation State
 
-A arquitectura MVVM simplificada está implementada no módulo de hortas e dispón actualmente dunha capa de persistencia real mediante SQLite.
+A arquitectura está aplicada actualmente aos módulos de hortas, plantas,
+especies e evolución das plantas.
 
-O fluxo actual é:
+A composición principal realízase en `main.dart`, onde se crean e
+inxectan as implementacións concretas dos Repositories e os ViewModels
+mediante `MultiProvider`.
 
-    View
-      ↓
-    GardensViewModel
-      ↓ async
-    GardenRepository
-      ↑
-    SQLiteGardenRepository
-      ↓
-    DatabaseService
-      ↓
-    SQLite
-      ↓
-    martola.db
+``` text
+main.dart
+   ↓
+DatabaseService
+   ↓
+Repositories SQLite
+   ↓
+ViewModels
+   ↓
+ChangeNotifierProvider / MultiProvider
+   ↓
+Views
+```
 
-Existe unha separación efectiva entre:
+Os ViewModels implementados son:
 
-- Interface de usuario.
-- Estado e lóxica de presentación.
-- Contrato de acceso aos datos.
-- Implementación concreta do Repository.
-- Infraestrutura de acceso á base de datos.
-- Persistencia SQLite.
+-   `GardensViewModel`
+-   `PlantSpeciesViewModel`
+-   `PlantsViewModel`
+-   `PlantEvolutionViewModel`
 
-`GardensViewModel` actúa como intermediario entre as Views e a capa Repository e é compartido mediante Provider.
+As Views acceden ao estado mediante:
 
-O ViewModel mantén unha colección local cos datos xa cargados:
+-   `context.read()` para executar accións sen subscribirse aos cambios.
+-   `context.watch()` para observar un estado.
+-   `context.select()` para observar só unha parte concreta.
 
-    List<Garden> _gardens
+Os ViewModels manteñen estado de presentación xa cargado, mentres que os
+Repositories constitúen a abstracción de acceso aos datos persistentes.
 
-Esta colección representa o estado de presentación e non a fonte persistente dos datos.
+## Implemented Repositories
 
-A carga inicial realízase mediante:
+Contratos:
 
-    loadGardens()
+-   `GardenRepository`
+-   `PlantSpeciesRepository`
+-   `GardenPlantRepository`
+-   `PlantEvolutionRecordRepository`
 
-que recupera de maneira asíncrona as hortas desde o Repository e actualiza o estado observable.
+Implementacións SQLite:
 
-As principais operacións do módulo son:
+-   `SQLiteGardenRepository`
+-   `SQLitePlantSpeciesRepository`
+-   `SQLiteGardenPlantRepository`
+-   `SQLitePlantEvolutionRecordRepository`
 
-    loadGardens()
-    addGarden()
-    getGardenById()
-    updateGarden()
-    removeGarden()
+`MemoryGardenRepository` mantense como implementación alternativa útil
+para probas ou desenvolvemento.
 
-As Views acceden ao ViewModel mediante:
-
-    context.read()
-    context.watch()
-    context.select()
-
-segundo necesiten executar unha acción, observar o estado completo ou reaccionar a unha parte concreta.
-
-A abstracción de acceso aos datos é:
-
-    GardenRepository
-
-Actualmente a implementación utilizada pola aplicación é:
-
-    SQLiteGardenRepository
-
-`MemoryGardenRepository` mantense como implementación alternativa do mesmo contrato e pode continuar sendo útil durante o desenvolvemento ou para probas.
-
-A implementación concreta inxéctase en `GardensViewModel` desde `main.dart`.
-
-A composición actual é:
-
-    main.dart
-       ↓
-    DatabaseService
-       ↓
-    SQLiteGardenRepository
-       ↓
-    GardensViewModel
-       ↓
-    ChangeNotifierProvider
-       ↓
-    Views
-
-Deste modo, `GardensViewModel` depende da abstracción `GardenRepository` e non necesita coñecer a tecnoloxía concreta utilizada para persistir os datos.
-
-Durante as sesións 13 e 14 completouse e evolucionou a primeira infraestrutura SQLite funcional.
-
-Xa se completou:
-
-- Adaptación asíncrona de `GardenRepository`.
-- Adaptación asíncrona de `MemoryGardenRepository`.
-- Introdución de `Future`, `async` e `await` no fluxo de datos.
-- Carga inicial mediante `loadGardens()`.
-- Adaptación das operacións CRUD ao modelo asíncrono.
-- Implementación de `DatabaseService`.
-- Apertura de `martola.db`.
-- Implementación de `SQLiteGardenRepository`.
-- CRUD completo de hortas mediante SQLite.
-- Integración de `SQLiteGardenRepository` desde `main.dart`.
-- Recuperación das hortas persistidas ao iniciar a aplicación.
-- Verificación da persistencia entre reinicios.
-- Evolución do esquema SQLite á versión 2.
-- Implementación da primeira migración v1 → v2.
-- Conservación dos datos existentes durante a migración.
-- Creación de `plant_species`.
-- Creación de `garden_plants`.
-- Introdución e activación de claves foráneas.
-- Verificación de `ON DELETE CASCADE`.
-- Verificación de `ON DELETE RESTRICT`.
-- Creación do modelo `GardenPlant`.
-- Creación do modelo `PlantSpecies`.
-- Creación de `GardenPlantRepository`.
-- Creación de `PlantSpeciesRepository`.
-
-A infraestrutura SQLite queda preparada para continuar o módulo de plantas.
-
-O seguinte paso é implementar `SQLitePlantSpeciesRepository` e posteriormente `SQLiteGardenPlantRepository`.
-
-**---**
+------------------------------------------------------------------------
 
 # Database Design
 
+## Current SQLite Version
+
+``` text
+version: 3
+```
+
+Migracións implementadas e comprobadas:
+
+``` text
+v1 → v2
+v2 → v3
+```
+
+As migracións son acumulativas e conservan os datos existentes.
+
+## Current Physical Schema
+
+``` text
+gardens
+plant_species
+garden_plants
+plant_evolution_records
+```
+
 ## Main Entities
-
-### users
-
-Usuarios da aplicación.
 
 ### gardens
 
-Hortas ou xardíns creados polos usuarios.
+Hortas ou xardíns creados na aplicación.
 
 ### plant_species
 
-Información xeral das especies vexetais.
+Información común das especies vexetais.
 
 ### garden_plants
 
@@ -300,115 +270,314 @@ Plantas concretas rexistradas dentro dunha horta.
 
 ### plant_evolution_records
 
-Histórico de evolución dunha planta.
+Histórico de evolución dunha planta concreta.
 
-### weather_records
+Campos actualmente implementados:
 
-Histórico meteorolóxico asociado ás hortas.
+-   `id`
+-   `plant_id`
+-   `date`
+-   `height`
+-   `notes`
 
-### garden_layout_items
+`height` e `notes` son opcionais.
 
-Posición visual das plantas dentro do deseño da horta.
+### Future Entities
 
-**---**
+Previstas no deseño global, pero aínda non implementadas fisicamente:
 
-## Database Relationships
+-   `users`
+-   `weather_records`
+-   `garden_layout_items`
 
-```text
-users 1:N gardens
+## Current Relationships
 
+``` text
 gardens 1:N garden_plants
 
 plant_species 1:N garden_plants
 
 garden_plants 1:N plant_evolution_records
-
-gardens 1:N weather_records
-
-gardens 1:N garden_layout_items
-
-garden_plants 1:1 garden_layout_items
 ```
 
-**---**
+Integridade referencial:
+
+-   `garden_plants.garden_id → gardens.id` con `ON DELETE CASCADE`.
+-   `garden_plants.species_id → plant_species.id` con
+    `ON DELETE RESTRICT`.
+-   `plant_evolution_records.plant_id → garden_plants.id` con
+    `ON DELETE CASCADE`.
+
+As claves foráneas actívanse mediante:
+
+``` sql
+PRAGMA foreign_keys = ON
+```
+
+## Persistence Decisions
+
+-   Os identificadores do dominio mantéñense como `String`, aínda que
+    SQLite utiliza `INTEGER`.
+-   A conversión realízase na fronteira coa persistencia.
+-   Os `DateTime` almacénanse como `TEXT` en formato ISO 8601.
+-   Os valores decimais, como superficie ou altura, almacénanse como
+    `REAL`.
+-   Os campos opcionais poden persistirse como `NULL`.
+
+------------------------------------------------------------------------
+
+# Implemented Functional Modules
+
+## Gardens
+
+CRUD completo desde a interface:
+
+-   Crear horta.
+-   Listar hortas.
+-   Consultar detalle.
+-   Editar horta.
+-   Eliminar horta.
+-   Persistencia SQLite.
+-   Recuperación dos datos entre reinicios.
+
+Fluxo:
+
+``` text
+Views
+  ↓
+GardensViewModel
+  ↓
+GardenRepository
+  ↓
+SQLiteGardenRepository
+  ↓
+DatabaseService
+  ↓
+SQLite
+```
+
+## Plant Species
+
+Implementado:
+
+-   Modelo `PlantSpecies`.
+-   `PlantSpeciesRepository`.
+-   `SQLitePlantSpeciesRepository`.
+-   `PlantSpeciesViewModel`.
+-   Catálogo inicial local de especies.
+-   Inserción do catálogo só cando `plant_species` está baleira.
+-   Uso do catálogo desde os formularios mediante selector de especies.
+
+O catálogo local é unha solución provisional para o MVP e poderá
+substituírse ou ampliarse no futuro.
+
+## Plants
+
+CRUD completo desde a interface:
+
+-   Listar plantas dunha horta.
+-   Crear planta.
+-   Consultar detalle.
+-   Resolver o nome da especie asociada.
+-   Editar planta.
+-   Eliminar planta.
+-   Persistencia SQLite.
+-   Actualización reactiva das Views.
+
+`PlantsViewModel` conserva `_currentGardenId` e mantén unicamente as
+plantas correspondentes á horta actualmente cargada.
+
+Fluxo principal:
+
+``` text
+GardenDetailsScreen
+  ↓
+PlantListScreen
+  ↓
+PlantDetailsScreen
+```
+
+Pantallas implementadas:
+
+-   `PlantListScreen`
+-   `AddPlantScreen`
+-   `PlantDetailsScreen`
+-   `EditPlantScreen`
+
+## Plant Evolution
+
+O módulo de evolución está implementado cun CRUD completo desde a
+interface.
+
+Modelo:
+
+-   `PlantEvolutionRecord`
+
+Campos:
+
+-   `id`
+-   `plantId`
+-   `date`
+-   `height` opcional
+-   `notes` opcionais
+
+Infraestrutura:
+
+-   `PlantEvolutionRecordRepository`
+-   `SQLitePlantEvolutionRecordRepository`
+-   `PlantEvolutionViewModel`
+
+Pantallas:
+
+-   `PlantEvolutionListScreen`
+-   `AddPlantEvolutionRecordScreen`
+-   `PlantEvolutionDetailsScreen`
+-   `EditPlantEvolutionRecordScreen`
+
+Funcionalidades:
+
+-   Cargar os rexistros dunha planta.
+-   Crear un rexistro.
+-   Consultar o detalle.
+-   Editar un rexistro.
+-   Eliminar un rexistro.
+-   Validar altura opcional.
+-   Gardar altura e notas como `NULL` cando non se proporcionan.
+-   Seleccionar a data mediante `showDatePicker`.
+-   Actualizar automaticamente as Views mediante `notifyListeners()`.
+
+`PlantEvolutionViewModel` conserva `_currentPlantId`, polo que os
+formularios de creación non necesitan xestionar directamente a relación
+coa planta activa.
+
+Fluxo:
+
+``` text
+PlantDetailsScreen
+  ↓
+PlantEvolutionListScreen
+  ↓
+PlantEvolutionDetailsScreen
+```
+
+Fluxo de datos:
+
+``` text
+View
+  ↓
+PlantEvolutionViewModel
+  ↓
+PlantEvolutionRecordRepository
+  ↓
+SQLitePlantEvolutionRecordRepository
+  ↓
+DatabaseService
+  ↓
+SQLite
+```
+
+O CRUD foi comprobado tanto directamente contra o Repository/SQLite como
+desde a interface.
+
+------------------------------------------------------------------------
 
 # Navigation Flow
 
-```text
-Inicio / Splash
-        ↓
-Benvida / Login
-        ↓
-Panel Principal
-        ↓
+Fluxo funcional actualmente relevante:
+
+``` text
+Inicio
+  ↓
+Dashboard
+  ↓
 Lista de Hortas
-        ↓
+  ↓
 Detalle dunha Horta
-        ├── Plantas
-        │     └── Detalle Planta
-        │            └── Evolución
-        ├── Meteoroloxía
-        │     └── Histórico Climático
-        ├── Deseño Visual
-        └── Configuración
+  ↓
+Lista de Plantas
+  ↓
+Detalle dunha Planta
+  ↓
+Evolución
+  ↓
+Lista de Rexistros
+  ↓
+Detalle do Rexistro
 ```
 
-**---**
+Operacións asociadas:
+
+``` text
+Horta
+├── Crear
+├── Editar
+└── Eliminar
+
+Planta
+├── Crear
+├── Editar
+└── Eliminar
+
+Evolución
+├── Crear rexistro
+├── Editar rexistro
+└── Eliminar rexistro
+```
+
+Funcionalidades futuras previstas no fluxo:
+
+-   Meteoroloxía.
+-   Histórico climático.
+-   Deseño visual da horta.
+-   Configuración.
+-   Tarefas e alertas.
+
+------------------------------------------------------------------------
 
 # Responsive Design
 
 ## Mobile
 
-Navegación secuencial vertical.
+Navegación principalmente secuencial e vertical.
 
 ## Tablet
 
-Uso de múltiples columnas.
-
-Paneis simultáneos.
+Prevese uso de múltiples columnas e paneis simultáneos.
 
 ## Desktop
 
-Sidebar lateral.
+Prevese maior aproveitamento do espazo horizontal e posible navegación
+mediante sidebar.
 
-Maior aproveitamento do espazo horizontal.
+O deseño responsive será especialmente relevante para:
 
-Especialmente importante para:
+-   `GardenDetailsScreen`
+-   Listas e detalles.
+-   Futuro `LayoutDesignerScreen`
 
-- GardenDetailScreen
-- LayoutDesignerScreen
-
-**---**
+------------------------------------------------------------------------
 
 # Figma Structure
 
-Debido ás limitacións da versión gratuíta de Figma (3 páxinas), o proxecto estrutúrase do seguinte modo:
+Debido ás limitacións da versión gratuíta de Figma, o proxecto
+estrutúrase en tres páxinas:
 
-## Page 1
+## Page 1 --- `00_System_&_Wireframes`
 
-### 00_System_&_Wireframes
+-   Design System
+-   Assets
+-   Wireframes
 
-Contido:
+## Page 2 --- `01_Mobile_UI`
 
-- Design System
-- Assets
-- Wireframes
+-   Mockups finais para móbil
 
-## Page 2
+## Page 3 --- `02_Desktop_&_Prototype`
 
-### 01_Mobile_UI
+-   Mockups de escritorio
+-   Prototipo navegable
 
-Mockups finais para móbil.
-
-## Page 3
-
-### 02_Desktop_&_Prototype
-
-Mockups escritorio.
-
-Prototipo navegable.
-
-**---**
+------------------------------------------------------------------------
 
 # Design System
 
@@ -418,44 +587,23 @@ Pendente de definición final.
 
 Durante a fase de deseño definiranse:
 
-- Paleta de cores.
-- Tipografías.
-- Sistema de espazado.
-- Compoñentes reutilizables.
-- Comportamento responsive.
-- Iconografía.
+-   Paleta de cores.
+-   Tipografías.
+-   Sistema de espazado.
+-   Compoñentes reutilizables.
+-   Comportamento responsive.
+-   Iconografía.
 
-**---**
+A prioridade actual continúa sendo completar e estabilizar a
+funcionalidade antes do refinamento visual definitivo.
 
-# Existing Documentation
-
-## UI_REFERENCE.md
-
-Referencia funcional das pantallas e widgets.
-
-## ARCHITECTURE.md
-
-Definición da arquitectura software.
-
-## DATABASE_DESIGN.md
-
-Modelo de datos e estrutura SQLite.
-
-## ROADMAP.md
-
-Planificación técnica do desenvolvemento.
-
-## DEVELOPMENT_GUIDE.md
-
-Plan de aprendizaxe e desenvolvemento progresivo de Flutter e Dart aplicado a MARTOLA.
-
-**---**
+------------------------------------------------------------------------
 
 # Current Version
 
 ## Version
 
-0.1.0-alpha
+`0.1.0-alpha`
 
 ## Status
 
@@ -463,726 +611,251 @@ Plan de aprendizaxe e desenvolvemento progresivo de Flutter e Dart aplicado a MA
 
 ## Last Updated
 
-2026-08-13
+2026-08-17
 
 ## Current Phase
 
-A infraestrutura de persistencia SQLite está operativa e evolucionou á versión 2.
+A infraestrutura local principal do MVP está operativa mediante SQLite
+v3.
 
-O módulo de hortas dispón dun CRUD persistente completo mediante:
+Están implementados de extremo a extremo:
 
-    View
-      ↓
-    GardensViewModel
-      ↓
-    GardenRepository
-      ↑
-    SQLiteGardenRepository
-      ↓
-    DatabaseService
-      ↓
-    SQLite
+-   CRUD de hortas.
+-   Catálogo local de especies.
+-   CRUD de plantas.
+-   CRUD de rexistros de evolución.
 
-A persistencia foi comprobada entre reinicios da aplicación.
+A persistencia foi comprobada entre reinicios e as relacións entre
+hortas, plantas, especies e evolución están implementadas mediante
+claves foráneas.
 
-A base de datos utiliza actualmente:
-
-    version: 2
-
-O esquema físico implementado contén:
-
-    gardens
-    plant_species
-    garden_plants
-
-Implementouse e comprobouse a primeira migración real:
-
-    v1 → v2
-
-A migración conserva os datos existentes e incorpora as primeiras relacións mediante claves foráneas.
-
-Están implementados os modelos:
-
-    Garden
-    GardenPlant
-    PlantSpecies
-
-Están definidos os contratos:
-
-    GardenRepository
-    GardenPlantRepository
-    PlantSpeciesRepository
-
-Actualmente `GardenRepository` dispón dunha implementación SQLite completa.
-
-As implementacións SQLite de plantas e especies son o seguinte paso do desenvolvemento.
-
-**---**
+------------------------------------------------------------------------
 
 # Current Progress
 
 ## Analysis & Planning
 
-✅ Descrición inicial do proxecto
-
-✅ Análise de requisitos
-
-✅ Planificación inicial
-
-✅ Estrutura da memoria final
-
-**---**
+-   ✅ Descrición inicial do proxecto
+-   ✅ Análise de requisitos
+-   ✅ Planificación inicial
+-   ✅ Estrutura da memoria final
 
 ## Design
 
-✅ Fluxo de navegación
-
-✅ Estrutura Figma definida
-
-✅ Wireframes definidos
-
-⏳ Design System
-
-⬜ Mockups finais
-
-**---**
+-   ✅ Fluxo de navegación
+-   ✅ Estrutura Figma definida
+-   ✅ Wireframes definidos
+-   ⏳ Design System
+-   ⬜ Mockups finais
 
 ## Architecture
 
-✅ Arquitectura MVVM simplificada
-
-✅ Repository Pattern definido
-
-✅ Estrutura de carpetas
-
-✅ Primeiro ViewModel funcional (`GardensViewModel`)
-
-✅ Estado compartido mediante Provider
-
-✅ Separación entre Views e estado do módulo de hortas
-
-✅ Implementación da capa Repository no módulo de hortas
-
-✅ Creación da abstracción `GardenRepository`
-
-✅ Creación de `MemoryGardenRepository`
-
-✅ Inxección de dependencias entre `GardensViewModel` e `GardenRepository`
-
-✅ Configuración de `main.dart` como punto de composición
-
-✅ Conversión de `GardenRepository` a contrato asíncrono
-
-✅ Adaptación de `MemoryGardenRepository` ao contrato asíncrono
-
-✅ Estado de presentación cargado en `GardensViewModel`
-
-✅ Carga inicial mediante `loadGardens()`
-
-✅ Implementación inicial de `DatabaseService`
-
-✅ Implementación de `SQLiteGardenRepository`
-
-✅ Integración da capa de persistencia SQLite
-
-✅ Substitución de `MemoryGardenRepository` por `SQLiteGardenRepository` na composición da aplicación
-
-✅ Persistencia SQLite desacoplada do ViewModel mediante `GardenRepository`
-
-✅ Estratexia de versionado da base de datos comprendida e documentada
-
-✅ Estratexia para futuras migracións definida
-
-✅ Primeira migración SQLite v1 → v2
-
-✅ Conservación dos datos existentes durante a migración
-
-✅ Introdución de claves foráneas
-
-✅ Creación de `GardenPlantRepository`
-
-✅ Creación de `PlantSpeciesRepository`
-
-✅ Implementación de `SQLitePlantSpeciesRepository`
-
-✅ Implementación de `SQLiteGardenPlantRepository`
-
-✅ Creación de `PlantSpeciesViewModel`
-
-✅ Creación de `PlantsViewModel`
-
-✅ Integración dos tres ViewModels mediante `MultiProvider`
-
-✅ Inxección de `PlantSpeciesRepository` en `PlantSpeciesViewModel`
-
-✅ Inxección de `GardenPlantRepository` en `PlantsViewModel`
-
-✅ Estado das plantas limitado á horta actualmente cargada
-
-✅ Carga de plantas mediante `loadPlants(gardenId)`
-
-**---**
+-   ✅ MVVM simplificado
+-   ✅ Repository Pattern
+-   ✅ Estrutura de carpetas
+-   ✅ Provider / MultiProvider
+-   ✅ Inxección de dependencias desde `main.dart`
+-   ✅ Contratos Repository asíncronos
+-   ✅ ViewModels desacoplados da persistencia
+-   ✅ `GardensViewModel`
+-   ✅ `PlantSpeciesViewModel`
+-   ✅ `PlantsViewModel`
+-   ✅ `PlantEvolutionViewModel`
+-   ✅ Repositories SQLite para hortas, especies, plantas e evolución
 
 ## Database
 
-✅ Modelo ER
-
-✅ Documentación SQLite
-
-✅ Dependencias SQLite multiplataforma configuradas
-
-✅ Implementación inicial de `DatabaseService`
-
-✅ Apertura de `martola.db`
-
-✅ Creación do esquema inicial
-
-✅ Creación da táboa `gardens`
-
-✅ Conversión `Garden ↔ Map<String, Object?>`
-
-✅ Implementación de `SQLiteGardenRepository`
-
-✅ CRUD SQLite do módulo de hortas
-
-✅ Integración SQLite co módulo de hortas
-
-✅ Persistencia verificada entre reinicios
-
-✅ Versionado do esquema comprendido e documentado
-
-✅ Funcionamento de `onCreate` e `onUpgrade` comprendido
-
-✅ Estratexia de migracións acumulativas definida
-
-✅ Evolución do esquema SQLite á versión 2
-
-✅ Primeira migración real v1 → v2
-
-✅ Conservación dos datos existentes durante a migración
-
-✅ Creación da táboa `plant_species`
-
-✅ Creación da táboa `garden_plants`
-
-✅ Activación de claves foráneas mediante `PRAGMA foreign_keys = ON`
-
-✅ Implementación de `ON DELETE CASCADE`
-
-✅ Implementación de `ON DELETE RESTRICT`
-
-✅ Verificación transaccional da integridade referencial
-
-✅ Implementación de `SQLitePlantSpeciesRepository`
-
-✅ CRUD SQLite do catálogo de especies
-
-✅ Implementación de `SQLiteGardenPlantRepository`
-
-✅ CRUD SQLite das plantas dunha horta
-
-✅ Consulta de plantas mediante `gardenId`
-
-✅ Conversión entre identificadores `String` do dominio e `INTEGER` de SQLite
-
-✅ Persistencia de `DateTime` como `TEXT` en formato ISO 8601
-
-✅ Catálogo inicial local de especies
-
-✅ Inicialización do catálogo só cando `plant_species` está baleira
-
-✅ Integración persistente das relacións `Garden → GardenPlant → PlantSpecies`
-
-**---**
-
-## Documentation
-
-✅ PROJECT_CONTEXT.md
-
-✅ UI_REFERENCE.md
-
-✅ ARCHITECTURE.md
-
-✅ DATABASE_DESIGN.md
-
-✅ ROADMAP.md
-
-✅ DEVELOPMENT_GUIDE.md
-
-**---**
+-   ✅ SQLite multiplataforma
+-   ✅ `DatabaseService`
+-   ✅ `martola.db`
+-   ✅ Versionado do esquema
+-   ✅ Migración v1 → v2
+-   ✅ Migración v2 → v3
+-   ✅ Conservación dos datos existentes
+-   ✅ `gardens`
+-   ✅ `plant_species`
+-   ✅ `garden_plants`
+-   ✅ `plant_evolution_records`
+-   ✅ Claves foráneas
+-   ✅ `ON DELETE CASCADE`
+-   ✅ `ON DELETE RESTRICT`
+-   ✅ Datas ISO 8601
+-   ✅ Valores opcionais `NULL`
+-   ✅ Catálogo inicial de especies
 
 ## Development
 
-✅ Creación proxecto Flutter
-
-✅ Configuración inicial Git/GitHub
-
-✅ Estrutura de carpetas da arquitectura
-
-✅ Creación da primeira HomeScreen funcional
-
-✅ Primeira interface funcional implementada
-
-✅ Primeiro widget reutilizable (`MartolaLogo`)
-
-✅ Configuración inicial do Theme global
-
-✅ Creación de `DashboardScreen`
-
-✅ Creación dos widgets principais do Dashboard:
-    - `WeatherCard`
-    - `GardenCard`
-    - `TasksCard`
-    - `QuickActionsCard`
-
-✅ Navegación do Dashboard aos módulos de hortas e tarefas
-
-✅ Pantallas provisionais `TasksScreen` e `CreateTaskScreen`
-
-✅ Callbacks desacoplados da navegación nos widgets do Dashboard
-
-✅ Creación do modelo de dominio `Garden`
-
-✅ Implementación inicial de `GardensScreen`
-
-✅ Listado dinámico de hortas mediante `ListView.builder`
-
-✅ Creación do widget reutilizable `GardenListItem`
-
-✅ Selección dunha horta mediante `InkWell`
-
-✅ Navegación desde a lista ao detalle dunha horta
-
-✅ Creación de `GardenDetailsScreen`
-
-✅ Paso dun obxecto `Garden` entre pantallas
-
-✅ Conversión de `CreateGardenScreen` a `StatefulWidget`
-
-✅ Implementación do formulario de creación de hortas
-
-✅ Xestión dos campos mediante `TextEditingController`
-
-✅ Validación do formulario mediante `Form` e `GlobalKey<FormState>`
-
-✅ Validación de nome, localización e superficie
-
-✅ Conversión da superficie de `String` a `double`
-
-✅ Creación dun obxecto `Garden` a partir dos datos do formulario
-
-✅ Devolución dun `Garden` entre rutas mediante `Navigator.pop(garden)`
-
-✅ Recepción de resultados mediante `await Navigator.push<Garden>()`
-
-✅ Integración do paquete Provider
-
-✅ Creación de `GardensViewModel`
-
-✅ Centralización da colección de hortas no ViewModel
-
-✅ Encapsulación da colección mediante `List.unmodifiable`
-
-✅ Implementación de `ChangeNotifier` e `notifyListeners()`
-
-✅ Configuración de `ChangeNotifierProvider` por enriba de `MaterialApp`
-
-✅ Lectura reactiva do estado en `GardensScreen` mediante `context.watch`
-
-✅ Modificación do estado desde `CreateGardenScreen` mediante `context.read`
-
-✅ Actualización dinámica do número de hortas no Dashboard mediante `context.select`
-
-✅ Eliminación dos mock data locais de `GardensScreen`
-
-✅ Implementación de identificadores temporais para as hortas en memoria
-
-✅ Implementación de `getGardenById()`
-
-✅ Creación de `EditGardenScreen`
-
-✅ Inicialización dos formularios de edición mediante `initState()`
-
-✅ Actualización de hortas mediante modelos inmutables
-
-✅ Implementación de `updateGarden()`
-
-✅ Implementación de eliminación de hortas mediante `removeGarden()`
-
-✅ Confirmación de eliminación mediante `AlertDialog`
-
-✅ Conversión de `GardenDetailsScreen` para traballar mediante `gardenId`
-
-✅ Consulta da versión actual dunha horta desde `GardensViewModel`
-
-✅ CRUD completo de hortas en memoria
-
-✅ Creación da capa Repository para o módulo de hortas
-
-✅ Traslado da colección de hortas desde `GardensViewModel` a `MemoryGardenRepository`
-
-✅ Traslado da xeración temporal de identificadores ao Repository
-
-✅ Delegación das operacións CRUD desde `GardensViewModel` ao Repository
-
-✅ Actualización das operacións de edición e eliminación para traballar mediante `gardenId`
-
-✅ Conservación da identidade dunha horta durante as actualizacións
-
-✅ Creación da abstracción `GardenRepository`
-
-✅ Creación da implementación `MemoryGardenRepository`
-
-✅ Aplicación de inxección de dependencias en `GardensViewModel`
-
-✅ Dependencia de `GardensViewModel` respecto da abstracción `GardenRepository`
-
-✅ Selección de `MemoryGardenRepository` desde `main.dart`
-
-✅ CRUD completo verificado tras a separación ViewModel/Repository
-✅ Conversión das operacións de `GardenRepository` a `Future`
-
-✅ Adaptación de `MemoryGardenRepository` ao modelo asíncrono
-
-✅ Creación do estado local `_gardens` en `GardensViewModel`
-
-✅ Implementación de `loadGardens()`
-
-✅ Carga inicial dos datos ao crear `GardensViewModel`
-
-✅ Sincronización do estado local tras creación, edición e eliminación
-
-✅ Adaptación de `CreateGardenScreen` ao uso de `await`
-
-✅ Adaptación de `EditGardenScreen` ao uso de `await`
-
-✅ Adaptación da eliminación desde `GardenDetailsScreen` ao uso de `await`
-
-✅ Uso de `context.mounted` despois de operacións asíncronas
-
-✅ Instalación de `sqflite`
-
-✅ Instalación de `sqflite_common_ffi`
-
-✅ Instalación de `path`
-
-✅ Instalación de `path_provider`
-
-✅ Implementación inicial de `DatabaseService`
-
-✅ Apertura de `martola.db`
-
-✅ Creación da táboa `gardens`
-
-✅ Implementación de `Garden.fromMap()`
-
-✅ Implementación de `Garden.toMap()`
-
-✅ Creación de `SQLiteGardenRepository`
-
-✅ Implementación de lectura de hortas mediante SQLite
-
-✅ Implementación de inserción de hortas mediante SQLite
-
-✅ Implementación de actualización de hortas mediante SQLite
-
-✅ Implementación de eliminación de hortas mediante SQLite
-
-✅ Integración de `SQLiteGardenRepository` desde `main.dart`
-
-✅ Substitución da persistencia en memoria pola persistencia SQLite
-
-✅ Carga das hortas persistidas mediante `loadGardens()`
-
-✅ Persistencia dos datos verificada entre reinicios
-
-✅ Introdución ao versionado SQLite
-
-✅ Introdución a `onCreate` e `onUpgrade`
-
-✅ Introdución ás migracións acumulativas
-
-✅ Revisión e limpeza final de `DatabaseService`
-
-✅ Evolución da base de datos á versión 2
-
-✅ Primeira migración SQLite v1 → v2
-
-✅ Creación do modelo `GardenPlant`
-
-✅ Creación do modelo `PlantSpecies`
-
-✅ Implementación de `GardenPlant.toMap()` e `GardenPlant.fromMap()`
-
-✅ Implementación de `PlantSpecies.toMap()` e `PlantSpecies.fromMap()`
-
-✅ Creación das táboas `plant_species` e `garden_plants`
-
-✅ Introdución de claves foráneas
-
-✅ Activación de `PRAGMA foreign_keys = ON`
-
-✅ Verificación de `ON DELETE CASCADE`
-
-✅ Verificación de `ON DELETE RESTRICT`
-
-✅ Creación de `GardenPlantRepository`
-
-✅ Creación de `PlantSpeciesRepository`
-
-✅ Implementación de `SQLitePlantSpeciesRepository`
-
-✅ Implementación de `SQLiteGardenPlantRepository`
-
-✅ Creación de `PlantSpeciesViewModel`
-
-✅ Creación de `PlantsViewModel`
-
-✅ Configuración de `MultiProvider`
-
-✅ Carga inicial do catálogo mediante `loadSpecies()`
-
-✅ Carga das plantas dunha horta mediante `loadPlants(gardenId)`
-
-✅ Mantemento de `_currentGardenId` en `PlantsViewModel`
-
-✅ Visualización do número de plantas desde `GardenDetailsScreen`
-
-✅ Creación de `PlantListScreen`
-
-✅ Navegación desde `GardenDetailsScreen` á lista de plantas
-
-✅ Creación de `AddPlantScreen`
-
-✅ Implementación do formulario de creación de plantas
-
-✅ Selección de especie mediante `DropdownButtonFormField`
-
-✅ Selección da data de plantación mediante `showDatePicker`
-
-✅ Creación dunha planta mediante `PlantsViewModel.addPlant()`
-
-✅ Persistencia dunha nova planta mediante SQLite
-
-✅ Actualización reactiva da lista tras a creación
-
-✅ Creación de `PlantDetailsScreen`
-
-✅ Navegación desde a lista ao detalle dunha planta
-
-✅ Consulta dunha planta mediante `PlantsViewModel.getPlantById()`
-
-✅ Resolución da información da especie mediante `PlantSpeciesViewModel`
-
-✅ Visualización do nome común da especie no detalle da planta
-
-✅ Creación de `EditPlantScreen`
-
-✅ Inicialización do formulario de edición mediante `initState()`
-
-✅ Actualización dunha planta mediante `PlantsViewModel.updatePlant()`
-
-✅ Actualización reactiva do detalle tras unha edición
-
-✅ Eliminación dunha planta mediante `PlantsViewModel.removePlant()`
-
-✅ Confirmación da eliminación mediante `AlertDialog`
-
-✅ Actualización reactiva da lista tras eliminar unha planta
-
-✅ CRUD funcional completo do módulo de plantas desde a interface
-
-**---**
+-   ✅ Home e Dashboard iniciais
+-   ✅ CRUD completo de hortas
+-   ✅ Persistencia real das hortas
+-   ✅ Módulo de especies
+-   ✅ CRUD completo de plantas
+-   ✅ Navegación Horta → Plantas → Detalle
+-   ✅ CRUD completo de evolución
+-   ✅ Navegación Planta → Evolución → Detalle
+-   ✅ Formularios con validación
+-   ✅ `TextEditingController`
+-   ✅ `showDatePicker`
+-   ✅ Conversión segura de datos de formulario
+-   ✅ Uso de `context.mounted` tras operacións asíncronas
+-   ✅ Actualización reactiva mediante Provider
+
+## Documentation
+
+-   ✅ `PROJECT_CONTEXT.md`
+-   ✅ `UI_REFERENCE.md`
+-   ✅ `ARCHITECTURE.md`
+-   ✅ `DATABASE_DESIGN.md`
+-   ✅ `ROADMAP.md`
+-   ✅ `DEVELOPMENT_GUIDE.md`
+-   ✅ `LEARNING_NOTES.md`
+
+------------------------------------------------------------------------
 
 # Important Technical Decisions
 
-- Arquitectura Local First.
-- SQLite antes que Firebase.
-- MVVM simplificado para reducir complexidade.
-- Responsive Design desde o inicio.
-- Flutter Desktop incluído como obxectivo.
-- Sistema preparado para futura sincronización cloud.
-- Flutter terá prioridade fronte ao deseño visual.
-- Os wireframes actuarán como referencia funcional para o desenvolvemento.
-- A documentación técnica converterase na principal fonte de contexto do proxecto.
-- Os widgets específicos dunha funcionalidade manteranse dentro da propia funcionalidade ata que exista unha necesidade real de reutilización.
-- Os widgets de presentación recibirán accións externas mediante callbacks para evitar acoplamento coa navegación.
-- O Dashboard estrutúrase mediante compoñentes independentes: WeatherCard, GardenCard, TasksCard e QuickActionsCard.
-- Durante a fase inicial da interface utilizaranse mock data antes da integración con SQLite e APIs.
-- As accións dependentes dunha horta concreta, como engadir unha planta, situaranse dentro do contexto desa horta.
-- Os widgets de presentación comunicarán as interaccións mediante callbacks; a navegación será responsabilidade das pantallas que coñecen o fluxo da aplicación.
-- O desenvolvemento das novas funcionalidades seguirá unha estratexia incremental: primeiro establecerase o fluxo mediante pantallas provisionais e posteriormente implementarase o seu contido funcional.
-- Os datos de dominio representaranse mediante modelos independentes da interface, comezando polo modelo `Garden`.
-- As pantallas que necesiten manter sincronizada unha entidade co estado compartido traballarán preferentemente coa súa identidade e obterán a versión actual desde o ViewModel.
-- Os elementos das listas recibirán o modelo completo cando os seus datos pertenzan conceptualmente á mesma entidade.
-- A interacción dun widget non implica por si mesma a necesidade dun `StatefulWidget`; utilizarase estado local só cando exista estado ou recursos que deban ser xestionados polo widget.
-- Os recursos asociados ao ciclo de vida dun `State`, como os `TextEditingController`, serán creados e liberados polo propio `State`.
-- Os formularios utilizarán `Form`, `GlobalKey<FormState>` e validadores para comprobar os datos antes de construír os modelos de dominio.
-- Os datos procedentes de campos de texto serán convertidos explicitamente ao tipo requirido polo modelo antes da creación do obxecto.
-- O identificador de `Garden` pode ser `null` antes de que a entidade sexa incorporada á fonte de datos. Na implementación SQLite, o identificador é xerado pola base de datos mediante `INTEGER PRIMARY KEY AUTOINCREMENT`.
-- A xestión de estado e a persistencia considéranse responsabilidades diferentes. Provider mantén e distribúe o estado compartido da aplicación, mentres que SQLite proporciona a persistencia local.
-- `SQLiteGardenRepository` é a implementación actualmente utilizada para a persistencia do módulo de hortas.
-- `MemoryGardenRepository` mantense como implementación alternativa de `GardenRepository`, útil para probas ou desenvolvemento sen persistencia real.
-- `DatabaseService` centraliza a apertura, configuración e reutilización da conexión SQLite.
-- Os modelos de dominio poden definir mecanismos de conversión cara e desde a representación utilizada pola capa de persistencia, como `toMap()` e `fromMap()`.
-- `SQLiteGardenRepository` encapsula as operacións SQL necesarias para transformar as operacións do dominio en operacións sobre SQLite.
-- O esquema SQLite evolucionará mediante versións e migracións para permitir cambios futuros conservando os datos existentes.
-- `Navigator` poderá utilizarse para devolver resultados entre rutas cando o fluxo o requira.
-- Non se implementarán solucións temporais para manter sincronizados datos locais entre pantallas cando esa responsabilidade corresponda posteriormente á xestión de estado.
-- Provider utilízase como mecanismo de distribución e observación do estado compartido.
-- `GardensViewModel` xestiona o estado de presentación do módulo de hortas e delega o acceso e manipulación dos datos en `GardenRepository`.
-- As Views non modificarán directamente as coleccións do ViewModel; as modificacións realizaranse mediante operacións específicas como `addGarden()`, `updateGarden()` e `removeGarden()`.
-- Utilizarase `context.read` para executar accións sen subscribirse aos cambios, `context.watch` cando a View dependa do estado completo e `context.select` cando só necesite observar unha parte concreta.
-- Os modelos de dominio manteranse inmutables. As actualizacións realizaranse creando unha nova instancia e substituíndo a anterior no estado.
-- `GardensViewModel` dependerá da abstracción `GardenRepository` e non dunha implementación concreta.
-- As implementacións concretas do acceso aos datos estarán separadas do contrato definido por `GardenRepository`.
-- `main.dart` actúa como punto de composición para seleccionar e inxectar as implementacións concretas das dependencias.
-- As operacións sobre entidades persistidas utilizarán preferentemente o identificador da entidade en lugar de depender dunha instancia concreta do modelo.
-- O Repository será responsable de garantir a conservación da identidade dunha entidade durante unha actualización.
-- `GardenRepository` utiliza un contrato asíncrono mediante `Future` para permitir implementacións baseadas tanto en memoria como en fontes persistentes.
-- `GardensViewModel` mantén o estado xa cargado necesario para as Views, mentres que o Repository continúa sendo a abstracción de acceso á fonte de datos.
-- As Views non accederán directamente á base de datos nin deberán coñecer a tecnoloxía de persistencia utilizada.
-- Os Repositories específicos utilizarán `DatabaseService` para acceder á infraestrutura de persistencia.
-- A infraestrutura SQLite deberá soportar Android, Windows e Linux mediante a factoría apropiada para cada plataforma.
-- As rutas de ficheiros construiranse mediante `path` e os directorios da aplicación obteranse mediante `path_provider`.
-- Os identificadores poden manterse como `String` nos modelos de dominio aínda que SQLite utilice `INTEGER`; a conversión realizarase na fronteira coa persistencia.
-- As datas do dominio representadas mediante `DateTime` almacenaranse inicialmente en SQLite como `TEXT` utilizando ISO 8601.
-- `GardenPlant` e `PlantSpecies` serán entidades independentes para evitar duplicar información común dunha especie en cada planta concreta.
-- As plantas dunha horta accederanse principalmente mediante `getPlantsByGardenId(gardenId)` en lugar dunha consulta global.
-- `GardenPlantRepository` e `PlantSpeciesRepository` manteranse separados para preservar unha responsabilidade única por Repository.
-- As claves foráneas de SQLite activaranse mediante `PRAGMA foreign_keys = ON`.
-- A eliminación dunha horta utilizará `ON DELETE CASCADE` sobre as plantas asociadas.
-- A eliminación dunha especie utilizada por unha planta estará protexida mediante `ON DELETE RESTRICT`.
-- As migracións SQLite seguirán unha estratexia acumulativa baseada en comprobacións de `oldVersion`.
+-   Arquitectura Local First.
+-   SQLite antes que Firebase ou sincronización cloud.
+-   MVVM simplificado para manter unha complexidade asumible.
+-   Repository Pattern para desacoplar o dominio da persistencia.
+-   Provider para distribuír e observar o estado compartido.
+-   `main.dart` como punto de composición e inxección de dependencias.
+-   As Views non acceden directamente á base de datos.
+-   Os ViewModels dependen dos contratos Repository, non das
+    implementacións SQLite.
+-   Os modelos de dominio mantéñense independentes da interface.
+-   Os modelos poden implementar `toMap()` e `fromMap()` para a
+    fronteira coa persistencia.
+-   Os identificadores poden ser `String` no dominio e `INTEGER` en
+    SQLite.
+-   Os `DateTime` almacénanse como `TEXT` ISO 8601.
+-   Os campos opcionais persístense como `NULL` cando non existe un
+    valor.
+-   As migracións SQLite son acumulativas mediante comprobacións de
+    `oldVersion`.
+-   As claves foráneas actívanse explicitamente con
+    `PRAGMA foreign_keys = ON`.
+-   A eliminación dunha horta elimina as súas plantas mediante
+    `ON DELETE CASCADE`.
+-   A eliminación dunha planta elimina os seus rexistros de evolución
+    mediante `ON DELETE CASCADE`.
+-   Unha especie utilizada por unha planta está protexida mediante
+    `ON DELETE RESTRICT`.
+-   `PlantSpeciesRepository`, `GardenPlantRepository` e
+    `PlantEvolutionRecordRepository` mantéñense separados por
+    responsabilidade.
+-   `PlantsViewModel` conserva o contexto da horta activa mediante
+    `_currentGardenId`.
+-   `PlantEvolutionViewModel` conserva o contexto da planta activa
+    mediante `_currentPlantId`.
+-   Os formularios manteñen o estado temporal na propia View mediante
+    `StatefulWidget` e `setState()`.
+-   Os `TextEditingController` créanse e libéranse no ciclo de vida do
+    `State`.
+-   Os formularios utilizan `Form`, `GlobalKey<FormState>` e
+    validadores.
+-   Os campos opcionais baleiros convértense a `null` cando esa é a
+    semántica do dominio.
+-   `context.read()` úsase para accións, `context.watch()` para observar
+    estado e `context.select()` para observar partes concretas.
+-   As entidades persistidas actualízanse preferentemente mediante o seu
+    identificador.
+-   As pantallas de detalle consultan a versión actual da entidade desde
+    o ViewModel cando necesitan permanecer sincronizadas.
+-   Os widgets de presentación comunican accións mediante callbacks
+    cando convén desacoplalos da navegación.
+-   As novas funcionalidades desenvólvense incrementalmente: dominio →
+    persistencia → ViewModel → interface → proba.
+-   Flutter e a funcionalidade teñen prioridade fronte ao refinamento
+    visual nesta fase.
+-   O deseño seguirá sendo responsive desde o inicio.
+-   A documentación técnica mantense sincronizada co estado real do
+    proxecto.
 
-- `PlantSpeciesRepository` e `GardenPlantRepository` dispoñen de implementacións SQLite independentes para manter a responsabilidade única de cada Repository.
-- `PlantSpeciesViewModel` xestiona o catálogo de especies dispoñible para as Views.
-- `PlantsViewModel` mantén unicamente as plantas correspondentes á horta actualmente cargada.
-- `PlantsViewModel` conserva `_currentGardenId` para asociar as novas plantas coa horta activa sen obrigar ás Views de creación a xestionar directamente esa relación.
-- O estado temporal dos formularios, como a especie seleccionada ou a data de plantación, permanece no `State` da View e xestiónase mediante `setState()`.
-- O estado compartido das plantas xestiónase mediante `PlantsViewModel`, mentres que a persistencia se delega na capa Repository.
-- As Views poden consumir máis dun ViewModel cando necesiten combinar información de diferentes dominios sen mesturar as responsabilidades dos ViewModels.
-- `PlantDetailsScreen` utiliza `PlantsViewModel` para obter a planta e `PlantSpeciesViewModel` para resolver a información da especie asociada.
-- A lista local de `PlantsViewModel` representa o conxunto de plantas da horta actualmente seleccionada, evitando acumular plantas de diferentes hortas.
-- Os formularios de creación e edición de plantas utilizan un selector de especies en lugar de expoñer `speciesId` directamente ao usuario.
-- As datas seleccionadas polo usuario xestiónanse mediante `DateTime` no dominio e `showDatePicker` na interface.
-- O catálogo inicial de especies introdúcese como mecanismo local provisional para permitir o funcionamento do módulo de plantas durante o MVP.
-- O catálogo inicial só se insire cando a táboa `plant_species` está baleira, evitando duplicados nos sucesivos arranques da aplicación.
-- As listas de plantas manteñen inicialmente o mesmo patrón visual interactivo utilizado nas hortas mediante elementos personalizados e `InkWell`, favorecendo a coherencia visual da aplicación.
+------------------------------------------------------------------------
 
-**---**
+# Current Milestone
 
-# Next Milestone
+## Achieved
 
-### Current Objective
+A infraestrutura relacional principal do MVP está implementada ata
+SQLite v3.
 
-Continuar o módulo de plantas sobre a infraestrutura SQLite v2 xa implementada.
+Actualmente funciona:
 
-### Starting Point
+``` text
+Garden
+  1
+  │
+  N
+GardenPlant
+  N
+  │
+  1
+PlantSpecies
 
-O módulo de hortas dispón dun CRUD persistente completo.
+GardenPlant
+  1
+  │
+  N
+PlantEvolutionRecord
+```
 
-A base de datos está actualmente en:
+Os módulos de hortas, plantas e evolución dispoñen de CRUD persistente
+completo desde a interface.
 
-    version: 2
+O módulo de evolución, completado na sesión 16, pecha o bloque principal
+de seguemento manual das plantas previsto para o MVP.
 
-O esquema implementado contén:
+## Next Development Step
 
-    gardens
-    plant_species
-    garden_plants
+O seguinte paso deberá decidirse segundo `ROADMAP.md`, priorizando as
+funcionalidades aínda pendentes do MVP e evitando introducir
+funcionalidades futuras antes de estabilizar a base actual.
 
-A primeira migración:
+Os principais bloques aínda previstos inclúen:
 
-    v1 → v2
+-   Integración meteorolóxica.
+-   Histórico climático.
+-   Deseño visual da distribución da horta.
+-   Revisión do responsive design.
+-   Probas.
+-   Refinamento da interface.
+-   Preparación progresiva da memoria final.
 
-está implementada e comprobada.
-
-As relacións actuais son:
-
-    Garden
-      1
-      │
-      N
-    GardenPlant
-      N
-      │
-      1
-    PlantSpecies
-
-A integridade referencial está activada e comprobouse o funcionamento de:
-
-    ON DELETE CASCADE
-    ON DELETE RESTRICT
-
-No dominio están implementados:
-
-    Garden
-    GardenPlant
-    PlantSpecies
-
-Na capa Repository están definidos:
-
-    GardenRepository
-    GardenPlantRepository
-    PlantSpeciesRepository
-
-Actualmente existe:
-
-    SQLiteGardenRepository
-
-e están pendentes:
-
-    SQLitePlantSpeciesRepository
-    SQLiteGardenPlantRepository
-
-### Next Development Step
-
-A seguinte tarefa será implementar:
-
-    SQLitePlantSpeciesRepository
-
-Comezarase polo catálogo de especies porque `GardenPlant` depende dunha especie existente mediante `speciesId`.
-
-Unha vez implementado e comprobado o acceso persistente ás especies, continuarase con:
-
-    SQLiteGardenPlantRepository
-
-Posteriormente integrarase o módulo de plantas coa capa ViewModel e coa interface.
-
-## Deliverable
-
-Primeira infraestrutura relacional de MARTOLA completada e módulo de plantas preparado a nivel de dominio, base de datos e contratos Repository para iniciar as súas implementacións SQLite.
-
-**---**
+------------------------------------------------------------------------
 
 # Future Improvements
 
-- Sincronización cloud.
-- Autenticación avanzada.
-- Notificacións.
-- Sensores ambientais.
-- IA para recomendacións.
-- Compartición de hortas.
-- Backup cloud.
-- Estatísticas avanzadas.
+-   Sincronización cloud.
+-   Autenticación avanzada.
+-   Notificacións.
+-   Sensores ambientais.
+-   IA para recomendacións.
+-   Compartición de hortas.
+-   Backup cloud.
+-   Estatísticas avanzadas.
+-   Exportación de información histórica das plantas.
+-   Ampliación ou integración externa do catálogo de especies.
 
-**---**
+------------------------------------------------------------------------
 
 # Notes
 
-Este documento considérase a fonte principal de contexto do proxecto MARTOLA.
+Este documento considérase a fonte principal de contexto do proxecto
+MARTOLA.
 
-Calquera cambio relevante na arquitectura, navegación, base de datos ou planificación deberá reflectirse neste ficheiro e na documentación asociada.
+Calquera cambio relevante na arquitectura, navegación, base de datos ou
+planificación deberá reflectirse neste ficheiro e na documentación
+asociada.
 
-O obxectivo principal actual é construír unha primeira versión funcional antes de introducir funcionalidades avanzadas ou melloras estéticas.
+O desenvolvemento realízase seguindo unha aprendizaxe progresiva de
+Flutter e Dart. Cada funcionalidade impleméntase unha vez comprendidos
+os principios técnicos que a sustentan.
 
-## Current Development Strategy
+A prioridade é construír unha primeira versión funcional, coherente e
+mantible antes de introducir funcionalidades avanzadas ou melloras
+estéticas.
 
-O desenvolvemento de MARTOLA realízase seguindo unha aprendizaxe progresiva de Flutter.
-
-Cada funcionalidade impleméntase unha vez comprendidos os principios técnicos que a sustentan.
-
-A prioridade actual non é a cantidade de código, senón construír unha arquitectura sólida, reutilizable e facilmente mantible.
-
-A documentación mantense sincronizada co estado real do proxecto e constitúe a principal referencia durante o desenvolvemento.
+A documentación debe manterse sincronizada co estado real do código e
+servir como base para a elaboración da memoria final.

@@ -25,56 +25,65 @@ Cada sesión de traballo terá un obxectivo concreto, conceptos asociados e un r
 
 ## Current Phase
 
-Persistencia relacional e inicio do módulo de plantas.
+Módulos relacionais principais do MVP implementados con persistencia local.
 
-O módulo de hortas xa dispón de:
+Actualmente MARTOLA dispón de:
 
+- CRUD persistente completo de hortas.
+- CRUD persistente completo de plantas.
+- Catálogo persistente de especies.
+- Seguemento persistente da evolución das plantas.
 - Estado compartido mediante Provider.
-- `GardensViewModel`.
-- `GardenRepository` como abstracción asíncrona.
-- `MemoryGardenRepository` como implementación alternativa en memoria.
-- `SQLiteGardenRepository` como implementación persistente.
-- Inxección de dependencias.
-- Operacións asíncronas mediante `Future`, `async` e `await`.
-- Carga inicial mediante `loadGardens()`.
-- CRUD completo de hortas mediante SQLite.
-- Persistencia dos datos entre reinicios.
+- Arquitectura MVVM simplificada + Repository Pattern.
+- Inxección de dependencias desde `main.dart`.
+- Navegación por identificadores nas pantallas de detalle.
+- Estado contextual para plantas e rexistros de evolución.
 
 A infraestrutura SQLite dispón actualmente de:
 
 - `DatabaseService`.
 - Base de datos `martola.db`.
-- Esquema na versión 2.
+- Esquema na versión 3.
 - Migración v1 → v2.
+- Migración v2 → v3.
 - Táboa `gardens`.
 - Táboa `plant_species`.
 - Táboa `garden_plants`.
+- Táboa `plant_evolution_records`.
 - Claves foráneas activadas mediante `PRAGMA foreign_keys = ON`.
 - `ON DELETE CASCADE` entre `gardens` e `garden_plants`.
 - `ON DELETE RESTRICT` entre `plant_species` e `garden_plants`.
+- `ON DELETE CASCADE` entre `garden_plants` e `plant_evolution_records`.
 
-O módulo de plantas dispón actualmente de:
+Os ViewModels actualmente integrados son:
 
-- Modelo `GardenPlant`.
-- Modelo `PlantSpecies`.
-- Conversión `toMap()` e `fromMap()` nos dous modelos.
-- Contrato `GardenPlantRepository`.
-- Contrato `PlantSpeciesRepository`.
+- `GardensViewModel`.
+- `PlantSpeciesViewModel`.
+- `PlantsViewModel`.
+- `PlantEvolutionViewModel`.
+
+Os Repositories SQLite actualmente integrados son:
+
+- `SQLiteGardenRepository`.
+- `SQLitePlantSpeciesRepository`.
+- `SQLiteGardenPlantRepository`.
+- `SQLitePlantEvolutionRecordRepository`.
 
 ## Next Action
 
-Comezar a Session 15 implementando a primeira capa de persistencia do módulo de plantas.
+Revisar o `ROADMAP.md` actualizado e seleccionar o seguinte bloque funcional do MVP.
 
-O seguinte paso será:
+A Session 16 deixa completado o módulo de evolución das plantas, polo que o seguinte paso non debe decidirse por orde histórica das fases, senón polo valor que achegue ao MVP e polo tempo dispoñible.
 
-1. Revisar brevemente o patrón xa utilizado en `SQLiteGardenRepository`.
-2. Implementar `SQLitePlantSpeciesRepository`.
-3. Aplicar o contrato definido por `PlantSpeciesRepository`.
-4. Implementar progresivamente as operacións CRUD sobre `plant_species`.
-5. Comprobar o funcionamento contra SQLite.
-6. Continuar posteriormente con `SQLiteGardenPlantRepository`.
+Os principais bloques aínda pendentes son:
 
-Comezarase por `PlantSpecies` porque unha `GardenPlant` necesita referenciar unha especie existente mediante `speciesId`.
+1. Integración meteorolóxica mediante API REST.
+2. Layout Designer.
+3. Adaptación responsive.
+4. Testing, revisión e optimización.
+5. Documentación final e preparación da defensa.
+
+Antes de comezar unha nova implementación revisarase o roadmap para fixar o seguinte obxectivo concreto.
 
 **---**
 
@@ -425,7 +434,7 @@ Plant Evolution
 
 Status:
 
-⬜ Pending
+✅ Completed
 
 ### Practical Objective
 
@@ -3104,3 +3113,488 @@ A Session 15 completa a primeira funcionalidade relacional de MARTOLA de extremo
 A aplicación xa non só persiste entidades independentes. Agora unha horta pode cargar e xestionar as súas propias plantas, cada planta referencia unha especie e a interface resolve esas relacións sen acoplarse directamente a SQLite.
 
 O patrón aprendido inicialmente co módulo de hortas foi reutilizado para especies e plantas, confirmando que a arquitectura pode crecer mantendo as responsabilidades separadas.
+---
+
+## Sesión 16 - Seguemento da evolución das plantas
+
+### Status
+
+✅ Completed
+
+### Obxectivos
+
+- Implementar o módulo de seguemento da evolución dunha planta.
+- Crear o modelo `PlantEvolutionRecord`.
+- Evolucionar o esquema SQLite da versión 2 á versión 3.
+- Crear a táboa `plant_evolution_records`.
+- Relacionar os rexistros de evolución cunha planta concreta.
+- Implementar o contrato `PlantEvolutionRecordRepository`.
+- Implementar `SQLitePlantEvolutionRecordRepository`.
+- Crear `PlantEvolutionViewModel`.
+- Integrar o cuarto ViewModel mediante `MultiProvider`.
+- Aplicar estado contextual mediante `_currentPlantId`.
+- Implementar o CRUD completo dos rexistros de evolución.
+- Integrar o novo fluxo coa navegación existente.
+- Verificar a migración conservando os datos das versións anteriores.
+
+### Conceptos aprendidos e practicados
+
+- Evolución incremental dunha arquitectura xa existente.
+- Reutilización do Repository Pattern nun novo nivel relacional.
+- Relación 1:N entre planta e rexistros de evolución.
+- Nova migración SQLite v2 → v3.
+- Migracións acumulativas.
+- `ON DELETE CASCADE` nunha relación dependente.
+- Persistencia de valores opcionais mediante `NULL`.
+- Conversión de `DateTime` a texto ISO 8601.
+- Estado contextual mediante `_currentPlantId`.
+- Consulta síncrona sobre estado previamente cargado.
+- Navegación por identificadores.
+- Integración dun novo `ChangeNotifierProvider`.
+- Reutilización de patróns de creación, detalle, edición e eliminación.
+
+### Modelo PlantEvolutionRecord
+
+Creouse:
+
+```text
+models/
+└── plant_evolution_record.dart
+```
+
+`PlantEvolutionRecord` representa unha observación da evolución dunha planta concreta ao longo do tempo.
+
+O modelo inclúe a identidade do rexistro, a referencia á planta, a data da observación e os datos rexistrados durante o seguemento.
+
+Os campos que non son obrigatorios poden representarse como valores nullable no dominio e como `NULL` en SQLite.
+
+O modelo incorpora:
+
+```text
+toMap()
+fromMap()
+```
+
+para converter entre a representación de dominio e a fila persistida.
+
+### Evolución do esquema SQLite
+
+A base de datos evolucionou desde:
+
+```text
+version: 2
+```
+
+a:
+
+```text
+version: 3
+```
+
+Engadiuse a táboa:
+
+```text
+plant_evolution_records
+```
+
+A relación principal é:
+
+```text
+garden_plants
+      1
+      ↓
+      N
+plant_evolution_records
+```
+
+A clave foránea referencia a planta mediante:
+
+```text
+plant_id
+```
+
+e utiliza:
+
+```text
+ON DELETE CASCADE
+```
+
+Deste modo, ao eliminar unha planta elimínanse tamén os seus rexistros de evolución.
+
+### Migración v2 → v3
+
+Actualizouse `onCreate()` para que unha instalación nova cree directamente todo o esquema actual.
+
+Tamén se incorporou a migración acumulativa correspondente:
+
+```text
+if (oldVersion < 3)
+    ↓
+crear plant_evolution_records
+```
+
+A estratexia continúa permitindo que unha base antiga aplique todas as migracións que lle falten.
+
+Comprobouse que a migración:
+
+```text
+v2 → v3
+```
+
+conserva as hortas, especies e plantas existentes.
+
+### PlantEvolutionRecordRepository
+
+Creouse o contrato:
+
+```text
+PlantEvolutionRecordRepository
+```
+
+coas operacións necesarias para o módulo:
+
+```text
+getRecordsByPlantId()
+addRecord()
+getRecordById()
+updateRecord()
+removeRecord()
+```
+
+A consulta principal está contextualizada pola planta:
+
+```text
+getRecordsByPlantId(plantId)
+```
+
+porque cada listado de evolución representa o histórico dunha única planta.
+
+### SQLitePlantEvolutionRecordRepository
+
+Creouse:
+
+```text
+SQLitePlantEvolutionRecordRepository
+```
+
+que implementa:
+
+```text
+PlantEvolutionRecordRepository
+```
+
+e utiliza:
+
+```text
+DatabaseService
+```
+
+como infraestrutura común de acceso a SQLite.
+
+O fluxo é:
+
+```text
+PlantEvolutionRecordRepository
+              ↑
+SQLitePlantEvolutionRecordRepository
+              ↓
+DatabaseService
+              ↓
+SQLite
+```
+
+As operacións realizan a conversión entre modelos e filas mediante `toMap()` e `fromMap()`.
+
+### PlantEvolutionViewModel
+
+Creouse:
+
+```text
+viewmodels/
+└── plant_evolution_viewmodel.dart
+```
+
+Mantén:
+
+```dart
+String? _currentPlantId;
+final List<PlantEvolutionRecord> _records = [];
+```
+
+`_currentPlantId` identifica a planta cuxo histórico está actualmente cargado.
+
+O patrón é equivalente ao empregado anteriormente en `PlantsViewModel` con `_currentGardenId`.
+
+As operacións principais son:
+
+```text
+loadRecords(plantId)
+addRecord()
+getRecordById()
+updateRecord()
+removeRecord()
+```
+
+`loadRecords(plantId)`:
+
+1. Garda o identificador da planta activa.
+2. Solicita ao Repository os rexistros desa planta.
+3. Baleira a colección anterior.
+4. Engade os rexistros recuperados.
+5. Executa `notifyListeners()`.
+
+Conceptualmente:
+
+```text
+Plant seleccionada
+        ↓
+loadRecords(plantId)
+        ↓
+_currentPlantId
+        ↓
+PlantEvolutionRecordRepository
+        ↓
+rexistros desa planta
+        ↓
+_records
+```
+
+Isto evita mesturar nunha mesma colección os históricos de diferentes plantas.
+
+### Integración mediante MultiProvider
+
+`main.dart` evolucionou para proporcionar catro ViewModels:
+
+```text
+MultiProvider
+├── GardensViewModel
+├── PlantSpeciesViewModel
+├── PlantsViewModel
+└── PlantEvolutionViewModel
+```
+
+As dependencias SQLite compóñense previamente:
+
+```text
+DatabaseService
+├── SQLiteGardenRepository
+├── SQLitePlantSpeciesRepository
+├── SQLiteGardenPlantRepository
+└── SQLitePlantEvolutionRecordRepository
+```
+
+`PlantEvolutionViewModel` recibe o seu Repository mediante inxección de dependencias.
+
+### Fluxo de navegación
+
+O módulo de evolución intégrase desde o detalle dunha planta.
+
+Fluxo principal:
+
+```text
+PlantDetailsScreen
+        ↓
+PlantEvolutionListScreen
+        ├── AddPlantEvolutionRecordScreen
+        │       ↓
+        │   crear rexistro
+        │
+        └── PlantEvolutionDetailsScreen
+                ├── EditPlantEvolutionRecordScreen
+                │       ↓
+                │   editar rexistro
+                │
+                └── eliminar rexistro
+```
+
+As pantallas de detalle traballan mediante identificadores, seguindo o patrón xa empregado con hortas e plantas.
+
+### PlantEvolutionListScreen
+
+A pantalla establece o contexto da planta e carga os seus rexistros.
+
+A carga realízase fóra de `build()` para evitar iniciar repetidamente a mesma operación durante as reconstrucións da interface.
+
+A colección observable procede de:
+
+```text
+PlantEvolutionViewModel.records
+```
+
+Cando non existen rexistros móstrase un estado baleiro.
+
+Cando existen, represéntanse como histórico da planta seleccionada.
+
+### Creación dun rexistro
+
+`AddPlantEvolutionRecordScreen` permite introducir os datos dunha nova observación.
+
+O formulario mantén localmente os valores temporais da interface e delega a operación persistente en:
+
+```text
+PlantEvolutionViewModel.addRecord(...)
+```
+
+O ViewModel utiliza `_currentPlantId` para asociar o rexistro coa planta activa.
+
+### Consulta dun rexistro
+
+`PlantEvolutionDetailsScreen` recibe:
+
+```text
+recordId
+```
+
+e obtén a versión actual mediante:
+
+```text
+PlantEvolutionViewModel.getRecordById(recordId)
+```
+
+Deste modo a pantalla non conserva unha copia independente que poida quedar desactualizada despois dunha edición.
+
+### Edición dun rexistro
+
+`EditPlantEvolutionRecordScreen` inicializa o formulario cos valores existentes.
+
+Ao gardar:
+
+```text
+View
+  ↓
+PlantEvolutionViewModel.updateRecord(...)
+  ↓
+PlantEvolutionRecordRepository
+  ↓
+SQLite
+  ↓
+_records
+  ↓
+notifyListeners()
+```
+
+A interface actualízase a partir do estado compartido.
+
+### Eliminación dun rexistro
+
+A eliminación require confirmación previa.
+
+O fluxo é:
+
+```text
+PlantEvolutionDetailsScreen
+        ↓
+PlantEvolutionViewModel.removeRecord(id)
+        ↓
+PlantEvolutionRecordRepository
+        ↓
+SQLite
+        ↓
+_records.removeWhere(...)
+        ↓
+notifyListeners()
+```
+
+### Fluxo relacional alcanzado
+
+Ao finalizar a sesión MARTOLA xa soporta:
+
+```text
+Garden
+  ↓
+GardenPlant
+  ↓
+PlantEvolutionRecord
+```
+
+e cada planta mantén ademais a relación:
+
+```text
+PlantSpecies
+  ↓
+GardenPlant
+```
+
+A aplicación dispón así dun fluxo relacional persistente de varios niveis.
+
+### Arquitectura final do módulo
+
+```text
+Views
+  ↓
+PlantEvolutionViewModel
+  ↓
+PlantEvolutionRecordRepository
+  ↑
+SQLitePlantEvolutionRecordRepository
+  ↓
+DatabaseService
+  ↓
+SQLite
+```
+
+O novo módulo reutiliza a mesma arquitectura que os módulos anteriores sen introducir acceso SQL nas Views nin no ViewModel.
+
+### Comprobación funcional
+
+Comprobouse que:
+
+- A base de datos actualiza correctamente de v2 a v3.
+- Os datos existentes permanecen despois da migración.
+- A táboa `plant_evolution_records` créase correctamente.
+- Os rexistros poden crearse.
+- Os rexistros quedan persistidos en SQLite.
+- O histórico se carga para a planta correspondente.
+- Os rexistros poden consultarse.
+- Os rexistros poden editarse.
+- Os rexistros poden eliminarse.
+- As Views se actualizan mediante Provider.
+- O estado non acumula rexistros doutras plantas.
+- A eliminación dunha planta elimina os seus rexistros asociados mediante `ON DELETE CASCADE`.
+- O CRUD completo do módulo de evolución funciona mantendo separadas as capas.
+
+### Skills Acquired
+
+- Estender unha arquitectura existente cun novo módulo relacional.
+- Deseñar un Repository contextualizado por unha entidade pai.
+- Aplicar novamente o patrón de estado contextual nun ViewModel.
+- Implementar unha segunda migración real de SQLite.
+- Manter migracións acumulativas.
+- Utilizar `CASCADE` para datos dependentes.
+- Integrar un novo ViewModel nun `MultiProvider`.
+- Construír un CRUD completo reutilizando patróns xa comprendidos.
+- Manter sincronizados persistencia, estado compartido e interface.
+- Navegar mediante identificadores para evitar copias desactualizadas das entidades.
+
+### Documentation Updated
+
+- `PROJECT_CONTEXT.md`
+- `ARCHITECTURE.md`
+- `DATABASE_DESIGN.md`
+- `DEVELOPMENT_GUIDE.md`
+
+`ROADMAP.md` queda como seguinte documento a revisar para decidir o próximo bloque funcional.
+
+### Next Step
+
+Revisar `ROADMAP.md` e seleccionar o seguinte bloque do MVP.
+
+A decisión deberá ter en conta:
+
+- valor funcional para MARTOLA;
+- dependencias técnicas;
+- tempo dispoñible;
+- contido necesario para o TFC;
+- necesidade de reservar tempo para probas e documentación final.
+
+### Commit
+
+Pendente ao finalizar a actualización da documentación.
+
+### Notes
+
+A Session 16 completa o módulo de seguemento da evolución das plantas e engade un novo nivel á estrutura relacional de MARTOLA.
+
+O patrón arquitectónico utilizado inicialmente para hortas e posteriormente para plantas volve reutilizarse sen introducir novas capas innecesarias.
+
+A aplicación dispón agora dunha base local v3 capaz de representar hortas, especies, plantas concretas e o histórico de evolución de cada planta, mantendo a separación entre Views, ViewModels, Repositories e infraestrutura SQLite.

@@ -5,10 +5,12 @@ import 'services/database_service.dart';
 import 'repositories/sqlite_garden_repository.dart';
 import 'repositories/sqlite_garden_plant_repository.dart';
 import 'repositories/sqlite_plant_species_repository.dart';
+import 'repositories/sqlite_plant_evolution_record_repository.dart';
 
 import 'viewmodels/gardens_viewmodel.dart';
 import 'viewmodels/plant_species_viewmodel.dart';
 import 'viewmodels/plants_viewmodel.dart';
+import 'viewmodels/plant_evolution_viewmodel.dart';
 
 import 'views/home/home_screen.dart';
 
@@ -29,12 +31,18 @@ void main() {
       SQLiteGardenPlantRepository(
     databaseService: databaseService,
   );
+
+  final plantEvolutionRecordRepository =
+      SQLitePlantEvolutionRecordRepository(
+    databaseService: databaseService,
+  );
   
   runApp(
     MartolaApp(
       gardenRepository: gardenRepository,
       plantSpeciesRepository: plantSpeciesRepository,
       gardenPlantRepository: gardenPlantRepository,
+      plantEvolutionRecordRepository: plantEvolutionRecordRepository,
     ),
   );
 }
@@ -45,12 +53,13 @@ class MartolaApp extends StatelessWidget {
     required this.gardenRepository,
     required this.gardenPlantRepository,
     required this.plantSpeciesRepository,
-    
+    required this.plantEvolutionRecordRepository,
     });
 
   final SQLiteGardenRepository gardenRepository;
   final SQLitePlantSpeciesRepository plantSpeciesRepository;
   final SQLiteGardenPlantRepository gardenPlantRepository;
+  final SQLitePlantEvolutionRecordRepository plantEvolutionRecordRepository;
 
   
   @override
@@ -70,6 +79,11 @@ class MartolaApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => PlantsViewModel(
           gardenPlantRepository: gardenPlantRepository,
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => PlantEvolutionViewModel(
+          plantEvolutionRecordRepository: plantEvolutionRecordRepository,
           ),
         ),
       ]
