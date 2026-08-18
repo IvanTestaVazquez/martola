@@ -8,22 +8,23 @@ Este documento define a arquitectura software da aplicación MARTOLA.
 
 O seu obxectivo é proporcionar unha guía clara para:
 
-- Organización do código.
-- Separación de responsabilidades.
-- Escalabilidade futura.
-- Mantemento do proxecto.
-- Coherencia entre módulos.
-- Apoio á elaboración da memoria final.
+-   Organización do código.
+-   Separación de responsabilidades.
+-   Escalabilidade futura.
+-   Mantemento do proxecto.
+-   Coherencia entre módulos.
+-   Apoio á elaboración da memoria final.
 
----
+------------------------------------------------------------------------
 
 # Architecture Overview
 
-MARTOLA utiliza unha arquitectura baseada en MVVM simplificado combinada co Repository Pattern.
+MARTOLA utiliza unha arquitectura baseada en MVVM simplificado combinada
+co Repository Pattern.
 
 Fluxo principal:
 
-```text
+``` text
 View
   ↓
 ViewModel
@@ -37,15 +38,16 @@ SQLite / API
 
 A arquitectura segue un enfoque Local First.
 
----
+------------------------------------------------------------------------
 
 # Current Implementation State
 
-A arquitectura está actualmente aplicada aos módulos de hortas, especies, plantas e evolución das plantas.
+A arquitectura está actualmente aplicada aos módulos de hortas,
+especies, plantas, evolución das plantas e meteoroloxía.
 
 A composición principal realízase en `main.dart`.
 
-```text
+``` text
 main.dart
   ↓
 DatabaseService
@@ -61,35 +63,38 @@ Views
 
 Actualmente están integrados:
 
-```text
+``` text
 GardensViewModel
 PlantSpeciesViewModel
 PlantsViewModel
 PlantEvolutionViewModel
+WeatherViewModel
 ```
 
 Todos eles estenden `ChangeNotifier`.
 
 As implementacións SQLite activas son:
 
-```text
+``` text
 SQLiteGardenRepository
 SQLitePlantSpeciesRepository
 SQLiteGardenPlantRepository
 SQLitePlantEvolutionRecordRepository
+OpenWeatherRepository
 ```
 
-Todos os Repositories SQLite comparten a mesma instancia de `DatabaseService`.
+Todos os Repositories SQLite comparten a mesma instancia de
+`DatabaseService`.
 
 A base de datos utiliza actualmente:
 
-```text
+``` text
 version: 3
 ```
 
 Táboas implementadas:
 
-```text
+``` text
 gardens
 plant_species
 garden_plants
@@ -98,14 +103,14 @@ plant_evolution_records
 
 Migracións comprobadas:
 
-```text
+``` text
 v1 → v2
 v2 → v3
 ```
 
 A arquitectura xa soporta o seguinte fluxo funcional:
 
-```text
+``` text
 Garden
   ↓
 GardenPlant
@@ -115,13 +120,13 @@ PlantEvolutionRecord
 
 coa relación adicional:
 
-```text
+``` text
 PlantSpecies
   ↓
 GardenPlant
 ```
 
----
+------------------------------------------------------------------------
 
 # Architecture Layers
 
@@ -131,36 +136,37 @@ Responsable de representar as entidades do dominio.
 
 Non debe conter:
 
-- Widgets.
-- Navegación.
-- Consultas SQL directas.
-- Chamadas HTTP directas.
-- Lóxica visual.
+-   Widgets.
+-   Navegación.
+-   Consultas SQL directas.
+-   Chamadas HTTP directas.
+-   Lóxica visual.
 
 Modelos actualmente implementados:
 
-- `Garden`
-- `PlantSpecies`
-- `GardenPlant`
-- `PlantEvolutionRecord`
+-   `Garden`
+-   `PlantSpecies`
+-   `GardenPlant`
+-   `PlantEvolutionRecord`
+-   `WeatherData`
 
 Modelos previstos:
 
-- `User`
-- `WeatherRecord`
-- `GardenLayoutItem`
+-   `User`
+-   `WeatherRecord`
+-   `GardenLayoutItem`
 
 Os modelos manteñen, na medida do posible, un carácter inmutable.
 
 As actualizacións realízanse creando novas instancias.
 
----
+------------------------------------------------------------------------
 
 ## Model Mapping
 
 Os modelos poden proporcionar:
 
-```text
+``` text
 toMap()
 fromMap()
 ```
@@ -171,29 +177,30 @@ para converter entre o dominio e SQLite.
 
 No dominio:
 
-```dart
+``` dart
 String? id
 ```
 
 En SQLite:
 
-```text
+``` text
 INTEGER PRIMARY KEY AUTOINCREMENT
 ```
 
-A conversión queda encapsulada na capa Repository ou no mapping do modelo.
+A conversión queda encapsulada na capa Repository ou no mapping do
+modelo.
 
 ### Dates
 
 No dominio:
 
-```dart
+``` dart
 DateTime
 ```
 
 En SQLite:
 
-```text
+``` text
 TEXT ISO 8601
 ```
 
@@ -201,136 +208,138 @@ TEXT ISO 8601
 
 Os campos opcionais do dominio poden persistirse como:
 
-```text
+``` text
 NULL
 ```
 
 Exemplo:
 
-```text
+``` text
 PlantEvolutionRecord.height
 PlantEvolutionRecord.notes
 ```
 
----
+------------------------------------------------------------------------
 
 # View Layer
 
 A View é responsable de:
 
-- Mostrar información.
-- Capturar interaccións.
-- Manter estado local de interface.
-- Executar navegación cando coñece o fluxo.
-- Delegar operacións de dominio nos ViewModels.
+-   Mostrar información.
+-   Capturar interaccións.
+-   Manter estado local de interface.
+-   Executar navegación cando coñece o fluxo.
+-   Delegar operacións de dominio nos ViewModels.
 
 Non debe conter:
 
-- SQL.
-- Acceso directo á base de datos.
-- Lóxica persistente.
-- Regras de negocio complexas.
+-   SQL.
+-   Acceso directo á base de datos.
+-   Lóxica persistente.
+-   Regras de negocio complexas.
 
 Pantallas actualmente implementadas:
 
 ## General
 
-- `HomeScreen`
-- `DashboardScreen`
+-   `HomeScreen`
+-   `DashboardScreen`
 
 ## Gardens
 
-- `GardensScreen`
-- `GardenDetailsScreen`
-- `CreateGardenScreen`
-- `EditGardenScreen`
+-   `GardensScreen`
+-   `GardenDetailsScreen`
+-   `CreateGardenScreen`
+-   `EditGardenScreen`
 
 ## Plants
 
-- `PlantListScreen`
-- `AddPlantScreen`
-- `PlantDetailsScreen`
-- `EditPlantScreen`
+-   `PlantListScreen`
+-   `AddPlantScreen`
+-   `PlantDetailsScreen`
+-   `EditPlantScreen`
 
 ## Plant Evolution
 
-- `PlantEvolutionListScreen`
-- `AddPlantEvolutionRecordScreen`
-- `PlantEvolutionDetailsScreen`
-- `EditPlantEvolutionRecordScreen`
+-   `PlantEvolutionListScreen`
+-   `AddPlantEvolutionRecordScreen`
+-   `PlantEvolutionDetailsScreen`
+-   `EditPlantEvolutionRecordScreen`
 
 ## Provisional
 
-- `TasksScreen`
-- `CreateTaskScreen`
+-   `TasksScreen`
+-   `CreateTaskScreen`
 
 As Views manteñen localmente:
 
-- `TextEditingController`
-- `FormState`
-- valores seleccionados
-- datas temporais
-- outros datos propios da interacción
+-   `TextEditingController`
+-   `FormState`
+-   valores seleccionados
+-   datas temporais
+-   outros datos propios da interacción
 
----
+------------------------------------------------------------------------
 
 # Presentation Widgets
 
-Os widgets reutilizables deben limitarse, sempre que sexa posible, á presentación e á comunicación de eventos.
+Os widgets reutilizables deben limitarse, sempre que sexa posible, á
+presentación e á comunicación de eventos.
 
 Exemplos:
 
 ## Dashboard
 
-- `WeatherCard`
-- `GardenCard`
-- `TasksCard`
-- `QuickActionsCard`
+-   `WeatherCard`
+-   `GardenCard`
+-   `TasksCard`
+-   `QuickActionsCard`
 
 ## Gardens
 
-- `GardenListItem`
+-   `GardenListItem`
 
-As interaccións comunícanse mediante callbacks cando isto evita acoplamento coa navegación.
+As interaccións comunícanse mediante callbacks cando isto evita
+acoplamento coa navegación.
 
 Exemplo:
 
-```dart
+``` dart
 final VoidCallback onPressed;
 ```
 
 ou:
 
-```dart
+``` dart
 final void Function(Garden) onTap;
 ```
 
----
+------------------------------------------------------------------------
 
 # ViewModel Layer
 
 Responsable de:
 
-- Estado compartido.
-- Coordinación entre Views e Repositories.
-- Operacións de carga.
-- Actualización de coleccións.
-- Notificación de cambios mediante `notifyListeners()`.
-- Consulta síncrona sobre datos xa cargados.
+-   Estado compartido.
+-   Coordinación entre Views e Repositories.
+-   Operacións de carga.
+-   Actualización de coleccións.
+-   Notificación de cambios mediante `notifyListeners()`.
+-   Consulta síncrona sobre datos xa cargados.
 
----
+------------------------------------------------------------------------
 
 ## GardensViewModel
 
 Mantén:
 
-```dart
+``` dart
 final List<Garden> _gardens = [];
 ```
 
 Operacións:
 
-```text
+``` text
 loadGardens()
 addGarden()
 getGardenById()
@@ -340,23 +349,23 @@ removeGarden()
 
 Depende de:
 
-```text
+``` text
 GardenRepository
 ```
 
----
+------------------------------------------------------------------------
 
 ## PlantSpeciesViewModel
 
 Mantén:
 
-```dart
+``` dart
 final List<PlantSpecies> _species = [];
 ```
 
 Operacións:
 
-```text
+``` text
 loadSpecies()
 addSpecies()
 getSpeciesById()
@@ -366,26 +375,26 @@ removeSpecies()
 
 Depende de:
 
-```text
+``` text
 PlantSpeciesRepository
 ```
 
 O catálogo é global dentro do estado actual da aplicación.
 
----
+------------------------------------------------------------------------
 
 ## PlantsViewModel
 
 Mantén:
 
-```dart
+``` dart
 String? _currentGardenId;
 final List<GardenPlant> _plants = [];
 ```
 
 Operacións:
 
-```text
+``` text
 loadPlants(gardenId)
 addPlant()
 getPlantById()
@@ -395,7 +404,7 @@ removePlant()
 
 Depende de:
 
-```text
+``` text
 GardenPlantRepository
 ```
 
@@ -403,20 +412,20 @@ GardenPlantRepository
 
 Isto evita acumular nunha mesma colección plantas de diferentes hortas.
 
----
+------------------------------------------------------------------------
 
 ## PlantEvolutionViewModel
 
 Mantén:
 
-```dart
+``` dart
 String? _currentPlantId;
 final List<PlantEvolutionRecord> _records = [];
 ```
 
 Operacións:
 
-```text
+``` text
 loadRecords(plantId)
 addRecord()
 getRecordById()
@@ -426,7 +435,7 @@ removeRecord()
 
 Depende de:
 
-```text
+``` text
 PlantEvolutionRecordRepository
 ```
 
@@ -434,7 +443,44 @@ PlantEvolutionRecordRepository
 
 Isto segue o mesmo patrón usado previamente en `PlantsViewModel`.
 
----
+------------------------------------------------------------------------
+
+## WeatherViewModel
+
+Mantén:
+
+``` dart
+WeatherData? _weatherData;
+bool _isLoading = false;
+String? _errorMessage;
+```
+
+Operación principal:
+
+``` text
+loadCurrentWeather(latitude, longitude)
+```
+
+Depende de:
+
+``` text
+WeatherRepository
+```
+
+Representa explicitamente os estados dunha operación asíncrona:
+
+``` text
+loading
+data
+error
+```
+
+O ViewModel non coñece OpenWeather nin realiza peticións HTTP
+directamente. Depende do contrato `WeatherRepository`, o que permite
+substituír a implementación meteorolóxica sen modificar a capa de
+presentación.
+
+------------------------------------------------------------------------
 
 # State Scope
 
@@ -446,7 +492,7 @@ Pertence a unha única pantalla.
 
 Exemplos:
 
-```text
+``` text
 TextEditingController
 FormState
 _selectedSpeciesId
@@ -457,7 +503,7 @@ _date
 
 Exemplo:
 
-```text
+``` text
 PlantSpeciesViewModel
 ```
 
@@ -465,7 +511,7 @@ PlantSpeciesViewModel
 
 Exemplos:
 
-```text
+``` text
 PlantsViewModel
 → plantas da horta actual
 
@@ -473,9 +519,10 @@ PlantEvolutionViewModel
 → rexistros da planta actual
 ```
 
-Compartido non implica necesariamente cargar todos os datos da aplicación.
+Compartido non implica necesariamente cargar todos os datos da
+aplicación.
 
----
+------------------------------------------------------------------------
 
 # Repository Layer
 
@@ -485,16 +532,17 @@ Os ViewModels dependen de contratos, non de implementacións concretas.
 
 Contratos actuais:
 
-```text
+``` text
 GardenRepository
 PlantSpeciesRepository
 GardenPlantRepository
 PlantEvolutionRecordRepository
+WeatherRepository
 ```
 
 Implementacións:
 
-```text
+``` text
 SQLiteGardenRepository
 SQLitePlantSpeciesRepository
 SQLiteGardenPlantRepository
@@ -503,17 +551,17 @@ SQLitePlantEvolutionRecordRepository
 
 Implementación alternativa:
 
-```text
+``` text
 MemoryGardenRepository
 ```
 
----
+------------------------------------------------------------------------
 
 # Repository Responsibilities
 
 ## GardenRepository
 
-```text
+``` text
 getGardens()
 addGarden()
 getGardenById()
@@ -521,11 +569,11 @@ updateGarden()
 removeGarden()
 ```
 
----
+------------------------------------------------------------------------
 
 ## PlantSpeciesRepository
 
-```text
+``` text
 getSpecies()
 addSpecies()
 getSpeciesById()
@@ -533,11 +581,11 @@ updateSpecies()
 removeSpecies()
 ```
 
----
+------------------------------------------------------------------------
 
 ## GardenPlantRepository
 
-```text
+``` text
 getPlantsByGardenId()
 addPlant()
 getPlantById()
@@ -547,15 +595,15 @@ removePlant()
 
 A lectura principal está contextualizada por:
 
-```text
+``` text
 gardenId
 ```
 
----
+------------------------------------------------------------------------
 
 ## PlantEvolutionRecordRepository
 
-```text
+``` text
 getRecordsByPlantId()
 addRecord()
 getRecordById()
@@ -565,11 +613,81 @@ removeRecord()
 
 A lectura principal está contextualizada por:
 
-```text
+``` text
 plantId
 ```
 
----
+------------------------------------------------------------------------
+
+## WeatherRepository
+
+Operación:
+
+``` text
+getCurrentWeather(
+  latitude,
+  longitude,
+)
+```
+
+A interface recibe coordenadas e devolve un `WeatherData`.
+
+A implementación actual é:
+
+``` text
+OpenWeatherRepository
+```
+
+`OpenWeatherRepository` delega a comunicación HTTP en `WeatherService`.
+Deste xeito, `WeatherViewModel` depende do contrato meteorolóxico e non
+dun provedor externo concreto.
+
+------------------------------------------------------------------------
+
+# Service Layer
+
+Os Services encapsulan infraestrutura ou comunicación con sistemas
+externos que non debe aparecer nas Views nin nos ViewModels.
+
+Actualmente existen dúas responsabilidades principais:
+
+``` text
+DatabaseService
+→ infraestrutura SQLite
+
+WeatherService
+→ comunicación HTTP con OpenWeather
+```
+
+## WeatherService
+
+Responsable de:
+
+-   Construír a URI da petición.
+-   Executar a petición HTTP GET.
+-   Procesar a resposta JSON.
+-   Crear `WeatherData` mediante `WeatherData.fromJson()`.
+-   Interpretar códigos de estado HTTP.
+-   Detectar fallos de conexión.
+-   Aplicar un timeout á petición.
+-   Lanzar `WeatherException` cando a operación non pode completarse.
+
+Fluxo:
+
+``` text
+OpenWeatherRepository
+  ↓
+WeatherService
+  ↓
+HTTP GET
+  ↓
+OpenWeather API
+```
+
+`WeatherException` permite propagar os erros meteorolóxicos ás capas
+superiores sen introducir detalles HTTP na interface.
+
+------------------------------------------------------------------------
 
 # Database Service Layer
 
@@ -577,23 +695,24 @@ plantId
 
 Responsabilidades:
 
-- Seleccionar a factoría SQLite segundo a plataforma.
-- Inicializar FFI cando sexa necesario.
-- Determinar a ruta de `martola.db`.
-- Abrir e reutilizar a conexión.
-- Activar claves foráneas.
-- Crear o esquema actual.
-- Xestionar versións.
-- Xestionar migracións.
-- Servir a conexión aos Repositories.
+-   Seleccionar a factoría SQLite segundo a plataforma.
+-   Inicializar FFI cando sexa necesario.
+-   Determinar a ruta de `martola.db`.
+-   Abrir e reutilizar a conexión.
+-   Activar claves foráneas.
+-   Crear o esquema actual.
+-   Xestionar versións.
+-   Xestionar migracións.
+-   Servir a conexión aos Repositories.
 
-Non debe conter lóxica de presentación nin responsabilidade específica dun ViewModel.
+Non debe conter lóxica de presentación nin responsabilidade específica
+dun ViewModel.
 
----
+------------------------------------------------------------------------
 
 # SQLite Multiplatform Strategy
 
-```text
+``` text
 Android
   ↓
 sqflite
@@ -607,13 +726,13 @@ sqflite_common_ffi
 
 As capas superiores non necesitan coñecer a factoría utilizada.
 
----
+------------------------------------------------------------------------
 
 # Database Path
 
 Utilízanse:
 
-```text
+``` text
 getApplicationDocumentsDirectory()
 join()
 ```
@@ -622,23 +741,23 @@ para construír unha ruta compatible coa plataforma.
 
 Nome da base:
 
-```text
+``` text
 martola.db
 ```
 
----
+------------------------------------------------------------------------
 
 # Database Versioning
 
 ## Current Version
 
-```text
+``` text
 version: 3
 ```
 
 ## Version 1
 
-```text
+``` text
 gardens
 ```
 
@@ -646,7 +765,7 @@ gardens
 
 Engadiu:
 
-```text
+``` text
 plant_species
 garden_plants
 ```
@@ -655,19 +774,20 @@ garden_plants
 
 Engadiu:
 
-```text
+``` text
 plant_evolution_records
 ```
 
----
+------------------------------------------------------------------------
 
 # Migration Strategy
 
-`onCreate()` crea directamente o esquema correspondente á versión actual.
+`onCreate()` crea directamente o esquema correspondente á versión
+actual.
 
 Nunha instalación nova v3:
 
-```text
+``` text
 gardens
 plant_species
 garden_plants
@@ -676,7 +796,7 @@ plant_evolution_records
 
 `onUpgrade()` utiliza migracións acumulativas:
 
-```dart
+``` dart
 if (oldVersion < 2) {
   // cambios v2
 }
@@ -690,19 +810,19 @@ Isto permite actualizar desde versións antigas sen perder datos.
 
 A migración:
 
-```text
+``` text
 v2 → v3
 ```
 
 foi comprobada mantendo hortas e plantas xa existentes.
 
----
+------------------------------------------------------------------------
 
 # Foreign Keys
 
 As claves foráneas actívanse mediante:
 
-```sql
+``` sql
 PRAGMA foreign_keys = ON
 ```
 
@@ -710,43 +830,43 @@ en `onConfigure`.
 
 ## Garden → GardenPlant
 
-```text
+``` text
 garden_plants.garden_id
         ↓
 gardens.id
 ```
 
-```text
+``` text
 ON DELETE CASCADE
 ```
 
 ## PlantSpecies → GardenPlant
 
-```text
+``` text
 garden_plants.species_id
         ↓
 plant_species.id
 ```
 
-```text
+``` text
 ON DELETE RESTRICT
 ```
 
 ## GardenPlant → PlantEvolutionRecord
 
-```text
+``` text
 plant_evolution_records.plant_id
         ↓
 garden_plants.id
 ```
 
-```text
+``` text
 ON DELETE CASCADE
 ```
 
 Consecuencia:
 
-```text
+``` text
 Eliminar Garden
 → elimina GardenPlant
 → elimina PlantEvolutionRecord
@@ -754,15 +874,15 @@ Eliminar Garden
 
 A especie mantense protexida se está sendo utilizada.
 
----
+------------------------------------------------------------------------
 
 # Dependency Injection
 
 As dependencias créanse en `main.dart`.
 
-Fluxo conceptual:
+Fluxo conceptual para persistencia local:
 
-```text
+``` text
 DatabaseService
   ↓
 Repositories SQLite
@@ -774,9 +894,23 @@ MultiProvider
 Views
 ```
 
+Fluxo conceptual para meteoroloxía:
+
+``` text
+WeatherService
+  ↓
+OpenWeatherRepository
+  ↓
+WeatherViewModel
+  ↓
+MultiProvider
+  ↓
+DashboardScreen
+```
+
 Exemplo simplificado:
 
-```text
+``` text
 SQLitePlantEvolutionRecordRepository
               ↓
 PlantEvolutionRecordRepository
@@ -790,18 +924,19 @@ Views
 
 Os ViewModels non crean internamente os seus Repositories.
 
----
+------------------------------------------------------------------------
 
 # Current Provider Composition
 
 Conceptualmente:
 
-```text
+``` text
 MultiProvider
 ├── GardensViewModel
 ├── PlantSpeciesViewModel
 ├── PlantsViewModel
-└── PlantEvolutionViewModel
+├── PlantEvolutionViewModel
+└── WeatherViewModel
     ↓
 MaterialApp
     ↓
@@ -810,7 +945,7 @@ Views
 
 Carga inicial:
 
-```text
+``` text
 GardensViewModel
 → loadGardens()
 
@@ -820,7 +955,7 @@ PlantSpeciesViewModel
 
 Carga contextual:
 
-```text
+``` text
 PlantsViewModel
 → loadPlants(gardenId)
 
@@ -828,7 +963,19 @@ PlantEvolutionViewModel
 → loadRecords(plantId)
 ```
 
----
+Carga meteorolóxica:
+
+``` text
+DashboardScreen
+→ addPostFrameCallback()
+→ WeatherViewModel.loadCurrentWeather(latitude, longitude)
+```
+
+A carga meteorolóxica iníciase despois do primeiro frame para evitar
+chamar a `notifyListeners()` mentres Flutter está construíndo a árbore
+de widgets.
+
+------------------------------------------------------------------------
 
 # Provider Usage
 
@@ -838,14 +985,14 @@ Utilizado para executar accións sen subscribirse aos cambios.
 
 Exemplos:
 
-```text
+``` text
 addGarden()
 addPlant()
 addRecord()
 removeRecord()
 ```
 
----
+------------------------------------------------------------------------
 
 ## context.watch()
 
@@ -853,12 +1000,12 @@ Utilizado cando a View depende do estado compartido.
 
 Exemplo:
 
-```dart
+``` dart
 final records =
     context.watch<PlantEvolutionViewModel>().records;
 ```
 
----
+------------------------------------------------------------------------
 
 ## context.select()
 
@@ -866,14 +1013,14 @@ Utilizado cando a View necesita observar un valor concreto.
 
 Exemplos:
 
-```text
+``` text
 Garden concreto
 Plant concreta
 PlantEvolutionRecord concreto
 número de plantas
 ```
 
----
+------------------------------------------------------------------------
 
 # Provider vs Persistence
 
@@ -881,7 +1028,7 @@ Provider non é persistencia.
 
 Separación:
 
-```text
+``` text
 SQLite
 → fonte persistente
 
@@ -900,21 +1047,56 @@ View
 
 Pechar a aplicación non elimina os datos persistidos.
 
----
+------------------------------------------------------------------------
+
+# Asynchronous Network State
+
+As operacións de rede introducen estados que a interface debe
+representar explicitamente.
+
+`WeatherViewModel` mantén:
+
+``` text
+isLoading
+weatherData
+errorMessage
+```
+
+A View distingue:
+
+``` text
+loading
+→ CircularProgressIndicator
+
+error
+→ mensaxe de erro
+
+data
+→ WeatherCard
+
+sen datos
+→ mensaxe informativa
+```
+
+O Service detecta os erros técnicos e o ViewModel transfórmaos en estado
+observable para a interface.
+
+------------------------------------------------------------------------
 
 # Navigation Strategy
 
 Actualmente utilízase:
 
-```text
+``` text
 Navigator.push()
 Navigator.pop()
 MaterialPageRoute
 ```
 
-Non se introducirá outra solución mentres esta cubra correctamente as necesidades do proxecto.
+Non se introducirá outra solución mentres esta cubra correctamente as
+necesidades do proxecto.
 
----
+------------------------------------------------------------------------
 
 # Identity-Based Navigation
 
@@ -922,7 +1104,7 @@ As pantallas de detalle reciben preferentemente identificadores.
 
 ## Garden
 
-```text
+``` text
 GardensScreen
   ↓ gardenId
 GardenDetailsScreen
@@ -932,7 +1114,7 @@ GardensViewModel.getGardenById()
 
 ## Plant
 
-```text
+``` text
 PlantListScreen
   ↓ plantId
 PlantDetailsScreen
@@ -942,7 +1124,7 @@ PlantsViewModel.getPlantById()
 
 ## Evolution Record
 
-```text
+``` text
 PlantEvolutionListScreen
   ↓ recordId
 PlantEvolutionDetailsScreen
@@ -950,17 +1132,19 @@ PlantEvolutionDetailsScreen
 PlantEvolutionViewModel.getRecordById()
 ```
 
-Isto permite que as pantallas de detalle obteñan a versión actual da entidade desde o estado compartido.
+Isto permite que as pantallas de detalle obteñan a versión actual da
+entidade desde o estado compartido.
 
----
+------------------------------------------------------------------------
 
 # Context Loading
 
-Cando unha pantalla necesita establecer un contexto, utilízase `initState()`.
+Cando unha pantalla necesita establecer un contexto, utilízase
+`initState()`.
 
 Exemplo conceptual:
 
-```text
+``` text
 GardenDetailsScreen
 → loadPlants(gardenId)
 
@@ -970,11 +1154,16 @@ PlantEvolutionListScreen
 
 Isto evita iniciar cargas repetidas directamente desde `build()`.
 
----
+No caso de `WeatherViewModel`, a carga inicial do Dashboard execútase
+mediante `WidgetsBinding.instance.addPostFrameCallback()`, porque
+`loadCurrentWeather()` modifica estado e chama a `notifyListeners()`.
+Así evítase solicitar unha reconstrución durante o primeiro `build()`.
+
+------------------------------------------------------------------------
 
 # Current Navigation Flow
 
-```text
+``` text
 HomeScreen
   ↓
 DashboardScreen
@@ -994,7 +1183,7 @@ PlantEvolutionDetailsScreen
 
 Fluxos secundarios:
 
-```text
+``` text
 GardenDetailsScreen
 ├── EditGardenScreen
 └── eliminar horta
@@ -1015,11 +1204,11 @@ PlantEvolutionDetailsScreen
 └── eliminar rexistro
 ```
 
----
+------------------------------------------------------------------------
 
 # Folder Structure
 
-```text
+``` text
 lib/
 ├── core/
 ├── models/
@@ -1033,35 +1222,37 @@ lib/
 └── main.dart
 ```
 
----
+------------------------------------------------------------------------
 
 # Current Models
 
-```text
+``` text
 models/
 ├── garden.dart
 ├── plant_species.dart
 ├── garden_plant.dart
-└── plant_evolution_record.dart
+├── plant_evolution_record.dart
+└── weather_data.dart
 ```
 
----
+------------------------------------------------------------------------
 
 # Current ViewModels
 
-```text
+``` text
 viewmodels/
 ├── gardens_viewmodel.dart
 ├── plant_species_viewmodel.dart
 ├── plants_viewmodel.dart
-└── plant_evolution_viewmodel.dart
+├── plant_evolution_viewmodel.dart
+└── weather_viewmodel.dart
 ```
 
----
+------------------------------------------------------------------------
 
 # Current Repositories
 
-```text
+``` text
 repositories/
 ├── garden_repository.dart
 ├── memory_garden_repository.dart
@@ -1071,19 +1262,23 @@ repositories/
 ├── garden_plant_repository.dart
 ├── sqlite_garden_plant_repository.dart
 ├── plant_evolution_record_repository.dart
-└── sqlite_plant_evolution_record_repository.dart
+├── sqlite_plant_evolution_record_repository.dart
+├── weather_repository.dart
+└── open_weather_repository.dart
 ```
 
----
+------------------------------------------------------------------------
 
 # Current Services
 
-```text
+``` text
 services/
-└── database_service.dart
+├── database_service.dart
+├── weather_service.dart
+└── weather_exception.dart
 ```
 
----
+------------------------------------------------------------------------
 
 # Data Layer
 
@@ -1093,17 +1288,90 @@ Fonte persistente local actualmente utilizada.
 
 ## External APIs
 
+Actualmente implementada:
+
+-   OpenWeather para condicións meteorolóxicas actuais.
+
 Prevista:
 
-- OpenWeatherMap
+-   MeteoSIX como posible provedor meteorolóxico adicional.
 
 Posibles futuras:
 
-- APIs botánicas.
-- Servizos cloud.
-- Sincronización remota.
+-   APIs botánicas.
+-   Servizos cloud.
+-   Sincronización remota.
 
----
+A comunicación externa segue:
+
+``` text
+View
+  ↓
+ViewModel
+  ↓
+Repository
+  ↓
+Service
+  ↓
+API
+```
+
+Isto conserva a separación de responsabilidades utilizada na
+persistencia local, substituíndo SQLite por un servizo HTTP.
+
+------------------------------------------------------------------------
+
+# API Configuration and Secrets
+
+As credenciais das APIs non se almacenan directamente no código fonte.
+
+Durante o desenvolvemento, a clave de OpenWeather proporciónase
+mediante:
+
+``` text
+--dart-define
+```
+
+ou:
+
+``` text
+--dart-define-from-file
+```
+
+Estrutura local:
+
+``` text
+config/
+├── secrets.json
+└── secrets.example.json
+```
+
+`secrets.json` contén as credenciais reais e está excluído mediante
+`.gitignore`.
+
+`secrets.example.json` pode versionarse para documentar as variables
+necesarias sen expoñer claves reais.
+
+O código recupera a clave mediante:
+
+``` dart
+const apiKey = String.fromEnvironment(
+  'OPENWEATHER_API_KEY',
+);
+```
+
+Exemplo:
+
+``` text
+flutter run -d windows --dart-define-from-file=config/secrets.json
+```
+
+Este mecanismo evita gardar a clave directamente no repositorio. Unha
+clave incorporada nun cliente compilado, porén, non debe considerarse un
+segredo completamente protexido; credenciais que deban permanecer
+privadas requirirían unha capa backend.
+
+------------------------------------------------------------------------
 
 # Local First Strategy
 
@@ -1111,21 +1379,21 @@ A aplicación prioriza o almacenamento local.
 
 Beneficios:
 
-- Funciona sen conexión.
-- Menor complexidade inicial.
-- Desenvolvemento incremental.
-- Maior control sobre o MVP.
-- Menor dependencia de infraestrutura externa.
+-   Funciona sen conexión.
+-   Menor complexidade inicial.
+-   Desenvolvemento incremental.
+-   Maior control sobre o MVP.
+-   Menor dependencia de infraestrutura externa.
 
 A sincronización cloud poderá incorporarse posteriormente.
 
----
+------------------------------------------------------------------------
 
 # Current Dependency Flow
 
 A estrutura xeral é:
 
-```text
+``` text
 View
   ↓
 ViewModel
@@ -1139,7 +1407,7 @@ SQLite
 
 Aplicada aos módulos:
 
-```text
+``` text
 GardensViewModel
   ↓
 GardenRepository
@@ -1147,7 +1415,7 @@ GardenRepository
 SQLiteGardenRepository
 ```
 
-```text
+``` text
 PlantSpeciesViewModel
   ↓
 PlantSpeciesRepository
@@ -1155,7 +1423,7 @@ PlantSpeciesRepository
 SQLitePlantSpeciesRepository
 ```
 
-```text
+``` text
 PlantsViewModel
   ↓
 GardenPlantRepository
@@ -1163,7 +1431,7 @@ GardenPlantRepository
 SQLiteGardenPlantRepository
 ```
 
-```text
+``` text
 PlantEvolutionViewModel
   ↓
 PlantEvolutionRecordRepository
@@ -1173,13 +1441,28 @@ SQLitePlantEvolutionRecordRepository
 
 Todos os Repositories SQLite converxen en:
 
-```text
+``` text
 DatabaseService
   ↓
 SQLite
 ```
 
----
+O módulo meteorolóxico utiliza un fluxo equivalente orientado a unha
+fonte externa:
+
+``` text
+WeatherViewModel
+  ↓
+WeatherRepository
+  ↑
+OpenWeatherRepository
+  ↓
+WeatherService
+  ↓
+OpenWeather API
+```
+
+------------------------------------------------------------------------
 
 # Current Architectural Milestone
 
@@ -1187,13 +1470,13 @@ A arquitectura xa foi reutilizada con éxito en varios módulos.
 
 O patrón inicial:
 
-```text
+``` text
 Garden
 ```
 
 foi estendido a:
 
-```text
+``` text
 PlantSpecies
 GardenPlant
 PlantEvolutionRecord
@@ -1201,11 +1484,13 @@ PlantEvolutionRecord
 
 sen introducir dependencias SQLite nas Views nin nos ViewModels.
 
-Isto valida na práctica a capacidade da arquitectura para crecer mantendo responsabilidades separadas.
+Isto valida na práctica a capacidade da arquitectura para crecer
+mantendo responsabilidades separadas.
 
-O módulo de evolución completado na sesión 16 utiliza exactamente a mesma estrutura:
+O módulo de evolución completado na sesión 16 utiliza exactamente a
+mesma estrutura:
 
-```text
+``` text
 View
   ↓
 PlantEvolutionViewModel
@@ -1219,49 +1504,72 @@ DatabaseService
 SQLite
 ```
 
----
+------------------------------------------------------------------------
 
 # Future Architecture Evolution
 
 Posibles ampliacións:
 
-- OpenWeatherMap.
-- Repository para meteoroloxía.
-- ViewModel meteorolóxico.
-- Layout Designer.
-- Sincronización cloud.
-- Firebase ou Supabase.
-- Authentication.
-- Push Notifications.
-- AI Services.
-- Exportación de históricos.
-- Xestión de ficheiros e fotografías.
+-   MeteoSIX como segundo provedor meteorolóxico.
+-   Xeocodificación por localidade.
+-   Selección de coordenadas mediante mapa.
+-   Meteoroloxía específica por horta.
+-   Posible horta principal para o Dashboard.
+-   Predición meteorolóxica.
+-   Histórico climático.
+-   Layout Designer.
+-   Sincronización cloud.
+-   Firebase ou Supabase.
+-   Authentication.
+-   Push Notifications.
+-   AI Services.
+-   Exportación de históricos.
+-   Xestión de ficheiros e fotografías.
 
-Estas ampliacións só se introducirán cando exista unha necesidade funcional real.
+Estas ampliacións só se introducirán cando exista unha necesidade
+funcional real.
 
----
+------------------------------------------------------------------------
 
 # Architectural Principles
 
-- Manter a arquitectura simple.
-- Separar UI, estado e persistencia.
-- Depender de abstraccións sempre que resulte útil.
-- Centralizar a infraestrutura SQLite.
-- Evitar acceso SQL desde Views ou ViewModels.
-- Evitar ViewModels excesivamente grandes.
-- Crear Repositories cunha responsabilidade clara.
-- Manter estado contextual cando a colección depende dunha entidade pai.
-- Utilizar identificadores para manter sincronizadas as pantallas de detalle.
-- Non introducir capas adicionais sen beneficio claro.
-- Priorizar funcionalidade e comprensión sobre sofisticación arquitectónica.
-- Manter a documentación sincronizada co código real.
+-   Manter a arquitectura simple.
+-   Separar UI, estado e persistencia.
+-   Depender de abstraccións sempre que resulte útil.
+-   Centralizar a infraestrutura SQLite.
+-   Evitar acceso SQL desde Views ou ViewModels.
+-   Evitar ViewModels excesivamente grandes.
+-   Crear Repositories cunha responsabilidade clara.
+-   Manter estado contextual cando a colección depende dunha entidade
+    pai.
+-   Utilizar identificadores para manter sincronizadas as pantallas de
+    detalle.
+-   Non introducir capas adicionais sen beneficio claro.
+-   Priorizar funcionalidade e comprensión sobre sofisticación
+    arquitectónica.
+-   Encapsular as comunicacións HTTP en Services específicos.
+-   Manter os ViewModels independentes do provedor externo concreto
+    mediante contratos Repository.
+-   Representar explicitamente os estados asíncronos de carga, datos e
+    erro.
+-   Evitar `notifyListeners()` durante o proceso de construción inicial
+    dunha View.
+-   Aplicar timeout ás peticións externas para evitar esperas
+    indefinidas.
+-   Non almacenar claves reais de APIs no código fonte nin no
+    repositorio.
+-   Manter a documentación sincronizada co código real.
 
----
+------------------------------------------------------------------------
 
 # Notes
 
-A arquitectura actual é suficiente para o MVP e xa soporta varios módulos persistentes e relacionados entre si.
+A arquitectura actual é suficiente para o MVP e xa soporta varios
+módulos persistentes e relacionados entre si, ademais dun primeiro
+módulo integrado cunha API externa.
 
-As futuras ampliacións deberán respectar a separación de responsabilidades definida neste documento.
+As futuras ampliacións deberán respectar a separación de
+responsabilidades definida neste documento.
 
-O obxectivo segue sendo construír unha aplicación funcional, comprensible e mantible antes de introducir complexidade adicional.
+O obxectivo segue sendo construír unha aplicación funcional,
+comprensible e mantible antes de introducir complexidade adicional.

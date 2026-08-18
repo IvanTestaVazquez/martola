@@ -8,7 +8,7 @@ class WeatherCard extends StatelessWidget {
     required this.location,
   });
 
-  final int temperature;
+  final double temperature;
   final String condition;
   final String location;
 

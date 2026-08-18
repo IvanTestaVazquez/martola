@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../viewmodels/gardens_viewmodel.dart';
+import '../../viewmodels/weather_viewmodel.dart';
 import '../../models/garden.dart';
 
 import '../gardens/gardens_screen.dart';
@@ -14,11 +15,32 @@ import './widgets/garden_card.dart';
 import './widgets/tasks_card.dart';
 import './widgets/quick_actions_card.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
+  State<DashboardScreen> createState() =>
+      _DashboardScreenState(); 
+}
+
+class _DashboardScreenState extends State<DashboardScreen>{
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback( (_) {
+      context.read<WeatherViewModel>().loadCurrentWeather(
+        latitude: 42.34,
+        longitude: -7.86,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final weatherViewModel = context.watch<WeatherViewModel>();
+    final weatherData = weatherViewModel.weatherData;
 
     final gardenCount = context.select<GardensViewModel, int>(
       (viewModel) => viewModel.gardens.length);
@@ -34,11 +56,27 @@ class DashboardScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                WeatherCard(
-                  temperature: 28,
-                  condition: "Ceo despexado",
-                  location: "Ourense",
-                ),
+                if (weatherViewModel.isLoading)
+                  const Center(
+                    child: CircularProgressIndicator(),
+                  )
+                else if (weatherViewModel.errorMessage != null)
+                  Text(
+                    weatherViewModel.errorMessage!,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  )
+                else if (weatherData != null)
+                  WeatherCard(
+                    temperature: weatherData.temperature,
+                    condition: weatherData.description,
+                    location: weatherData.city,
+                  )
+                else
+                  Text(
+                    'Non hai datos meteorolóxicos',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  )
+                ,
                 const SizedBox(height: 16),
                 GardenCard(
                   gardenCount: gardenCount,
@@ -71,13 +109,11 @@ class DashboardScreen extends StatelessWidget {
                     );
                   },
                   onCreateGarden: () async {
-                    final garden = await Navigator.of(context).push<Garden>(
+                    await Navigator.of(context).push<Garden>(
                       MaterialPageRoute(
                         builder: (context) => const CreateGardenScreen(),
                       ),
                     );
-
-                    debugPrint('Resultado: ${garden?.name}');
                   },
                 ),
               ],
