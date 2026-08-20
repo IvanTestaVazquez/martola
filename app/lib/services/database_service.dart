@@ -27,7 +27,7 @@ class DatabaseService {
     final database = await _databaseFactory.openDatabase(
       databasePath,
       options: OpenDatabaseOptions(
-        version: 3,
+        version: 4,
         onConfigure: (db) async{
           await db.execute('PRAGMA foreign_keys = ON');
         },
@@ -38,7 +38,9 @@ class DatabaseService {
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               name TEXT NOT NULL,
               location TEXT NOT NULL,
-              area REAL NOT NULL
+              area REAL NOT NULL,
+              latitude REAL,
+              longirude REAL
             )
             '''
           );
@@ -119,7 +121,7 @@ class DatabaseService {
             );            
           }
 
-          if (oldVersion <3){
+          if (oldVersion < 3){
             await db.execute(
               '''
               CREATE TABLE plant_evolution_records (
@@ -137,9 +139,19 @@ class DatabaseService {
             );
           }
 
+          if (oldVersion < 4){
+            await db.execute(
+              'ALTER TABLE gardens ADD COLUMN latitude REAL',
+            );
+
+            await db.execute(
+              'ALTER TABLE gardens ADD COLUMN longitude REAL',
+            );
+          }
+
         },
       ),
-    );
+  );
 
     await _seedPlantSpecies(database);
 

@@ -134,6 +134,10 @@ Representa unha horta ou xardín.
 -   `name`
 -   `location`
 -   `area`
+-   `latitude`
+-   `longitude`
+
+`latitude` e `longitude` son opcionais para manter compatibilidade con hortas creadas antes da xeocodificación.
 
 ------------------------------------------------------------------------
 
@@ -368,7 +372,7 @@ DatabaseService
 ## Current Version
 
 ``` text
-version: 3
+version: 4
 ```
 
 ## Implemented Migrations
@@ -376,6 +380,7 @@ version: 3
 ``` text
 v1 → v2
 v2 → v3
+v3 → v4
 ```
 
 Ambas migracións foron executadas e comprobadas conservando os datos
@@ -390,6 +395,10 @@ if (oldVersion < 2) {
 
 if (oldVersion < 3) {
   // cambios da versión 3
+}
+
+if (oldVersion < 4) {
+  // engade latitude e longitude a gardens
 }
 ```
 
@@ -416,7 +425,9 @@ CREATE TABLE gardens (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   location TEXT NOT NULL,
-  area REAL NOT NULL
+  area REAL NOT NULL,
+  latitude REAL,
+  longitude REAL
 )
 ```
 
@@ -608,6 +619,15 @@ int.parse(plantId)
 # Model Mapping
 
 ## Garden
+
+O modelo `Garden` incorpora actualmente `latitude` e `longitude` como `double?`. `toMap()` persiste ambos campos e `fromMap()` recupéraos mediante conversión segura desde `num?`:
+
+``` dart
+latitude: (map['latitude'] as num?)?.toDouble(),
+longitude: (map['longitude'] as num?)?.toDouble(),
+```
+
+Isto permite que as hortas antigas sen coordenadas continúen sendo válidas.
 
 ``` text
 Garden
@@ -862,16 +882,42 @@ previamente almacenadas.
 
 ------------------------------------------------------------------------
 
+## Version 4
+
+Engadiu á táboa `gardens`:
+
+``` text
+latitude  REAL NULL
+longitude REAL NULL
+```
+
+Migración:
+
+``` text
+v3
+ ↓
+ALTER TABLE gardens ADD COLUMN latitude REAL
+ALTER TABLE gardens ADD COLUMN longitude REAL
+ ↓
+v4
+```
+
+Os campos son anulables para conservar as hortas xa existentes. A migración foi comprobada e as coordenadas das novas hortas persisten entre reinicios. Estas coordenadas obtéñense actualmente mediante xeocodificación por localidade e úsanse para consultar a meteoroloxía específica da horta.
+
+------------------------------------------------------------------------
+
 ## New Installations
 
 Nunha instalación nova, `onCreate()` crea directamente o esquema
-completo correspondente á versión 3:
+completo correspondente á versión 4:
 
 ``` text
 gardens
 plant_species
 garden_plants
 plant_evolution_records
+
+A táboa `gardens` inclúe tamén `latitude` e `longitude`.
 ```
 
 Non é necesario executar as migracións históricas nunha instalación
@@ -881,7 +927,7 @@ nova.
 
 ## Existing Installations
 
-Unha instalación v1 que pase directamente a v3 executará:
+Unha instalación anterior que pase directamente a v4 executará acumulativamente as migracións necesarias:
 
 ``` text
 oldVersion < 2
@@ -890,13 +936,19 @@ oldVersion < 2
 
 oldVersion < 3
 → crea plant_evolution_records
+
+oldVersion < 4
+→ engade latitude e longitude a gardens
 ```
 
-Unha instalación v2 executará unicamente:
+Unha instalación v2 executará:
 
 ``` text
 oldVersion < 3
 → crea plant_evolution_records
+
+oldVersion < 4
+→ engade latitude e longitude a gardens
 ```
 
 ------------------------------------------------------------------------
@@ -951,8 +1003,7 @@ Isto evita duplicados nos sucesivos arranques.
 
 # Weather Module and Database Scope
 
-O módulo meteorolóxico básico incorporado na sesión 17 **non modifica o
-esquema SQLite actual**.
+O módulo meteorolóxico básico da sesión 17 non requiriu inicialmente cambios no esquema. Na sesión 18, a asociación da meteoroloxía a cada horta si motivou a migración `v3 → v4`, engadindo coordenadas a `gardens`.
 
 A implementación actual consulta as condicións meteorolóxicas mediante
 unha API externa e mantén os datos recibidos no estado da aplicación:
@@ -966,7 +1017,7 @@ OpenWeatherRepository
   ↓
 WeatherViewModel
   ↓
-DashboardScreen
+GardenDetailsScreen
 ```
 
 O modelo:
@@ -981,8 +1032,8 @@ representa a resposta meteorolóxica utilizada pola aplicación, pero
 Por este motivo:
 
 -   `weather_records` continúa como táboa obxectivo non implementada.
--   A versión da base de datos continúa sendo `3`.
--   Non se require unha migración `v3 → v4`.
+-   A versión da base de datos é `4`.
+-   A migración `v3 → v4` engadiu `latitude` e `longitude` a `gardens`.
 -   Non se almacenan aínda históricos meteorolóxicos.
 -   Os datos meteorolóxicos actuais pérdense ao pechar a aplicación e
     poden obterse de novo mediante a API.
@@ -1015,7 +1066,7 @@ Posibles ampliacións:
 -   Fotografías asociadas aos rexistros.
 -   Exportación de históricos.
 -   Persistencia de históricos meteorolóxicos en `weather_records`.
--   Asociación da meteoroloxía e dos históricos a unha horta concreta.
+-   Persistencia futura dos históricos meteorolóxicos asociados a unha horta concreta.
 -   Posible soporte de múltiples provedores meteorolóxicos.
 -   API botánica externa.
 -   Sincronización cloud.
@@ -1029,7 +1080,7 @@ Posibles ampliacións:
 
 # Current Implementation Note
 
-A infraestrutura SQLite está actualmente operativa na versión 3.
+A infraestrutura SQLite está actualmente operativa na versión 4.
 
 A arquitectura de persistencia é:
 
@@ -1085,9 +1136,7 @@ A base de datos seguirá evolucionando incrementalmente cando novas
 funcionalidades requiran persistencia adicional, como os históricos
 meteorolóxicos, o deseño visual ou outras ampliacións.
 
-A consulta meteorolóxica básica xa está implementada, pero ao tratarse
-actualmente de datos remotos non persistidos non implica cambios no
-esquema físico SQLite.
+A consulta meteorolóxica segue empregando datos remotos non persistidos. O cambio de esquema da versión 4 non almacena respostas meteorolóxicas: unicamente persiste `latitude` e `longitude` en `gardens` para poder solicitar condicións meteorolóxicas contextualizadas por horta.
 
 O deseño completo documentado neste ficheiro representa o modelo
 obxectivo de MARTOLA, mentres que as seccións de implementación actual

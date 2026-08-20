@@ -43,7 +43,7 @@ A arquitectura segue un enfoque Local First.
 # Current Implementation State
 
 A arquitectura está actualmente aplicada aos módulos de hortas,
-especies, plantas, evolución das plantas e meteoroloxía.
+especies, plantas, evolución das plantas, meteoroloxía e xeocodificación.
 
 A composición principal realízase en `main.dart`.
 
@@ -69,6 +69,7 @@ PlantSpeciesViewModel
 PlantsViewModel
 PlantEvolutionViewModel
 WeatherViewModel
+GeocodingViewModel
 ```
 
 Todos eles estenden `ChangeNotifier`.
@@ -81,6 +82,7 @@ SQLitePlantSpeciesRepository
 SQLiteGardenPlantRepository
 SQLitePlantEvolutionRecordRepository
 OpenWeatherRepository
+OpenWeatherGeocodingRepository
 ```
 
 Todos os Repositories SQLite comparten a mesma instancia de
@@ -89,7 +91,7 @@ Todos os Repositories SQLite comparten a mesma instancia de
 A base de datos utiliza actualmente:
 
 ``` text
-version: 3
+version: 4
 ```
 
 Táboas implementadas:
@@ -106,6 +108,7 @@ Migracións comprobadas:
 ``` text
 v1 → v2
 v2 → v3
+v3 → v4
 ```
 
 A arquitectura xa soporta o seguinte fluxo funcional:
@@ -149,6 +152,7 @@ Modelos actualmente implementados:
 -   `GardenPlant`
 -   `PlantEvolutionRecord`
 -   `WeatherData`
+-   `GeocodingResult`
 
 Modelos previstos:
 
@@ -217,6 +221,8 @@ Exemplo:
 ``` text
 PlantEvolutionRecord.height
 PlantEvolutionRecord.notes
+Garden.latitude
+Garden.longitude
 ```
 
 ------------------------------------------------------------------------
@@ -290,7 +296,6 @@ Exemplos:
 
 ## Dashboard
 
--   `WeatherCard`
 -   `GardenCard`
 -   `TasksCard`
 -   `QuickActionsCard`
@@ -298,6 +303,10 @@ Exemplos:
 ## Gardens
 
 -   `GardenListItem`
+
+## Shared
+
+-   `WeatherCard` (`lib/widgets/`)
 
 As interaccións comunícanse mediante callbacks cando isto evita
 acoplamento coa navegación.
@@ -482,6 +491,33 @@ presentación.
 
 ------------------------------------------------------------------------
 
+
+## GeocodingViewModel
+
+Mantén:
+
+``` dart
+List<GeocodingResult>? _results;
+bool _isLoading = false;
+String? _errorMessage;
+```
+
+Operación principal:
+
+``` text
+searchLocation(location)
+```
+
+Depende de:
+
+``` text
+GeocodingRepository
+```
+
+Representa os estados de carga, resultados e erro da busca de localidades. A lista nula indica que aínda non se realizou unha busca; unha lista baleira indica unha busca correcta sen coincidencias.
+
+---
+
 # State Scope
 
 MARTOLA distingue entre diferentes tipos de estado.
@@ -538,6 +574,7 @@ PlantSpeciesRepository
 GardenPlantRepository
 PlantEvolutionRecordRepository
 WeatherRepository
+GeocodingRepository
 ```
 
 Implementacións:
@@ -547,6 +584,8 @@ SQLiteGardenRepository
 SQLitePlantSpeciesRepository
 SQLiteGardenPlantRepository
 SQLitePlantEvolutionRecordRepository
+OpenWeatherRepository
+OpenWeatherGeocodingRepository
 ```
 
 Implementación alternativa:
@@ -644,19 +683,35 @@ dun provedor externo concreto.
 
 ------------------------------------------------------------------------
 
+
+## GeocodingRepository
+
+Operación:
+
+``` text
+getGeocodingResults(location)
+```
+
+A interface recibe o texto dunha localización e devolve unha lista de `GeocodingResult`. A implementación actual é `OpenWeatherGeocodingRepository`, que delega a comunicación HTTP en `GeocodingService`.
+
+---
+
 # Service Layer
 
 Os Services encapsulan infraestrutura ou comunicación con sistemas
 externos que non debe aparecer nas Views nin nos ViewModels.
 
-Actualmente existen dúas responsabilidades principais:
+Actualmente existen tres responsabilidades principais:
 
 ``` text
 DatabaseService
 → infraestrutura SQLite
 
 WeatherService
-→ comunicación HTTP con OpenWeather
+→ comunicación HTTP meteorolóxica con OpenWeather
+
+GeocodingService
+→ busca de localidades e coordenadas mediante OpenWeather Geocoding API
 ```
 
 ## WeatherService
@@ -688,6 +743,25 @@ OpenWeather API
 superiores sen introducir detalles HTTP na interface.
 
 ------------------------------------------------------------------------
+
+
+## GeocodingService
+
+Responsable de construír e executar a petición á Direct Geocoding API de OpenWeather, converter o array JSON nunha `List<GeocodingResult>`, aplicar timeout e traducir erros técnicos a `GeocodingException`.
+
+Fluxo:
+
+``` text
+OpenWeatherGeocodingRepository
+  ↓
+GeocodingService
+  ↓
+HTTP GET
+  ↓
+OpenWeather Geocoding API
+```
+
+---
 
 # Database Service Layer
 
@@ -752,7 +826,7 @@ martola.db
 ## Current Version
 
 ``` text
-version: 3
+version: 4
 ```
 
 ## Version 1
@@ -785,7 +859,7 @@ plant_evolution_records
 `onCreate()` crea directamente o esquema correspondente á versión
 actual.
 
-Nunha instalación nova v3:
+Nunha instalación nova v4:
 
 ``` text
 gardens
@@ -804,6 +878,10 @@ if (oldVersion < 2) {
 if (oldVersion < 3) {
   // cambios v3
 }
+
+if (oldVersion < 4) {
+  // engade latitude e longitude a gardens
+}
 ```
 
 Isto permite actualizar desde versións antigas sen perder datos.
@@ -815,6 +893,8 @@ v2 → v3
 ```
 
 foi comprobada mantendo hortas e plantas xa existentes.
+
+A migración `v3 → v4` engade `latitude` e `longitude` opcionais á táboa `gardens`, conservando as hortas xa persistidas.
 
 ------------------------------------------------------------------------
 
@@ -905,7 +985,7 @@ WeatherViewModel
   ↓
 MultiProvider
   ↓
-DashboardScreen
+GardenDetailsScreen
 ```
 
 Exemplo simplificado:
@@ -936,7 +1016,8 @@ MultiProvider
 ├── PlantSpeciesViewModel
 ├── PlantsViewModel
 ├── PlantEvolutionViewModel
-└── WeatherViewModel
+├── WeatherViewModel
+└── GeocodingViewModel
     ↓
 MaterialApp
     ↓
@@ -966,12 +1047,13 @@ PlantEvolutionViewModel
 Carga meteorolóxica:
 
 ``` text
-DashboardScreen
+GardenDetailsScreen
+→ obtén latitude/longitude de Garden
 → addPostFrameCallback()
 → WeatherViewModel.loadCurrentWeather(latitude, longitude)
 ```
 
-A carga meteorolóxica iníciase despois do primeiro frame para evitar
+A carga meteorolóxica contextual da horta iníciase despois do primeiro frame para evitar
 chamar a `notifyListeners()` mentres Flutter está construíndo a árbore
 de widgets.
 
@@ -1154,7 +1236,7 @@ PlantEvolutionListScreen
 
 Isto evita iniciar cargas repetidas directamente desde `build()`.
 
-No caso de `WeatherViewModel`, a carga inicial do Dashboard execútase
+No caso de `WeatherViewModel`, a carga en `GardenDetailsScreen` execútase
 mediante `WidgetsBinding.instance.addPostFrameCallback()`, porque
 `loadCurrentWeather()` modifica estado e chama a `notifyListeners()`.
 Así evítase solicitar unha reconstrución durante o primeiro `build()`.
@@ -1245,7 +1327,8 @@ viewmodels/
 ├── plant_species_viewmodel.dart
 ├── plants_viewmodel.dart
 ├── plant_evolution_viewmodel.dart
-└── weather_viewmodel.dart
+├── weather_viewmodel.dart
+└── geocoding_viewmodel.dart
 ```
 
 ------------------------------------------------------------------------
@@ -1264,7 +1347,9 @@ repositories/
 ├── plant_evolution_record_repository.dart
 ├── sqlite_plant_evolution_record_repository.dart
 ├── weather_repository.dart
-└── open_weather_repository.dart
+├── open_weather_repository.dart
+├── geocoding_repository.dart
+└── open_weather_geocoding_repository.dart
 ```
 
 ------------------------------------------------------------------------
@@ -1275,7 +1360,9 @@ repositories/
 services/
 ├── database_service.dart
 ├── weather_service.dart
-└── weather_exception.dart
+├── weather_exception.dart
+├── geocoding_service.dart
+└── geocoding_exception.dart
 ```
 
 ------------------------------------------------------------------------
@@ -1291,6 +1378,7 @@ Fonte persistente local actualmente utilizada.
 Actualmente implementada:
 
 -   OpenWeather para condicións meteorolóxicas actuais.
+-   OpenWeather Geocoding API para converter localidades en coordenadas.
 
 Prevista:
 
@@ -1462,6 +1550,20 @@ WeatherService
 OpenWeather API
 ```
 
+A xeocodificación segue o mesmo patrón:
+
+``` text
+GeocodingViewModel
+  ↓
+GeocodingRepository
+  ↑
+OpenWeatherGeocodingRepository
+  ↓
+GeocodingService
+  ↓
+OpenWeather Geocoding API
+```
+
 ------------------------------------------------------------------------
 
 # Current Architectural Milestone
@@ -1506,14 +1608,41 @@ SQLite
 
 ------------------------------------------------------------------------
 
+
+## Session 18 — Geocoding and garden-specific weather
+
+A sesión 18 completou un segundo fluxo baseado nunha API externa:
+
+``` text
+CreateGardenScreen
+  ↓
+GeocodingViewModel
+  ↓
+GeocodingRepository
+  ↓
+OpenWeatherGeocodingRepository
+  ↓
+GeocodingService
+  ↓
+OpenWeather Geocoding API
+  ↓
+GeocodingResult
+  ↓
+Garden(location, latitude, longitude)
+  ↓
+SQLite v4
+```
+
+As coordenadas persistidas son reutilizadas posteriormente por `GardenDetailsScreen` para solicitar a meteoroloxía da horta mediante `WeatherViewModel`. Isto elimina a dependencia de coordenadas fixas no Dashboard e contextualiza a información meteorolóxica no dominio correcto.
+
+---
+
 # Future Architecture Evolution
 
 Posibles ampliacións:
 
 -   MeteoSIX como segundo provedor meteorolóxico.
--   Xeocodificación por localidade.
 -   Selección de coordenadas mediante mapa.
--   Meteoroloxía específica por horta.
 -   Posible horta principal para o Dashboard.
 -   Predición meteorolóxica.
 -   Histórico climático.
@@ -1565,8 +1694,7 @@ funcional real.
 # Notes
 
 A arquitectura actual é suficiente para o MVP e xa soporta varios
-módulos persistentes e relacionados entre si, ademais dun primeiro
-módulo integrado cunha API externa.
+módulos persistentes e relacionados entre si, ademais dos fluxos meteorolóxico e de xeocodificación integrados con APIs externas.
 
 As futuras ampliacións deberán respectar a separación de
 responsabilidades definida neste documento.

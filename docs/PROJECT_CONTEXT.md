@@ -105,7 +105,7 @@ A infraestrutura de persistencia está deseñada para soportar Android, Windows 
 ## HTTP / External APIs
 
 - Paquete `http`
-- OpenWeather API para condicións meteorolóxicas actuais.
+- OpenWeather API para condicións meteorolóxicas actuais e xeocodificación directa de localidades.
 - MeteoSIX prevista para información e predición meteorolóxica adicional.
 
 A integración actual con OpenWeather está implementada e operativa.
@@ -184,7 +184,7 @@ Arquitectura MVVM simplificada orientada a:
 
 ## Current Implementation State
 
-A arquitectura está aplicada actualmente aos módulos de hortas, plantas, especies, evolución das plantas e meteoroloxía.
+A arquitectura está aplicada actualmente aos módulos de hortas, plantas, especies, evolución das plantas, xeocodificación e meteoroloxía.
 
 A composición principal realízase en `main.dart`, onde se crean e inxectan as implementacións concretas dos Repositories, Services e ViewModels mediante `MultiProvider`.
 
@@ -204,26 +204,38 @@ ChangeNotifierProvider / MultiProvider
 Views
 ```
 
-Para a meteoroloxía:
+Para a xeocodificación e meteoroloxía:
 
 ```text
 main.dart
-   ↓
-WeatherService
-   ↓
-OpenWeatherRepository
-   ↓
-WeatherViewModel
-   ↓
-ChangeNotifierProvider / MultiProvider
-   ↓
-DashboardScreen
+   ├── GeocodingService → OpenWeatherGeocodingRepository → GeocodingViewModel
+   └── WeatherService → OpenWeatherRepository → WeatherViewModel
+                    ↓
+       ChangeNotifierProvider / MultiProvider
+                    ↓
+                  Views
 ```
 
-O fluxo dunha petición meteorolóxica desde a interface é:
+O fluxo de localización e meteoroloxía por horta é:
 
 ```text
-DashboardScreen
+CreateGardenScreen
+   ↓
+GeocodingViewModel
+   ↓
+GeocodingRepository
+   ↓
+OpenWeatherGeocodingRepository
+   ↓
+GeocodingService
+   ↓
+OpenWeather Geocoding API
+   ↓
+Garden(location, latitude, longitude)
+   ↓
+SQLite
+
+GardenDetailsScreen
    ↓
 WeatherViewModel
    ↓
@@ -243,6 +255,7 @@ Os ViewModels implementados son:
 - `PlantsViewModel`
 - `PlantEvolutionViewModel`
 - `WeatherViewModel`
+- `GeocodingViewModel`
 
 As Views acceden ao estado mediante:
 
@@ -263,6 +276,7 @@ Contratos:
 - `GardenPlantRepository`
 - `PlantEvolutionRecordRepository`
 - `WeatherRepository`
+- `GeocodingRepository`
 
 Implementacións:
 
@@ -271,6 +285,7 @@ Implementacións:
 - `SQLiteGardenPlantRepository`
 - `SQLitePlantEvolutionRecordRepository`
 - `OpenWeatherRepository`
+- `OpenWeatherGeocodingRepository`
 
 `MemoryGardenRepository` mantense como implementación alternativa útil para probas ou desenvolvemento.
 
@@ -283,7 +298,7 @@ Implementacións:
 ## Current SQLite Version
 
 ```text
-version: 3
+version: 4
 ```
 
 Migracións implementadas e comprobadas:
@@ -291,6 +306,7 @@ Migracións implementadas e comprobadas:
 ```text
 v1 → v2
 v2 → v3
+v3 → v4
 ```
 
 As migracións son acumulativas e conservan os datos existentes.
@@ -368,21 +384,18 @@ PRAGMA foreign_keys = ON
 - Os valores decimais, como superficie ou altura, almacénanse como `REAL`.
 - Os campos opcionais poden persistirse como `NULL`.
 
-## Future Location Evolution
+## Garden Location and Coordinates
 
-A integración meteorolóxica actual utiliza temporalmente coordenadas fixas de Ourense para validar o fluxo completo.
+`Garden` xa permite asociar cada horta a coordenadas xeográficas mediante:
 
-Está previsto ampliar `Garden` para asociar cada horta a coordenadas xeográficas:
+- `latitude` opcional.
+- `longitude` opcional.
 
-- latitude
-- longitude
+Os campos persístense na táboa `gardens` como valores `REAL` anulables. A ampliación incorporouse mediante a migración SQLite v3 → v4, conservando os datos existentes.
 
-A obtención da localización deberá poder realizarse mediante:
+A localización pode buscarse por texto mediante a API de xeocodificación directa de OpenWeather. O usuario selecciona unha das coincidencias devoltas e MARTOLA garda o nome da localización seleccionada xunto coas súas coordenadas.
 
-- Busca por localidade.
-- Selección nun mapa.
-
-Esta ampliación requirirá unha futura migración da base de datos e non forma parte aínda do esquema SQLite v3.
+A selección mediante mapa mantense como mellora futura. As coordenadas son a referencia xeográfica utilizada para consultar a meteoroloxía específica de cada horta.
 
 ---
 
@@ -560,7 +573,7 @@ Infraestrutura:
 Fluxo:
 
 ```text
-DashboardScreen
+GardenDetailsScreen
   ↓
 WeatherViewModel
   ↓
@@ -598,20 +611,63 @@ Mantén:
 - `bool _isLoading`
 - `String? _errorMessage`
 
-O Dashboard reacciona a estes estados mostrando:
+`GardenDetailsScreen` reacciona a estes estados mostrando:
 
+- Mensaxe específica cando a horta non ten coordenadas asociadas.
 - `CircularProgressIndicator` durante a carga.
 - Mensaxe de erro cando a petición falla.
 - `WeatherCard` cando existen datos.
-- Mensaxe de ausencia de datos cando non se cumpre ningún dos estados anteriores.
 
-A carga inicial realízase despois do primeiro frame mediante `WidgetsBinding.instance.addPostFrameCallback()` para evitar chamar a `notifyListeners()` durante o proceso inicial de construción da interface.
+A carga realízase despois do frame mediante `WidgetsBinding.instance.addPostFrameCallback()` cando a horta dispón de latitude e longitude, evitando notificacións durante o proceso de construción da interface.
 
-Actualmente utilízanse temporalmente as coordenadas de Ourense para validar o módulo.
+`WeatherCard` trasladouse a `lib/widgets/` ao converterse nun compoñente reutilizable e non exclusivo do Dashboard.
 
-A integración futura asociará a meteoroloxía ás coordenadas reais das hortas.
+A consulta meteorolóxica utiliza xa as coordenadas reais persistidas de cada horta; eliminouse a dependencia funcional das coordenadas fixas de Ourense.
 
 ---
+
+
+## Geocoding
+
+O módulo de xeocodificación directa está implementado e conectado coa API de OpenWeather.
+
+Modelo:
+
+- `GeocodingResult`
+
+Datos procesados:
+
+- Nome da localización.
+- Latitude.
+- Longitude.
+- Estado/rexión cando está dispoñible.
+- País cando está dispoñible.
+
+Infraestrutura:
+
+- `GeocodingService`
+- `GeocodingException`
+- `GeocodingRepository`
+- `OpenWeatherGeocodingRepository`
+- `GeocodingViewModel`
+
+`CreateGardenScreen` permite introducir unha localización, realizar a busca, representar os estados de carga/erro/sen resultados e seleccionar unha coincidencia. A selección actualiza a localización do formulario e permite persistir `latitude` e `longitude` no `Garden`.
+
+Fluxo:
+
+```text
+CreateGardenScreen
+  ↓
+GeocodingViewModel
+  ↓
+GeocodingRepository
+  ↓
+OpenWeatherGeocodingRepository
+  ↓
+GeocodingService
+  ↓
+OpenWeather Geocoding API
+```
 
 # API Configuration and Secrets
 
@@ -677,11 +733,12 @@ Fluxo funcional actualmente relevante:
 Inicio
   ↓
 Dashboard
-  ├── Meteoroloxía actual
   ↓
 Lista de Hortas
+  ├── Crear horta → Buscar/seleccionar localización → Coordenadas
   ↓
 Detalle dunha Horta
+  ├── Meteoroloxía actual da horta
   ↓
 Lista de Plantas
   ↓
@@ -718,7 +775,7 @@ Meteoroloxía
 
 Funcionalidades futuras previstas no fluxo:
 
-- Meteoroloxía específica por horta.
+- Selección de localización mediante mapa.
 - Predición meteorolóxica.
 - Histórico climático.
 - Deseño visual da horta.
@@ -801,11 +858,11 @@ A prioridade actual continúa sendo completar e estabilizar a funcionalidade ant
 
 ## Last Updated
 
-2026-08-18
+2026-08-20
 
 ## Current Phase
 
-A infraestrutura local principal do MVP está operativa mediante SQLite v3.
+A infraestrutura local principal do MVP está operativa mediante SQLite v4.
 
 Están implementados de extremo a extremo:
 
@@ -813,7 +870,8 @@ Están implementados de extremo a extremo:
 - Catálogo local de especies.
 - CRUD de plantas.
 - CRUD de rexistros de evolución.
-- Consulta meteorolóxica actual mediante OpenWeather.
+- Xeocodificación de localidades mediante OpenWeather.
+- Consulta meteorolóxica actual específica por horta mediante OpenWeather.
 
 A persistencia foi comprobada entre reinicios e as relacións entre hortas, plantas, especies e evolución están implementadas mediante claves foráneas.
 
@@ -852,9 +910,11 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 - ✅ `PlantsViewModel`
 - ✅ `PlantEvolutionViewModel`
 - ✅ `WeatherViewModel`
+- ✅ `GeocodingViewModel`
 - ✅ Repositories SQLite para hortas, especies, plantas e evolución
 - ✅ Repository para acceso á API meteorolóxica
-- ✅ Service dedicado á comunicación HTTP con OpenWeather
+- ✅ Repository para xeocodificación directa
+- ✅ Services dedicados á comunicación HTTP con OpenWeather
 
 ## Database
 
@@ -864,6 +924,7 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 - ✅ Versionado do esquema
 - ✅ Migración v1 → v2
 - ✅ Migración v2 → v3
+- ✅ Migración v3 → v4
 - ✅ Conservación dos datos existentes
 - ✅ `gardens`
 - ✅ `plant_species`
@@ -875,6 +936,7 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 - ✅ Datas ISO 8601
 - ✅ Valores opcionais `NULL`
 - ✅ Catálogo inicial de especies
+- ✅ Coordenadas opcionais `latitude` / `longitude` en `gardens`
 
 ## Development
 
@@ -904,7 +966,12 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 - ✅ Tratamento de erros HTTP
 - ✅ Tratamento de fallo de conexión
 - ✅ Timeout das peticións meteorolóxicas
-- ✅ Datos meteorolóxicos reais no Dashboard
+- ✅ Modelo `GeocodingResult`
+- ✅ `GeocodingService` / `GeocodingRepository` / `GeocodingViewModel`
+- ✅ Busca e selección de localización en `CreateGardenScreen`
+- ✅ Persistencia de latitude e longitude por horta
+- ✅ Meteoroloxía real específica por horta en `GardenDetailsScreen`
+- ✅ `WeatherCard` reutilizable en `lib/widgets/`
 - ✅ Configuración da API key fóra do código fonte
 
 ## Documentation
@@ -939,7 +1006,7 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 - A eliminación dunha horta elimina as súas plantas mediante `ON DELETE CASCADE`.
 - A eliminación dunha planta elimina os seus rexistros de evolución mediante `ON DELETE CASCADE`.
 - Unha especie utilizada por unha planta está protexida mediante `ON DELETE RESTRICT`.
-- `PlantSpeciesRepository`, `GardenPlantRepository`, `PlantEvolutionRecordRepository` e `WeatherRepository` mantéñense separados por responsabilidade.
+- `PlantSpeciesRepository`, `GardenPlantRepository`, `PlantEvolutionRecordRepository`, `WeatherRepository` e `GeocodingRepository` mantéñense separados por responsabilidade.
 - `PlantsViewModel` conserva o contexto da horta activa mediante `_currentGardenId`.
 - `PlantEvolutionViewModel` conserva o contexto da planta activa mediante `_currentPlantId`.
 - Os formularios manteñen o estado temporal na propia View mediante `StatefulWidget` e `setState()`.
@@ -955,6 +1022,9 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 - Os Repositories abstraen o ViewModel do provedor externo concreto.
 - `WeatherViewModel` non coñece OpenWeather directamente; depende de `WeatherRepository`.
 - `OpenWeatherRepository` implementa actualmente o contrato meteorolóxico utilizando `WeatherService`.
+- `OpenWeatherGeocodingRepository` implementa o contrato de xeocodificación utilizando `GeocodingService`.
+- A localización xeográfica dunha horta represéntase mediante texto máis coordenadas opcionais; as coordenadas son a referencia utilizada para a meteoroloxía.
+- A xeocodificación devolve varias coincidencias e a selección final corresponde ao usuario.
 - As respostas JSON externas convértense a modelos propios antes de chegar á interface.
 - O estado dunha operación de rede represéntase explicitamente mediante carga, datos e erro.
 - `notifyListeners()` permite que a interface reaccione aos cambios dese estado.
@@ -977,7 +1047,7 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 
 ## Achieved
 
-A infraestrutura relacional principal do MVP está implementada ata SQLite v3.
+A infraestrutura relacional principal do MVP está implementada ata SQLite v4.
 
 Actualmente funciona:
 
@@ -1007,23 +1077,27 @@ O módulo de evolución, completado na sesión 16, pechou o bloque principal de 
 
 Na sesión 17 completouse o primeiro módulo baseado nunha API externa.
 
-A integración meteorolóxica básica permite actualmente:
+Na sesión 18 completouse a asociación entre localización, coordenadas e meteoroloxía por horta. A integración permite actualmente:
 
 ```text
-Dashboard
+CreateGardenScreen
+   ↓
+GeocodingViewModel
+   ↓
+OpenWeather Geocoding API
+   ↓
+Garden(location, latitude, longitude)
+   ↓
+SQLite v4
+   ↓
+GardenDetailsScreen
    ↓
 WeatherViewModel
    ↓
-WeatherRepository
-   ↓
-OpenWeatherRepository
-   ↓
-WeatherService
-   ↓
-OpenWeather
+OpenWeather Weather API
 ```
 
-A aplicación obtén datos meteorolóxicos reais, transforma a resposta JSON nun modelo propio e representa na interface os estados de carga, datos e erro.
+A aplicación busca localidades reais, permite seleccionar unha coincidencia, persiste as coordenadas e utiliza esas coordenadas para obter as condicións meteorolóxicas da horta concreta.
 
 Tamén quedaron implementados o tratamento básico de erros HTTP, conexión e timeout, así como a xestión local das credenciais mediante `dart-define`.
 
@@ -1031,14 +1105,12 @@ Tamén quedaron implementados o tratamento básico de erros HTTP, conexión e ti
 
 O seguinte paso deberá decidirse segundo `ROADMAP.md`, mantendo o desenvolvemento incremental e evitando ampliar innecesariamente o alcance do MVP.
 
-Tras completar a meteoroloxía básica, quedan pendentes dentro ou arredor deste bloque:
+Tras completar a xeocodificación e a meteoroloxía específica por horta, quedan pendentes dentro ou arredor deste bloque:
 
-- Asociar coordenadas reais ás hortas.
-- Permitir obter a localización mediante localidade ou mapa.
-- Mostrar meteoroloxía específica para cada horta.
-- Decidir o comportamento da meteoroloxía do Dashboard cando existan varias hortas.
-- Valorar unha horta principal.
-- Integrar MeteoSIX cando estean dispoñibles as credenciais necesarias.
+- Incorporar selección de localización mediante mapa.
+- Decidir se o Dashboard debe recuperar no futuro algún resumo meteorolóxico cando existan varias hortas.
+- Valorar unha horta principal só se resulta necesaria para esa experiencia.
+- Integrar MeteoSIX, cuxas credenciais xa están dispoñibles, cando o roadmap determine que é o seguinte paso máis eficiente.
 - Incorporar predición meteorolóxica.
 - Desenvolver o histórico climático.
 
@@ -1064,9 +1136,8 @@ Outros bloques principais aínda previstos:
 - Estatísticas avanzadas.
 - Exportación de información histórica das plantas.
 - Ampliación ou integración externa do catálogo de especies.
-- Xeocodificación de localizacións.
 - Selección de localización mediante mapa.
-- Meteoroloxía específica por horta.
+- Melloras visuais da meteoroloxía, como iconas dinámicas segundo as condicións.
 - Integración de múltiples provedores meteorolóxicos.
 
 ---

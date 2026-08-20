@@ -34,7 +34,7 @@ class WeatherCard extends StatelessWidget {
                 )
               ],),
             const SizedBox(height: 8),
-            Text('$temperature °C', style: Theme.of(context).textTheme.headlineMedium),
+            Text('${temperature.toStringAsFixed(1)} °C', style: Theme.of(context).textTheme.headlineMedium),
             Text(condition),
           ],)
         )

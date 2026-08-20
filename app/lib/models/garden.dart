@@ -4,6 +4,8 @@ class Garden {
   final String name;
   final String location;
   final double area;
+  final double? latitude;
+  final double? longitude;
 
 
   const Garden({
@@ -11,6 +13,8 @@ class Garden {
     required this.name,
     required this.location,
     required this.area,
+    this.latitude,
+    this.longitude,
   });
 
   factory Garden.fromMap(Map<String, Object?> map) {
@@ -19,6 +23,8 @@ class Garden {
       name: map['name'] as String,
       location: map['location'] as String,
       area: (map['area'] as num).toDouble(),
+      latitude: (map['latitude'] as num?)?.toDouble(),
+      longitude: (map['longitude'] as num?)?.toDouble(),
     );
   }
 
@@ -27,6 +33,8 @@ class Garden {
       'name' : name,
       'location' : location,
       'area' : area,
+      'longitude' : longitude,
+      'latitude' : latitude,
     };
   }
 }

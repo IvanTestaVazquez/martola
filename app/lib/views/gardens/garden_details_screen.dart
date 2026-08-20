@@ -4,8 +4,11 @@ import 'package:provider/provider.dart';
 import '../plants/plant_list_screen.dart';
 import 'edit_garden_screen.dart';
 
+import '../../widgets/weather_card.dart';
+
 import '../../viewmodels/gardens_viewmodel.dart';
 import '../../viewmodels/plants_viewmodel.dart';
+import '../../viewmodels/weather_viewmodel.dart';
 import '../../models/garden.dart';
 import '../../models/garden_plant.dart';
 
@@ -25,6 +28,7 @@ class GardenDetailsScreen extends StatefulWidget {
 }
 
 class _GardenDetailsScreenState  extends State<GardenDetailsScreen> {
+  bool _weatherLoaded = false;
 
   @override
   void initState(){
@@ -52,6 +56,21 @@ class _GardenDetailsScreenState  extends State<GardenDetailsScreen> {
       );
     }
     
+    if (!_weatherLoaded &&
+        garden.latitude != null &&
+        garden.longitude != null) {
+      _weatherLoaded = true;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<WeatherViewModel>().loadCurrentWeather(
+          latitude: garden.latitude!,
+          longitude: garden.longitude!,
+        );
+      });
+    }
+
+    final weatherViewModel = context.watch<WeatherViewModel>();
+    final weatherData = weatherViewModel.weatherData;
 
     return Scaffold(
       appBar: AppBar(
@@ -78,6 +97,25 @@ class _GardenDetailsScreenState  extends State<GardenDetailsScreen> {
               'Área: ${garden.area} m²',
               style: Theme.of(context).textTheme.bodyLarge,
             ),
+            const SizedBox(height: 16),
+            if (garden.latitude == null || garden.longitude == null)
+              const Text(
+                'Esta horta non ten coordenadas asociadas.',
+              )
+            else if (weatherViewModel.isLoading)
+              const Center(
+                child: CircularProgressIndicator(),
+              )
+            else if (weatherViewModel.errorMessage != null)
+              Text(
+                weatherViewModel.errorMessage!,
+              )
+            else if (weatherData != null)
+              WeatherCard(
+                temperature: weatherData.temperature,
+                condition: weatherData.description,
+                location: garden.location,
+              ),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: (){

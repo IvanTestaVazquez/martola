@@ -46,17 +46,23 @@ Actualmente MARTOLA dispón de:
 -   Integración meteorolóxica básica mediante API REST.
 -   Consulta das condicións meteorolóxicas actuais mediante OpenWeather.
 -   Presentación dos datos meteorolóxicos reais no Dashboard.
--   Xestión básica dos estados de carga e erro da consulta
-    meteorolóxica.
+-   Xeocodificación de localidades mediante OpenWeather Geocoding API.
+-   Selección de resultados de xeocodificación ao crear ou editar unha
+    horta.
+-   Coordenadas opcionais persistidas en cada horta.
+-   Meteoroloxía específica segundo a localización de cada horta.
+-   `WeatherCard` reutilizable no Dashboard e no detalle dunha horta.
+-   Xestión dos estados de carga e erro nas operacións de rede.
 
 A infraestrutura SQLite dispón actualmente de:
 
 -   `DatabaseService`.
 -   Base de datos `martola.db`.
--   Esquema na versión 3.
+-   Esquema na versión 4.
 -   Migración v1 → v2.
 -   Migración v2 → v3.
--   Táboa `gardens`.
+-   Migración v3 → v4.
+-   Táboa `gardens`, con `latitude` e `longitude` opcionais.
 -   Táboa `plant_species`.
 -   Táboa `garden_plants`.
 -   Táboa `plant_evolution_records`.
@@ -73,22 +79,26 @@ Os ViewModels actualmente integrados son:
 -   `PlantsViewModel`.
 -   `PlantEvolutionViewModel`.
 -   `WeatherViewModel`.
+-   `GeocodingViewModel`.
 
-Os Repositories SQLite actualmente integrados son:
+Os Repositories e implementacións actualmente integrados inclúen:
 
 -   `SQLiteGardenRepository`.
 -   `SQLitePlantSpeciesRepository`.
 -   `SQLiteGardenPlantRepository`.
 -   `SQLitePlantEvolutionRecordRepository`.
+-   `OpenWeatherRepository`.
+-   `OpenWeatherGeocodingRepository`.
 
 ## Next Action
 
 Revisar o `ROADMAP.md` actualizado e seleccionar o seguinte bloque
 funcional do MVP.
 
-A Session 17 deixa completada a integración meteorolóxica básica.
-MARTOLA xa pode consultar datos meteorolóxicos actuais mediante
-OpenWeather e mostralos no Dashboard.
+A Session 18 deixa completada a asociación entre hortas, coordenadas e
+meteorología actual. MARTOLA xa pode buscar unha localidade, gardar as
+coordenadas escollidas e consultar o tempo correspondente á localización
+real dunha horta.
 
 Os principais bloques aínda pendentes son:
 
@@ -96,9 +106,8 @@ Os principais bloques aínda pendentes son:
 2.  Adaptación responsive.
 3.  Testing, revisión e optimización.
 4.  Documentación final e preparación da defensa.
-5.  Posibles ampliacións do módulo meteorolóxico, como localización por
-    horta, MeteoSIX ou histórico persistente, se o tempo dispoñible o
-    permite.
+5.  Ampliacións meteorolóxicas non imprescindibles para o MVP, como
+    MeteoSIX, predición ou histórico persistente.
 
 Antes de comezar unha nova implementación revisarase o roadmap para
 fixar o seguinte obxectivo concreto.
@@ -4388,3 +4397,258 @@ A sesión deixa completado o módulo meteorolóxico básico: consulta
 remota, transformación a modelo de dominio, integración mediante
 Repository e ViewModel, xestión de estados e presentación de datos reais
 no Dashboard.
+
+------------------------------------------------------------------------
+
+## Sesión 18 - Xeocodificación e meteoroloxía específica por horta
+
+### Status
+
+✅ Completed
+
+### Obxectivos
+
+-   Asociar coordenadas xeográficas ás hortas.
+-   Evolucionar SQLite de v3 a v4 conservando os datos existentes.
+-   Introducir un servizo específico de xeocodificación.
+-   Reutilizar o patrón Service → Repository → ViewModel.
+-   Permitir buscar e seleccionar localidades nos formularios de horta.
+-   Consultar a meteoroloxía segundo as coordenadas persistidas da
+    horta.
+-   Reutilizar `WeatherCard` fóra do Dashboard.
+
+### Conceptos aprendidos e practicados
+
+-   Campos opcionais `double?`.
+-   Migración SQLite v3 → v4.
+-   Conversión segura mediante `num` e `toDouble()`.
+-   Conversión dunha lista JSON mediante `map(...).toList()`.
+-   Xeocodificación directa.
+-   `TimeoutException` e `http.ClientException`.
+-   Excepcións específicas de Service.
+-   Uso de `finally` para restaurar estado asíncrono.
+-   Dependencia de contratos Repository.
+-   `context.read<T>()` con Provider.
+-   Selección explícita dun resultado antes de persistilo.
+-   Reutilización real dun widget compartido.
+
+### Evolución de Garden e SQLite
+
+`Garden` incorpora agora:
+
+``` dart
+final double? latitude;
+final double? longitude;
+```
+
+As coordenadas son opcionais. `toMap()` e `Garden.fromMap()` foron
+adaptados para persistilas e recuperalas.
+
+Na lectura utilízase:
+
+``` dart
+latitude: (map['latitude'] as num?)?.toDouble(),
+longitude: (map['longitude'] as num?)?.toDouble(),
+```
+
+A base de datos pasa a `version: 4`. A migración `v3 → v4` engade
+`latitude` e `longitude` á táboa `gardens` sen eliminar os datos
+existentes.
+
+### Decisión sobre a localización
+
+Descartouse usar a xeolocalización do dispositivo como mecanismo
+principal. MARTOLA necesita coñecer o tempo onde está a horta, non onde
+está o usuario.
+
+O fluxo escollido é:
+
+``` text
+localidade introducida
+  ↓
+xeocodificación
+  ↓
+lista de resultados
+  ↓
+selección do usuario
+  ↓
+latitude + longitude
+  ↓
+Garden
+```
+
+### GeocodingResult
+
+Creouse un modelo específico para os resultados da xeocodificación cos
+datos necesarios para identificar e seleccionar unha localización:
+
+``` text
+name
+state
+country
+latitude
+longitude
+```
+
+`state` permite distinguir resultados homónimos de diferentes rexións.
+
+### GeocodingService
+
+Creouse un servizo independente para OpenWeather Geocoding API usando:
+
+``` text
+/geo/1.0/direct
+```
+
+cos parámetros `q`, `limit` e `appid`. Actualmente `q` corresponde ao
+texto introducido polo usuario e `limit` é 5.
+
+A resposta é unha lista JSON que se transforma en
+`List<GeocodingResult>` mediante `map()` e `toList()`.
+
+### Xestión de erros
+
+Creouse `GeocodingException`.
+
+Distínguense erros de API key, servidor, outros códigos HTTP, timeout e
+fallos de conexión. `GeocodingViewModel` utiliza `finally` para garantir
+que `isLoading` volva a `false` ao finalizar a operación.
+
+### Repository e ViewModel
+
+Creáronse:
+
+``` text
+GeocodingRepository
+OpenWeatherGeocodingRepository
+GeocodingViewModel
+```
+
+O fluxo é:
+
+``` text
+GeocodingViewModel
+        ↓
+GeocodingRepository
+        ↑
+OpenWeatherGeocodingRepository
+        ↓
+GeocodingService
+        ↓
+OpenWeather Geocoding API
+```
+
+`GeocodingViewModel` mantén resultados, estado de carga e mensaxe de
+erro, e expón `searchLocation(location)`.
+
+### Inxección de dependencias
+
+`main.dart` incorpora:
+
+``` text
+GeocodingService
+  ↓
+OpenWeatherGeocodingRepository
+  ↓
+GeocodingViewModel
+  ↓
+MultiProvider
+```
+
+Os campos de `MartolaApp` empregan os contratos Repository en lugar das
+implementacións concretas cando existe unha abstracción.
+
+### Integración nos formularios
+
+O usuario pode buscar unha localidade e seleccionar un resultado. Ao
+facelo, a localización textual e as coordenadas seleccionadas pasan ao
+`Garden` que se crea ou actualiza.
+
+A selección explícita evita asumir que o primeiro resultado devolto pola
+API é necesariamente o correcto.
+
+Probouse, entre outros casos, con `Ourense` e `Sada`, comprobando que a
+API pode devolver varios resultados e que resulta útil mostrar `state` e
+`country`.
+
+### Meteoroloxía por horta
+
+`GardenDetailsScreen` utiliza agora as coordenadas persistidas da horta
+para consultar as condicións meteorolóxicas correspondentes.
+
+``` text
+Garden
+  ↓
+latitude / longitude
+  ↓
+WeatherViewModel
+  ↓
+WeatherRepository
+  ↓
+OpenWeather
+  ↓
+WeatherData
+  ↓
+GardenDetailsScreen
+```
+
+A meteoroloxía deixa así de depender de coordenadas fixas de proba.
+
+### WeatherCard reutilizable
+
+Ao necesitar `WeatherCard` tanto no Dashboard como en
+`GardenDetailsScreen`, moveuse desde `views/dashboard/widgets/` a
+`lib/widgets/`.
+
+Isto aplica o criterio definido no proxecto: extraer un widget cando
+aparece unha necesidade real de reutilización.
+
+### Comprobación funcional
+
+Comprobouse que a aplicación arranca coa nova composición, SQLite v4
+conserva os datos, as coordenadas quedan persistidas, a xeocodificación
+devolve resultados reais, a selección funciona e `GardenDetailsScreen`
+pode mostrar meteoroloxía correspondente á horta.
+
+### Skills Acquired
+
+-   Evolucionar un modelo persistido conservando compatibilidade.
+-   Crear unha migración SQLite con campos opcionais.
+-   Deseñar un segundo fluxo HTTP coa arquitectura existente.
+-   Transformar arrays JSON en listas de modelos Dart.
+-   Diferenciar erros HTTP, timeout e conexión.
+-   Utilizar `finally` en estado asíncrono.
+-   Depender de contratos Repository no punto de composición.
+-   Integrar un ViewModel nun formulario mediante Provider.
+-   Asociar datos dunha API externa cunha entidade persistente.
+-   Reutilizar un widget cando aparece unha segunda necesidade real.
+
+### Documentation Updated
+
+-   `PROJECT_CONTEXT.md`
+-   `DATABASE_DESIGN.md`
+-   `ARCHITECTURE.md`
+-   `DEVELOPMENT_GUIDE.md`
+
+`ROADMAP.md` deberá quedar sincronizado co estado final da sesión.
+
+### Next Step
+
+Revisar `ROADMAP.md` e decidir o seguinte bloque priorizando o tempo
+restante e o valor para o MVP. Os candidatos principais son Layout
+Designer, responsive e testing. MeteoSIX e outras ampliacións
+meteorolóxicas quedan como melloras opcionais.
+
+### Commit
+
+Pendente ao finalizar a actualización da documentación.
+
+### Notes
+
+A Session 18 converte a meteoroloxía nunha funcionalidade ligada ás
+hortas reais de MARTOLA. A xeocodificación resolve a ponte entre a
+localización introducida polo usuario e as coordenadas que necesita a
+API meteorolóxica, sen depender da posición física do dispositivo.
+
+A arquitectura da Session 17 puido ampliarse cun segundo fluxo HTTP
+mantendo as mesmas responsabilidades e sen introducir capas adicionais.

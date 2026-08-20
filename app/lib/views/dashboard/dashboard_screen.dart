@@ -10,7 +10,7 @@ import '../gardens/create_garden_screen.dart';
 import '../tasks/tasks_screen.dart';
 import '../tasks/create_task_screen.dart';
 
-import './widgets/weather_card.dart';
+import '../../widgets/weather_card.dart';
 import './widgets/garden_card.dart';
 import './widgets/tasks_card.dart';
 import './widgets/quick_actions_card.dart';
@@ -29,12 +29,7 @@ class _DashboardScreenState extends State<DashboardScreen>{
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback( (_) {
-      context.read<WeatherViewModel>().loadCurrentWeather(
-        latitude: 42.34,
-        longitude: -7.86,
-      );
-    });
+     
   }
 
   @override

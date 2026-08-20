@@ -37,10 +37,10 @@ class WeatherViewModel extends ChangeNotifier {
     }on WeatherException catch (error){
       _weatherData = null;
       _errorMessage = error.message;
+    }finally{      
+      _isLoading = false;
+      notifyListeners();
     }
 
-    _isLoading = false;
-
-    notifyListeners();
   }
 }

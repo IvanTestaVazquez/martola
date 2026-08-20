@@ -87,14 +87,14 @@ Mostra un resumo da información meteorolóxica.
 
 **\### Uso actual**
 
-\- DashboardScreen
+\- DashboardScreen - GardenDetailsScreen
 
 **\### Estado**
 
-✅ Implementado con datos ficticios.
+✅ Implementado con datos meteorolóxicos reais.
 
-A información será substituída posteriormente por datos procedentes do
-módulo meteorolóxico.
+O widget foi trasladado a `lib/widgets/` ao aparecer unha necesidade
+real de reutilización entre o Dashboard e o detalle dunha horta.
 
 **\*\*---\*\***
 
@@ -326,8 +326,8 @@ A información mostrada combina actualmente datos reais do estado da
 aplicación con datos ficticios:
 
 \- O número de hortas procede de \`GardensViewModel\`. - A información
-meteorolóxica continúa sendo ficticia. - A información de tarefas
-continúa sendo ficticia.
+meteorolóxica procede de OpenWeather mediante `WeatherViewModel`. - A
+información de tarefas continúa sendo ficticia.
 
 Os datos ficticios substituiranse progresivamente polos módulos
 funcionais correspondentes.
@@ -391,7 +391,8 @@ progresivamente como centro de control desa horta.
 
 **\### Información actual**
 
-\- Nome. - Localización. - Superficie.
+\- Nome. - Localización. - Superficie. - Número de plantas. - Condicións
+meteorolóxicas actuais cando a horta dispón de coordenadas.
 
 **\### Entrada**
 
@@ -420,7 +421,7 @@ mostrando a nova instancia almacenada no ViewModel.
 
 **\### Accións actuais**
 
-\- Editar horta. - Eliminar horta.
+\- Editar horta. - Eliminar horta. - Acceder á lista de plantas.
 
 **\### Eliminación**
 
@@ -449,11 +450,16 @@ accións relacionadas coa horta.
 
 ✅ Acceso ao módulo de plantas integrado.
 
-⏳ Integración da meteoroloxía coa localización específica da horta e
-deseño visual pendentes.
+✅ Meteoroloxía contextualizada mediante as coordenadas persistidas da
+horta.
 
-O módulo meteorolóxico básico xa funciona no Dashboard, pero aínda non
-está contextualizado por horta.
+⬜ Deseño visual da horta pendente.
+
+`GardenDetailsScreen` carga as plantas da horta para mostrar o seu
+número e utiliza `WeatherViewModel` para consultar as condicións
+meteorolóxicas correspondentes a `garden.latitude` e `garden.longitude`.
+
+`WeatherCard` reutilízase nesta pantalla como widget global.
 
 **\*\*---\*\***
 
@@ -470,7 +476,8 @@ StatefulWidget
 
 **\### Campos actuais**
 
-\- Nome. - Localización. - Superficie.
+\- Nome. - Localización. - Superficie. - Latitude e longitude obtidas
+mediante xeocodificación cando o usuario selecciona un resultado.
 
 **\### Xestión do formulario**
 
@@ -486,6 +493,33 @@ Compróbase que:
 \- O nome sexa válido. - A localización sexa válida. - A superficie
 poida converterse correctamente a \`double\`. - A superficie cumpra as
 condicións definidas polo formulario.
+
+**\### Xeocodificación**
+
+O campo de localización permite realizar unha procura mediante
+`GeocodingViewModel`.
+
+A API pode devolver varias coincidencias. A interface mostra os
+resultados e require unha selección explícita antes de utilizar as
+coordenadas.
+
+Ao seleccionar unha opción:
+
+``` text
+localización introducida
+    ↓
+GeocodingViewModel
+    ↓
+List<GeocodingResult>
+    ↓
+selección do usuario
+    ↓
+nome + latitude + longitude
+    ↓
+Garden
+```
+
+O texto da localización actualízase coa opción seleccionada.
 
 **\### Resultado**
 
@@ -536,7 +570,8 @@ inicialmente no formulario.
 
 **\### Campos**
 
-\- Nome. - Localización. - Superficie.
+\- Nome. - Localización. - Superficie. - Latitude e longitude asociadas
+á localización seleccionada.
 
 **\### Inicialización**
 
@@ -553,6 +588,10 @@ posteriormente en \`dispose()\`.
 
 Utiliza as mesmas regras básicas de validación que
 \`CreateGardenScreen\`.
+
+A localización pode volver buscarse mediante `GeocodingViewModel`. Se o
+usuario selecciona unha nova coincidencia, a actualización conserva as
+novas coordenadas xunto co resto dos datos da horta.
 
 **\### Actualización**
 
@@ -1074,6 +1113,7 @@ DashboardScreen
     │   GardenListItem
     │       ↓
     │   GardenDetailsScreen
+    │       ├── WeatherCard
     │       ├── EditGardenScreen
     │       ├── Eliminar horta
     │       └── PlantListScreen
@@ -1115,7 +1155,7 @@ os ViewModels correspondentes.
 
 # Current UI State Management
 
-A interface utiliza actualmente cinco ViewModels compartidos:
+A interface utiliza actualmente seis ViewModels compartidos:
 
 ``` text
 GardensViewModel
@@ -1123,6 +1163,7 @@ PlantSpeciesViewModel
 PlantsViewModel
 PlantEvolutionViewModel
 WeatherViewModel
+GeocodingViewModel
 ```
 
 Distribuídos mediante:
@@ -1205,8 +1246,35 @@ errorMessage
 
 e informa á interface mediante `notifyListeners()`.
 
-A asociación da meteoroloxía coa horta seleccionada implementarase nunha
-ampliación posterior.
+A meteoroloxía pode contextualizarse por horta utilizando as coordenadas
+persistidas en `Garden`.
+
+A xeocodificación utiliza un fluxo independente:
+
+``` text
+CreateGardenScreen / EditGardenScreen
+      ↓
+GeocodingViewModel
+      ↓
+GeocodingRepository
+      ↑
+OpenWeatherGeocodingRepository
+      ↓
+GeocodingService
+      ↓
+OpenWeather Geocoding API
+```
+
+`GeocodingViewModel` conserva o estado da procura:
+
+``` text
+results
+isLoading
+errorMessage
+```
+
+A selección dun resultado pertence á interface e as coordenadas
+escollidas pasan posteriormente ao modelo `Garden`.
 
 ------------------------------------------------------------------------
 
@@ -1217,7 +1285,7 @@ A persistencia local está integrada mediante SQLite.
 Versión actual:
 
 ``` text
-version: 3
+version: 4
 ```
 
 Táboas relacionadas coa interface actual:
@@ -1228,6 +1296,10 @@ plant_species
 garden_plants
 plant_evolution_records
 ```
+
+A táboa `gardens` inclúe agora `latitude` e `longitude` opcionais. Estes
+campos permiten persistir a localización xeográfica seleccionada para
+cada horta.
 
 Os CRUD de:
 
@@ -1256,13 +1328,11 @@ WeatherViewModel
 UI
 ```
 
-Por tanto, a versión da base de datos continúa sendo:
+A versión 4 incorpora a migración v3 → v4 para engadir as coordenadas ás
+hortas conservando os datos existentes.
 
-``` text
-version: 3
-```
-
-e o histórico meteorolóxico queda pendente.
+`WeatherData` continúa sen persistirse; o histórico meteorolóxico queda
+pendente.
 
 **---**
 
@@ -1338,6 +1408,88 @@ widgets de presentación e o provedor meteorolóxico.
 
 ------------------------------------------------------------------------
 
+# Session 18 - UI Geocoding and Garden Weather Integration
+
+## Estado
+
+✅ Completada.
+
+## Cambios visibles
+
+-   `CreateGardenScreen` permite buscar unha localización.
+-   `EditGardenScreen` permite volver buscar a localización dunha horta.
+-   A procura pode mostrar varias coincidencias.
+-   O usuario selecciona explicitamente o resultado correcto.
+-   A localización seleccionada proporciona latitude e longitude ao
+    `Garden`.
+-   `GardenDetailsScreen` mostra o número de plantas.
+-   `GardenDetailsScreen` consulta a meteoroloxía da localización
+    específica da horta.
+-   `WeatherCard` reutilízase no Dashboard e no detalle da horta.
+-   `WeatherCard` pasa a `lib/widgets/`.
+
+## Fluxo de creación/edición da localización
+
+``` text
+TextFormField
+    ↓
+Buscar localización
+    ↓
+GeocodingViewModel.searchLocation()
+    ↓
+resultados
+    ↓
+selección
+    ↓
+localización + latitude + longitude
+    ↓
+Garden
+    ↓
+SQLite
+```
+
+## Fluxo meteorolóxico no detalle
+
+``` text
+GardenDetailsScreen
+    ↓
+Garden(latitude, longitude)
+    ↓
+WeatherViewModel
+    ↓
+WeatherRepository
+    ↓
+WeatherService
+    ↓
+OpenWeather API
+    ↓
+WeatherCard
+```
+
+## Decisión de UX
+
+Non se utiliza a xeolocalización do dispositivo como fonte principal.
+
+A localización relevante é a da horta, que pode ser diferente da
+posición actual do usuario. Por iso as coordenadas forman parte da
+entidade persistida.
+
+Tampouco se escolle automaticamente o primeiro resultado da
+xeocodificación. Ante resultados ambiguos, a decisión corresponde ao
+usuario.
+
+## Estado tras a sesión
+
+`GardenDetailsScreen` xa funciona como punto de acceso contextual á
+horta: mostra información básica, número de plantas, meteoroloxía actual
+e acceso ao módulo de plantas, ademais das accións de edición e
+eliminación.
+
+O deseño visual da horta (`LayoutDesignerScreen`) continúa pendente e é
+o seguinte gran bloque funcional previsto.
+
+------------------------------------------------------------------------
+
 # Desktop Adaptation\*\*
 
 **\## Main Navigation**
@@ -1375,9 +1527,10 @@ A implementación actual continúa priorizando funcionalidade fronte a
 deseño visual.
 
 Os módulos de hortas, plantas e evolución dispoñen xa dunha primeira
-interface funcional con persistencia real. O módulo meteorolóxico básico
-tamén está integrado na interface mediante datos remotos reais, aínda
-sen persistencia nin contextualización por horta.
+interface funcional con persistencia real. O módulo meteorolóxico está
+integrado mediante datos remotos reais e xa pode contextualizarse por
+horta usando as coordenadas persistidas. `WeatherData` continúa sen
+persistirse.
 
 Os refinamentos visuais poderán realizarse posteriormente sen alterar o
 fluxo básico de navegación.

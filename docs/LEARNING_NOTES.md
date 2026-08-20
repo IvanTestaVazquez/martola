@@ -12142,3 +12142,663 @@ OpenWeather.
 MARTOLA pode evolucionar cara a outro provedor, como MeteoSIX, mantendo
 estables as capas superiores sempre que se respecte o contrato definido
 polo Repository.
+
+------------------------------------------------------------------------
+
+# Sesión 18 - Xeocodificación e meteoroloxía por horta
+
+## Coordenadas opcionais no modelo de dominio
+
+`Garden` incorpora agora dúas propiedades opcionais:
+
+``` dart
+final double? latitude;
+final double? longitude;
+```
+
+O `?` indica que unha horta pode ter coordenadas ou non telas.
+
+Isto permite manter válidas as hortas creadas antes de incorporar a
+xeocodificación e tamén representar unha horta cuxa localización aínda
+non foi resolta.
+
+### Regra
+
+> Un dato debe ser nullable cando a ausencia dese dato representa un
+> estado válido do dominio.
+
+------------------------------------------------------------------------
+
+## Conversión segura de números procedentes de SQLite
+
+SQLite pode devolver valores numéricos mediante tipos compatibles con
+`num`.
+
+Por iso, ao reconstruír un `Garden`, utilízase:
+
+``` dart
+latitude: (map['latitude'] as num?)?.toDouble(),
+longitude: (map['longitude'] as num?)?.toDouble(),
+```
+
+`num` é un tipo numérico máis xeral que pode representar valores como
+`int` ou `double`.
+
+O operador:
+
+``` dart
+?.
+```
+
+permite executar `toDouble()` unicamente cando o valor non é `null`.
+
+### Regra
+
+> Ao ler datos externos ou persistidos, convén adaptar explicitamente o
+> tipo recibido ao tipo que necesita o modelo de dominio.
+
+------------------------------------------------------------------------
+
+## Migración SQLite v3 → v4
+
+Engadir `latitude` e `longitude` modifica o esquema da base de datos.
+
+Por tanto, a versión pasa de:
+
+``` text
+v3
+```
+
+a:
+
+``` text
+v4
+```
+
+A migración engade os novos campos á táboa `gardens` sen eliminar as
+hortas existentes.
+
+As filas antigas poden manter:
+
+``` text
+latitude = null
+longitude = null
+```
+
+### Regra
+
+> Un cambio no modelo de dominio só require migración cando modifica o
+> esquema persistido.
+
+------------------------------------------------------------------------
+
+## Xeocodificación
+
+A xeocodificación transforma unha localización escrita por unha persoa
+nunhas coordenadas xeográficas.
+
+Exemplo conceptual:
+
+``` text
+"Ourense"
+    ↓
+Geocoding API
+    ↓
+latitude + longitude
+```
+
+En MARTOLA a xeocodificación permite conectar o texto introducido polo
+usuario coas coordenadas que necesita a API meteorolóxica.
+
+------------------------------------------------------------------------
+
+## Por que non utilizar directamente a localización do dispositivo
+
+A posición do dispositivo responde á pregunta:
+
+> Onde está agora o usuario?
+
+MARTOLA necesita responder:
+
+> Onde está a horta?
+
+As dúas localizacións poden ser diferentes.
+
+Por iso, a localización dunha horta forma parte dos datos persistidos da
+propia horta e non depende da posición actual do dispositivo.
+
+### Regra
+
+> A fonte dun dato debe corresponder coa entidade á que pertence
+> conceptualmente.
+
+------------------------------------------------------------------------
+
+## `GeocodingResult`
+
+Unha procura pode devolver varias localizacións posibles.
+
+Por iso créase un modelo específico:
+
+``` text
+GeocodingResult
+```
+
+que contén os datos necesarios para identificar unha opción:
+
+``` text
+name
+state
+country
+latitude
+longitude
+```
+
+O modelo non representa unha horta.
+
+Representa un resultado temporal devolto pola API de xeocodificación.
+
+------------------------------------------------------------------------
+
+## JSON que representa unha lista
+
+Na sesión anterior traballouse principalmente cun obxecto JSON.
+
+A xeocodificación introduce unha resposta formada por varios elementos.
+
+Conceptualmente:
+
+``` json
+[
+  { "name": "Ourense", "lat": 0.0, "lon": 0.0 },
+  { "name": "Ourense", "lat": 0.0, "lon": 0.0 }
+]
+```
+
+Despois de:
+
+``` dart
+jsonDecode(response.body)
+```
+
+o resultado é unha `List`.
+
+Cada elemento pode transformarse nun `GeocodingResult`.
+
+------------------------------------------------------------------------
+
+## `map()` e `toList()`
+
+`map()` permite transformar cada elemento dunha colección.
+
+Fluxo conceptual:
+
+``` text
+List<dynamic>
+      ↓
+map()
+      ↓
+cada JSON
+      ↓
+GeocodingResult
+      ↓
+toList()
+      ↓
+List<GeocodingResult>
+```
+
+`map()` describe a transformación.
+
+`toList()` materializa o resultado como unha lista.
+
+### Regra
+
+> Cando unha API devolve unha colección, transforma cada elemento ao
+> modelo de dominio ou de transferencia correspondente antes de
+> utilizalo nas capas superiores.
+
+------------------------------------------------------------------------
+
+## Separación entre meteoroloxía e xeocodificación
+
+A meteoroloxía e a xeocodificación utilizan OpenWeather, pero resolven
+problemas diferentes.
+
+``` text
+WeatherService
+→ obter condicións meteorolóxicas
+
+GeocodingService
+→ converter unha localización en coordenadas
+```
+
+Compartir provedor externo non significa compartir responsabilidade.
+
+### Regra
+
+> Dous servizos que utilizan a mesma API poden permanecer separados se
+> resolven responsabilidades distintas.
+
+------------------------------------------------------------------------
+
+## `GeocodingService`
+
+`GeocodingService` é responsable da comunicación HTTP coa API de
+xeocodificación.
+
+A súa responsabilidade inclúe:
+
+-   construír a URI;
+-   realizar a petición;
+-   interpretar o código HTTP;
+-   decodificar o JSON;
+-   transformar a resposta;
+-   converter erros técnicos en excepcións comprensibles para as capas
+    superiores.
+
+Non decide que resultado debe seleccionar o usuario.
+
+------------------------------------------------------------------------
+
+## `GeocodingException`
+
+Creouse unha excepción específica:
+
+``` dart
+GeocodingException
+```
+
+Isto permite distinguir os erros da operación de xeocodificación doutras
+excepcións da aplicación.
+
+Poden existir situacións diferentes:
+
+``` text
+401
+→ credencial non válida
+
+5xx
+→ erro do servidor
+
+timeout
+→ o servidor tarda demasiado
+
+ClientException
+→ problema de conexión
+```
+
+### Regra
+
+> As capas técnicas deben traducir os erros externos a erros que teñan
+> significado dentro da responsabilidade que están executando.
+
+------------------------------------------------------------------------
+
+## `TimeoutException`
+
+Unha operación de rede pode non responder nun tempo razoable.
+
+Un timeout permite limitar canto tempo está disposta a esperar a
+aplicación.
+
+Conceptualmente:
+
+``` text
+petición
+   ↓
+espera
+   ↓
+tempo máximo superado
+   ↓
+TimeoutException
+```
+
+Un timeout non significa necesariamente que o servidor devolvese un erro
+HTTP.
+
+Pode significar que non chegou ningunha resposta a tempo.
+
+------------------------------------------------------------------------
+
+## `http.ClientException`
+
+`ClientException` representa erros relacionados coa comunicación HTTP
+desde o cliente.
+
+Pode aparecer, por exemplo, cando non é posible completar correctamente
+a conexión.
+
+É diferente dun código HTTP como `404` ou `500`, porque neses casos si
+existiu unha resposta HTTP do servidor.
+
+------------------------------------------------------------------------
+
+## `finally`
+
+Un bloque `finally` execútase ao finalizar un `try`, tanto se a
+operación ten éxito como se se produce unha excepción.
+
+Exemplo conceptual:
+
+``` dart
+try {
+  // operación
+} catch (error) {
+  // tratamento do erro
+} finally {
+  // execútase sempre ao finalizar
+}
+```
+
+No ViewModel resulta útil para restaurar:
+
+``` dart
+_isLoading = false;
+notifyListeners();
+```
+
+sen duplicar estas instrucións nas ramas de éxito e erro.
+
+### Regra
+
+> Utiliza `finally` para operacións que deben executarse ao finalizar
+> independentemente do resultado do `try`.
+
+------------------------------------------------------------------------
+
+## `GeocodingRepository`
+
+`GeocodingRepository` define o contrato que necesita a aplicación para
+buscar localizacións.
+
+Conceptualmente:
+
+``` text
+GeocodingViewModel
+        ↓
+GeocodingRepository
+        ↑
+OpenWeatherGeocodingRepository
+```
+
+O ViewModel depende da abstracción.
+
+A implementación concreta depende do provedor utilizado actualmente.
+
+------------------------------------------------------------------------
+
+## Dependencia respecto do contrato
+
+Se existe:
+
+``` text
+WeatherRepository
+```
+
+unha capa superior non necesita declarar necesariamente:
+
+``` text
+OpenWeatherRepository
+```
+
+como tipo da súa dependencia.
+
+Pode depender de:
+
+``` text
+WeatherRepository
+```
+
+e recibir unha implementación concreta durante a composición da
+aplicación.
+
+### Regra
+
+> As capas superiores deberían depender do contrato que necesitan, non
+> de máis detalles dos necesarios.
+
+------------------------------------------------------------------------
+
+## `GeocodingViewModel`
+
+O ViewModel representa para a interface os estados da procura:
+
+``` text
+isLoading
+results
+errorMessage
+```
+
+A View non realiza directamente a petición HTTP.
+
+Solicita:
+
+``` text
+searchLocation(...)
+```
+
+e observa o estado resultante.
+
+O patrón é equivalente ao xa utilizado para meteoroloxía:
+
+``` text
+View
+  ↓
+ViewModel
+  ↓
+Repository
+  ↓
+Service
+  ↓
+API
+```
+
+------------------------------------------------------------------------
+
+## `context.read<T>()`
+
+Provider permite obter unha dependencia desde o `BuildContext`.
+
+``` dart
+context.read<GeocodingViewModel>()
+```
+
+`read()` obtén a instancia sen facer que esa chamada concreta estableza
+unha subscrición aos cambios.
+
+É apropiado, por exemplo, para executar unha acción:
+
+``` text
+botón pulsado
+    ↓
+context.read<GeocodingViewModel>()
+    ↓
+searchLocation(...)
+```
+
+Para reconstruír a interface cando cambia o estado poden empregarse
+mecanismos reactivos como `watch()` ou `Consumer`.
+
+------------------------------------------------------------------------
+
+## Selección explícita dun resultado
+
+Unha API de xeocodificación pode devolver varias coincidencias.
+
+Non é seguro asumir:
+
+``` text
+primeiro resultado = resultado correcto
+```
+
+Por iso MARTOLA mostra as opcións e deixa que o usuario seleccione unha.
+
+Fluxo:
+
+``` text
+texto
+  ↓
+procura
+  ↓
+resultados
+  ↓
+selección
+  ↓
+latitude + longitude
+  ↓
+Garden
+```
+
+### Regra
+
+> Cando un servizo externo devolve resultados ambiguos, a aplicación non
+> debería inventar unha certeza que a fonte de datos non proporciona.
+
+------------------------------------------------------------------------
+
+## Persistencia da localización da horta
+
+Unha vez seleccionado un resultado, as coordenadas pasan a formar parte
+do `Garden`.
+
+Isto permite que sobrevivan ao reinicio da aplicación mediante SQLite.
+
+A meteoroloxía pode utilizar despois:
+
+``` text
+Garden
+  ↓
+latitude / longitude
+  ↓
+WeatherViewModel
+```
+
+A xeocodificación non necesita repetirse cada vez que se consulta o
+tempo.
+
+------------------------------------------------------------------------
+
+## Meteoroloxía específica por horta
+
+Na sesión 17 utilizáronse coordenadas coñecidas para validar a
+integración.
+
+Agora as coordenadas proceden da horta persistida.
+
+O fluxo real pasa a ser:
+
+``` text
+Garden
+  ↓
+latitude / longitude
+  ↓
+WeatherViewModel
+  ↓
+WeatherRepository
+  ↓
+WeatherService
+  ↓
+OpenWeather
+```
+
+Isto conecta por primeira vez o módulo meteorolóxico coa localización
+real dunha entidade do dominio.
+
+------------------------------------------------------------------------
+
+## Reutilización real de `WeatherCard`
+
+`WeatherCard` naceu como widget específico do Dashboard.
+
+Ao necesitarse tamén en `GardenDetailsScreen`, aparece unha segunda
+necesidade real de reutilización.
+
+Por iso pode moverse a:
+
+``` text
+lib/widgets/
+```
+
+Isto confirma unha regra aprendida anteriormente:
+
+> Un widget non debe facerse global "por se acaso". Debe extraerse cando
+> existe unha necesidade real de reutilización.
+
+------------------------------------------------------------------------
+
+## Conceptos clave da sesión 18
+
+-   `double?`.
+-   Coordenadas opcionais.
+-   `num`.
+-   `num?`.
+-   `toDouble()`.
+-   Migración SQLite v3 → v4.
+-   Xeocodificación.
+-   `GeocodingResult`.
+-   JSON como lista.
+-   `List<dynamic>`.
+-   `map()`.
+-   `toList()`.
+-   `List<GeocodingResult>`.
+-   `GeocodingService`.
+-   Separación entre meteoroloxía e xeocodificación.
+-   `GeocodingException`.
+-   `TimeoutException`.
+-   `http.ClientException`.
+-   `try`.
+-   `catch`.
+-   `finally`.
+-   `GeocodingRepository`.
+-   `OpenWeatherGeocodingRepository`.
+-   Dependencia respecto dun contrato.
+-   `GeocodingViewModel`.
+-   `context.read<T>()`.
+-   Selección explícita dun resultado.
+-   Persistencia de latitude e longitude.
+-   Meteoroloxía por horta.
+-   Reutilización de `WeatherCard`.
+
+------------------------------------------------------------------------
+
+## Regra principal da sesión 18
+
+Un dato obtido dunha API externa pode integrarse no dominio sen acoplar
+a interface ao provedor.
+
+En MARTOLA:
+
+``` text
+texto da localización
+        ↓
+GeocodingViewModel
+        ↓
+GeocodingRepository
+        ↓
+GeocodingService
+        ↓
+OpenWeather
+        ↓
+GeocodingResult
+        ↓
+selección do usuario
+        ↓
+Garden(latitude, longitude)
+        ↓
+SQLite
+        ↓
+WeatherViewModel
+        ↓
+meteorología da horta
+```
+
+A xeocodificación resolve unha responsabilidade concreta: traducir unha
+localización humana a coordenadas.
+
+A persistencia conserva esas coordenadas como parte da horta.
+
+A meteoroloxía reutilízaas posteriormente sen necesitar coñecer como se
+obtiveron.
+
+Esta separación mantén independentes a interface, a persistencia, a
+xeocodificación e o provedor meteorolóxico.

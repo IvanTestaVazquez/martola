@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../viewmodels/gardens_viewmodel.dart';
 
 import 'garden_details_screen.dart';
+import 'create_garden_screen.dart';
 
 import 'widgets/garden_list_item.dart';
 
@@ -39,8 +40,18 @@ class GardensScreen extends StatelessWidget {
               },
             );
           },
-        )
-      )
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const CreateGardenScreen(),)
+          );
+        } ,        
+        tooltip: 'Crear nova horta',
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }
