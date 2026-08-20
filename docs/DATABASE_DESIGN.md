@@ -84,6 +84,7 @@ garden_plants
    │ 1:N
    ▼
 plant_evolution_records
+garden_layout_items
 ```
 
 ------------------------------------------------------------------------
@@ -298,9 +299,43 @@ Elementos visuais do deseño dunha horta.
   color             TEXT
   icon              TEXT
 
+### Current Implemented Fields
+
+-   `id`
+-   `garden_id`
+-   `garden_plant_id`
+-   `x_position`
+-   `y_position`
+
+As coordenadas `x_position` e `y_position` persístense normalizadas, polo que a disposición non depende das dimensións concretas da pantalla. `garden_plant_id` é único para impedir que unha mesma planta apareza máis dunha vez no deseño.
+
+### Current Physical Schema
+
+``` sql
+CREATE TABLE garden_layout_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  garden_id INTEGER NOT NULL,
+  garden_plant_id INTEGER NOT NULL,
+  x_position REAL NOT NULL,
+  y_position REAL NOT NULL,
+
+  FOREIGN KEY (garden_id)
+    REFERENCES gardens(id)
+    ON DELETE CASCADE,
+
+  FOREIGN KEY (garden_plant_id)
+    REFERENCES garden_plants(id)
+    ON DELETE CASCADE,
+
+  UNIQUE (garden_plant_id)
+)
+```
+
 ### Status
 
-⬜ Non implementada.
+✅ Implementada desde SQLite v5.
+
+Os campos obxectivo `width`, `height`, `rotation`, `color` e `icon` quedan como posibles ampliacións futuras.
 
 ------------------------------------------------------------------------
 
@@ -332,6 +367,10 @@ gardens 1:N garden_plants
 plant_species 1:N garden_plants
 
 garden_plants 1:N plant_evolution_records
+
+gardens 1:N garden_layout_items
+
+garden_plants 1:1 garden_layout_items
 ```
 
 ------------------------------------------------------------------------
@@ -372,7 +411,7 @@ DatabaseService
 ## Current Version
 
 ``` text
-version: 4
+version: 5
 ```
 
 ## Implemented Migrations
@@ -381,6 +420,7 @@ version: 4
 v1 → v2
 v2 → v3
 v3 → v4
+v4 → v5
 ```
 
 Ambas migracións foron executadas e comprobadas conservando os datos
@@ -416,6 +456,7 @@ gardens
 plant_species
 garden_plants
 plant_evolution_records
+garden_layout_items
 ```
 
 ## gardens
@@ -502,6 +543,34 @@ CREATE TABLE plant_evolution_records (
 
 ------------------------------------------------------------------------
 
+## garden_layout_items
+
+A táboa `garden_layout_items` persiste a colocación das plantas no deseño visual da horta.
+
+``` sql
+CREATE TABLE garden_layout_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  garden_id INTEGER NOT NULL,
+  garden_plant_id INTEGER NOT NULL,
+  x_position REAL NOT NULL,
+  y_position REAL NOT NULL,
+
+  FOREIGN KEY (garden_id)
+    REFERENCES gardens(id)
+    ON DELETE CASCADE,
+
+  FOREIGN KEY (garden_plant_id)
+    REFERENCES garden_plants(id)
+    ON DELETE CASCADE,
+
+  UNIQUE (garden_plant_id)
+)
+```
+
+As posicións representan o centro do elemento mediante coordenadas normalizadas. A interface convérteas a píxeles segundo o tamaño dispoñible do taboleiro.
+
+------------------------------------------------------------------------
+
 # Referential Integrity
 
 SQLite require activar explicitamente a comprobación das claves foráneas
@@ -577,6 +646,16 @@ existe.
 
 Unha futura funcionalidade de exportación podería permitir conservar esa
 información fóra da base funcional antes da eliminación.
+
+------------------------------------------------------------------------
+
+## Garden / GardenPlant → GardenLayoutItem
+
+`garden_layout_items.garden_id` referencia `gardens.id` con `ON DELETE CASCADE`.
+
+`garden_layout_items.garden_plant_id` referencia `garden_plants.id` tamén con `ON DELETE CASCADE`.
+
+Isto garante que ao eliminar unha horta ou unha planta desaparezan automaticamente os elementos de layout asociados. A restrición `UNIQUE (garden_plant_id)` garante que cada planta dispoña como máximo dunha única posición no deseño.
 
 ------------------------------------------------------------------------
 
@@ -711,6 +790,24 @@ ou `NULL`:
 
 ------------------------------------------------------------------------
 
+## GardenLayoutItem
+
+O modelo mantén:
+
+``` text
+id
+gardenId
+gardenPlantId
+xPosition
+yPosition
+```
+
+`toMap()` converte `gardenId` e `gardenPlantId` a `INTEGER` para SQLite e persiste as coordenadas como `REAL`.
+
+`fromMap()` recupera os identificadores como `String` e converte `x_position` e `y_position` a `double`.
+
+------------------------------------------------------------------------
+
 # Implemented Repository Operations
 
 ## Gardens
@@ -776,6 +873,21 @@ historial.
 
 ------------------------------------------------------------------------
 
+## Garden Layout Items
+
+`SqliteGardenLayoutRepository`:
+
+``` text
+CREATE → addItem()
+READ   → getItemsByGardenId()
+UPDATE → updateItem()
+DELETE → removeItem()
+```
+
+Durante o arrastre, `GardenLayoutViewModel` actualiza a posición en memoria. A escritura en SQLite realízase ao finalizar o arrastre, evitando actualizacións persistentes continuas durante `onPanUpdate`.
+
+------------------------------------------------------------------------
+
 # CRUD Verification
 
 ## Gardens
@@ -819,6 +931,19 @@ AFTER DELETE = null  ✅
 
 Tamén se comprobou o CRUD completo desde a interface mediante
 `PlantEvolutionViewModel`.
+
+## Garden Layout Items
+
+Comprobouse desde a interface:
+
+-   Engadir unha planta ao deseño.
+-   Recuperar os elementos dunha horta.
+-   Mover individualmente os elementos.
+-   Persistir a posición final.
+-   Recuperar as posicións entre reinicios.
+-   Retirar unha planta do deseño.
+-   Integridade mediante `ON DELETE CASCADE`.
+-   Unicidade mediante `UNIQUE (garden_plant_id)`.
 
 ------------------------------------------------------------------------
 
@@ -906,19 +1031,32 @@ Os campos son anulables para conservar as hortas xa existentes. A migración foi
 
 ------------------------------------------------------------------------
 
+## Version 5
+
+Engadiu:
+
+``` text
+garden_layout_items
+```
+
+A migración `v4 → v5` crea a nova táboa coas relacións cara a `gardens` e `garden_plants`, coordenadas normalizadas e a restrición `UNIQUE (garden_plant_id)`.
+
+------------------------------------------------------------------------
+
 ## New Installations
 
 Nunha instalación nova, `onCreate()` crea directamente o esquema
-completo correspondente á versión 4:
+completo correspondente á versión 5:
 
 ``` text
 gardens
 plant_species
 garden_plants
 plant_evolution_records
+garden_layout_items
+```
 
 A táboa `gardens` inclúe tamén `latitude` e `longitude`.
-```
 
 Non é necesario executar as migracións históricas nunha instalación
 nova.
@@ -927,7 +1065,7 @@ nova.
 
 ## Existing Installations
 
-Unha instalación anterior que pase directamente a v4 executará acumulativamente as migracións necesarias:
+Unha instalación anterior que pase directamente a v5 executará acumulativamente as migracións necesarias:
 
 ``` text
 oldVersion < 2
@@ -939,6 +1077,9 @@ oldVersion < 3
 
 oldVersion < 4
 → engade latitude e longitude a gardens
+
+oldVersion < 5
+→ crea garden_layout_items
 ```
 
 Unha instalación v2 executará:
@@ -949,6 +1090,9 @@ oldVersion < 3
 
 oldVersion < 4
 → engade latitude e longitude a gardens
+
+oldVersion < 5
+→ crea garden_layout_items
 ```
 
 ------------------------------------------------------------------------
@@ -968,6 +1112,10 @@ if (oldVersion < 3) {
 
 if (oldVersion < 4) {
   // cambios v4
+}
+
+if (oldVersion < 5) {
+  // cambios v5
 }
 ```
 
@@ -1032,7 +1180,7 @@ representa a resposta meteorolóxica utilizada pola aplicación, pero
 Por este motivo:
 
 -   `weather_records` continúa como táboa obxectivo non implementada.
--   A versión da base de datos é `4`.
+-   A versión da base de datos é `5`.
 -   A migración `v3 → v4` engadiu `latitude` e `longitude` a `gardens`.
 -   Non se almacenan aínda históricos meteorolóxicos.
 -   Os datos meteorolóxicos actuais pérdense ao pechar a aplicación e
@@ -1050,11 +1198,10 @@ As seguintes táboas do deseño obxectivo aínda non están implementadas:
 
 -   `users`
 -   `weather_records`
--   `garden_layout_items`
 
 Serán incorporadas cando se desenvolvan os seus módulos.
 
-`plant_evolution_records` xa forma parte do esquema físico v3.
+`plant_evolution_records` forma parte do esquema físico desde v3 e `garden_layout_items` desde v5.
 
 ------------------------------------------------------------------------
 
@@ -1080,7 +1227,7 @@ Posibles ampliacións:
 
 # Current Implementation Note
 
-A infraestrutura SQLite está actualmente operativa na versión 4.
+A infraestrutura SQLite está actualmente operativa na versión 5.
 
 A arquitectura de persistencia é:
 
@@ -1103,6 +1250,7 @@ SQLiteGardenRepository
 SQLitePlantSpeciesRepository
 SQLiteGardenPlantRepository
 SQLitePlantEvolutionRecordRepository
+SqliteGardenLayoutRepository
 ```
 
 Táboas activas:
@@ -1134,9 +1282,9 @@ interface e comprobado.
 
 A base de datos seguirá evolucionando incrementalmente cando novas
 funcionalidades requiran persistencia adicional, como os históricos
-meteorolóxicos, o deseño visual ou outras ampliacións.
+meteorolóxicos ou outras ampliacións. O deseño visual xa dispón de persistencia propia desde v5.
 
-A consulta meteorolóxica segue empregando datos remotos non persistidos. O cambio de esquema da versión 4 non almacena respostas meteorolóxicas: unicamente persiste `latitude` e `longitude` en `gardens` para poder solicitar condicións meteorolóxicas contextualizadas por horta.
+A consulta meteorolóxica segue empregando datos remotos non persistidos. O cambio de esquema da versión 5 non almacena respostas meteorolóxicas: unicamente persiste `latitude` e `longitude` en `gardens` para poder solicitar condicións meteorolóxicas contextualizadas por horta.
 
 O deseño completo documentado neste ficheiro representa o modelo
 obxectivo de MARTOLA, mentres que as seccións de implementación actual

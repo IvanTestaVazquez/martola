@@ -421,7 +421,7 @@ mostrando a nova instancia almacenada no ViewModel.
 
 **\### Accións actuais**
 
-\- Editar horta. - Eliminar horta. - Acceder á lista de plantas.
+\- Editar horta. - Eliminar horta. - Acceder á lista de plantas. - Acceder ao deseño visual da horta.
 
 **\### Eliminación**
 
@@ -437,7 +437,7 @@ Se o usuario confirma:
 
 **\### Funcionalidades previstas**
 
-\- Plantas. - Evolución. - Meteoroloxía. - Deseño da horta. - Outras
+\- Plantas. - Evolución. - Meteoroloxía. - Outras
 accións relacionadas coa horta.
 
 **\### Estado**
@@ -453,7 +453,7 @@ accións relacionadas coa horta.
 ✅ Meteoroloxía contextualizada mediante as coordenadas persistidas da
 horta.
 
-⬜ Deseño visual da horta pendente.
+✅ Acceso ao deseño visual da horta mediante `LayoutDesignerScreen`.
 
 `GardenDetailsScreen` carga as plantas da horta para mostrar o seu
 número e utiliza `WeatherViewModel` para consultar as condicións
@@ -1079,27 +1079,185 @@ compartido.
 
 **---**
 
-## LayoutDesignerScreen\*\*
+## LayoutDesignerScreen
 
-**\### Propósito**
+### Propósito
 
-Representación visual da horta.
+Permitir representar visualmente as plantas dunha horta e gardar a súa
+disposición.
 
-**\### Seccións**
+### Entrada
 
-\- Header - Barra de ferramentas - Área de deseño - Lista de plantas
+Recibe:
 
-**\### Widgets utilizados**
+``` dart
+String gardenId
+```
 
-\- ToolButton - LayoutCanvas - PlantLayoutItem
+A pantalla utiliza este identificador para cargar tanto as plantas da horta
+como os elementos xa gardados no deseño.
 
-**\### Estado**
+### Carga inicial
 
-⬜ Pendente
+En `initState()` solicítase:
 
-**\*\*---\*\***
+``` text
+GardenLayoutViewModel.loadItems(gardenId)
+PlantsViewModel.loadPlants(gardenId)
+```
 
-\*\*# Current UI Flow
+Deste modo o deseño queda contextualizado pola horta seleccionada.
+
+### Seccións actuais
+
+-   AppBar.
+-   Selector de plantas dispoñibles.
+-   Botón para engadir a planta seleccionada.
+-   Área de deseño.
+-   Elementos posicionables correspondentes ás plantas engadidas.
+
+### Selector de plantas
+
+O `DropdownButton<GardenPlant>` mostra unicamente as plantas da horta que
+aínda non forman parte do deseño.
+
+Conceptualmente:
+
+``` text
+plantas da horta
+        -
+plantas xa colocadas
+        =
+plantas dispoñibles
+```
+
+Unha planta xa engadida deixa de aparecer no selector.
+
+### Área de deseño
+
+A área dispoñible constrúese mediante:
+
+``` text
+LayoutBuilder
+    ↓
+Container
+    ↓
+Stack
+    ↓
+Positioned
+    ↓
+GestureDetector
+```
+
+`LayoutBuilder` proporciona as dimensións reais do taboleiro.
+
+Cada planta represéntase actualmente mediante unha caixa cadrada que contén:
+
+-   icona `Icons.eco`;
+-   nome personalizado da planta.
+
+### Posicionamento
+
+As posicións persístense como coordenadas normalizadas:
+
+``` text
+xPosition
+yPosition
+```
+
+A interface convérteas ás dimensións reais do taboleiro.
+
+Isto permite que a disposición non dependa directamente do tamaño concreto
+da pantalla.
+
+### Arrastre
+
+Cada elemento pode moverse individualmente mediante `GestureDetector`.
+
+Durante:
+
+``` text
+onPanUpdate
+```
+
+actualízase a posición observable en memoria.
+
+Ao finalizar:
+
+``` text
+onPanEnd
+```
+
+persístese a posición final mediante `GardenLayoutViewModel`.
+
+### Límites
+
+O movemento está limitado para manter toda a caixa da planta dentro da área
+de deseño.
+
+Os límites teñen en conta a metade do tamaño do elemento e aplícanse mediante
+`clamp()`.
+
+### Prevención de solapamento
+
+Antes de aceptar unha nova posición compróbase se a planta se superpoñería
+con outro elemento.
+
+Se existe solapamento, a nova posición non se aplica.
+
+Deste modo cada zona ocupada queda reservada para unha única planta.
+
+### Retirada do deseño
+
+Unha planta pode retirarse do Layout Designer eliminando o seu
+`GardenLayoutItem`.
+
+Esta acción non elimina a `GardenPlant` da horta.
+
+### Persistencia
+
+O fluxo é:
+
+``` text
+LayoutDesignerScreen
+        ↓
+GardenLayoutViewModel
+        ↓
+GardenLayoutRepository
+        ↓
+SqliteGardenLayoutRepository
+        ↓
+SQLite
+```
+
+As posicións gardadas recupéranse ao volver entrar na pantalla e tamén
+despois de reiniciar a aplicación.
+
+### Estado
+
+✅ Primeira versión funcional implementada.
+
+✅ Integrada con Provider.
+
+✅ Persistencia mediante SQLite.
+
+✅ Movemento individual mediante arrastre.
+
+✅ Límites do taboleiro implementados.
+
+✅ Prevención de solapamento implementada.
+
+### Melloras opcionais
+
+-   Grid ou snapping.
+-   Maior fluidez durante o arrastre.
+-   Tamaños variables.
+-   Representación visual específica segundo a especie.
+-   Refinamento responsive do taboleiro.
+
+**---**
+
+# Current UI Flow
 
 O fluxo funcional principal actualmente implementado é:
 
@@ -1116,6 +1274,7 @@ DashboardScreen
     │       ├── WeatherCard
     │       ├── EditGardenScreen
     │       ├── Eliminar horta
+    │       ├── LayoutDesignerScreen
     │       └── PlantListScreen
     │               ├── AddPlantScreen
     │               └── PlantDetailsScreen
@@ -1155,7 +1314,7 @@ os ViewModels correspondentes.
 
 # Current UI State Management
 
-A interface utiliza actualmente seis ViewModels compartidos:
+A interface utiliza actualmente sete ViewModels compartidos:
 
 ``` text
 GardensViewModel
@@ -1164,6 +1323,7 @@ PlantsViewModel
 PlantEvolutionViewModel
 WeatherViewModel
 GeocodingViewModel
+GardenLayoutViewModel
 ```
 
 Distribuídos mediante:
@@ -1233,6 +1393,16 @@ _currentGardenId
 _currentPlantId
 ```
 
+`GardenLayoutViewModel` mantén os elementos do deseño correspondentes á
+horta cargada mediante:
+
+``` text
+loadItems(gardenId)
+```
+
+e actualiza as posicións observables durante o arrastre antes de persistir a
+posición final.
+
 Isto evita mesturar coleccións pertencentes a diferentes entidades pai.
 
 `WeatherViewModel` non mantén actualmente un contexto persistente por
@@ -1285,7 +1455,7 @@ A persistencia local está integrada mediante SQLite.
 Versión actual:
 
 ``` text
-version: 4
+version: 5
 ```
 
 Táboas relacionadas coa interface actual:
@@ -1295,6 +1465,7 @@ gardens
 plant_species
 garden_plants
 plant_evolution_records
+garden_layout_items
 ```
 
 A táboa `gardens` inclúe agora `latitude` e `longitude` opcionais. Estes
@@ -1306,6 +1477,7 @@ Os CRUD de:
 -   hortas;
 -   plantas;
 -   rexistros de evolución;
+-   disposición visual das plantas;
 
 funcionan desde a interface ata SQLite.
 
@@ -1330,6 +1502,9 @@ UI
 
 A versión 4 incorpora a migración v3 → v4 para engadir as coordenadas ás
 hortas conservando os datos existentes.
+
+A versión 5 incorpora a migración v4 → v5 e crea `garden_layout_items` para
+persistir a disposición visual das plantas.
 
 `WeatherData` continúa sen persistirse; o histórico meteorolóxico queda
 pendente.
@@ -1485,8 +1660,101 @@ horta: mostra información básica, número de plantas, meteoroloxía actual
 e acceso ao módulo de plantas, ademais das accións de edición e
 eliminación.
 
-O deseño visual da horta (`LayoutDesignerScreen`) continúa pendente e é
-o seguinte gran bloque funcional previsto.
+Ao finalizar esta sesión, o deseño visual da horta
+(`LayoutDesignerScreen`) quedaba como seguinte gran bloque funcional
+previsto.
+
+------------------------------------------------------------------------
+
+# Session 19 - UI Layout Designer
+
+## Estado
+
+✅ Primeira versión funcional completada.
+
+## Cambios visibles
+
+-   `GardenDetailsScreen` incorpora acceso ao deseño visual da horta.
+-   Créase `LayoutDesignerScreen`.
+-   O usuario pode seleccionar unha planta aínda non colocada.
+-   As plantas engadidas aparecen dentro dunha área visual propia.
+-   Cada planta pode arrastrarse individualmente.
+-   Os elementos permanecen completamente dentro do taboleiro.
+-   Dúas plantas non poden ocupar o mesmo espazo.
+-   As posicións gardadas recupéranse ao volver entrar na pantalla.
+-   A disposición persiste tamén entre reinicios da aplicación.
+-   Retirar unha planta do deseño non elimina a planta da horta.
+
+## Fluxo de acceso
+
+``` text
+GardenDetailsScreen
+        ↓
+LayoutDesignerScreen(gardenId)
+        ↓
+PlantsViewModel + GardenLayoutViewModel
+```
+
+## Fluxo visual
+
+``` text
+LayoutBuilder
+    ↓
+Container
+    ↓
+Stack
+    ↓
+Positioned
+    ↓
+GestureDetector
+```
+
+## Fluxo durante o arrastre
+
+``` text
+onPanUpdate
+    ↓
+nova posición normalizada
+    ↓
+límites
+    ↓
+comprobación de solapamento
+    ↓
+GardenLayoutViewModel.updateItemPositionLocally()
+    ↓
+rebuild
+```
+
+Ao finalizar:
+
+``` text
+onPanEnd
+    ↓
+GardenLayoutViewModel.updateItem()
+    ↓
+GardenLayoutRepository
+    ↓
+SQLite
+```
+
+## Decisión de UI
+
+A posición das plantas non se define en píxeles absolutos.
+
+Utilízanse coordenadas normalizadas para que a disposición almacenada sexa
+independente das dimensións concretas da pantalla ou do taboleiro.
+
+A interface é responsable de converter esas coordenadas ás dimensións reais
+dispoñibles.
+
+## Estado tras a sesión
+
+O Layout Designer deixa de ser unha pantalla prevista e pasa a formar parte
+do fluxo funcional real da aplicación.
+
+A primeira versión prioriza funcionalidade e simplicidade. O refinamento
+responsive, a posible incorporación de grid/snapping, a representación por
+especie e as melloras de fluidez quedan como iteracións posteriores.
 
 ------------------------------------------------------------------------
 
@@ -1526,11 +1794,11 @@ StatisticsScreen
 A implementación actual continúa priorizando funcionalidade fronte a
 deseño visual.
 
-Os módulos de hortas, plantas e evolución dispoñen xa dunha primeira
-interface funcional con persistencia real. O módulo meteorolóxico está
-integrado mediante datos remotos reais e xa pode contextualizarse por
-horta usando as coordenadas persistidas. `WeatherData` continúa sen
-persistirse.
+Os módulos de hortas, plantas, evolución e deseño visual dispoñen xa
+dunha primeira interface funcional con persistencia real. O módulo
+meteorolóxico está integrado mediante datos remotos reais e pode
+contextualizarse por horta usando as coordenadas persistidas.
+`WeatherData` continúa sen persistirse.
 
 Os refinamentos visuais poderán realizarse posteriormente sen alterar o
 fluxo básico de navegación.

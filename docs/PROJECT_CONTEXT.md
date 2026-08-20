@@ -184,7 +184,7 @@ Arquitectura MVVM simplificada orientada a:
 
 ## Current Implementation State
 
-A arquitectura está aplicada actualmente aos módulos de hortas, plantas, especies, evolución das plantas, xeocodificación e meteoroloxía.
+A arquitectura está aplicada actualmente aos módulos de hortas, plantas, especies, evolución das plantas, xeocodificación, meteoroloxía e deseño visual da distribución da horta.
 
 A composición principal realízase en `main.dart`, onde se crean e inxectan as implementacións concretas dos Repositories, Services e ViewModels mediante `MultiProvider`.
 
@@ -256,6 +256,7 @@ Os ViewModels implementados son:
 - `PlantEvolutionViewModel`
 - `WeatherViewModel`
 - `GeocodingViewModel`
+- `GardenLayoutViewModel`
 
 As Views acceden ao estado mediante:
 
@@ -277,6 +278,7 @@ Contratos:
 - `PlantEvolutionRecordRepository`
 - `WeatherRepository`
 - `GeocodingRepository`
+- `GardenLayoutRepository`
 
 Implementacións:
 
@@ -286,6 +288,7 @@ Implementacións:
 - `SQLitePlantEvolutionRecordRepository`
 - `OpenWeatherRepository`
 - `OpenWeatherGeocodingRepository`
+- `SqliteGardenLayoutRepository`
 
 `MemoryGardenRepository` mantense como implementación alternativa útil para probas ou desenvolvemento.
 
@@ -298,7 +301,7 @@ Implementacións:
 ## Current SQLite Version
 
 ```text
-version: 4
+version: 5
 ```
 
 Migracións implementadas e comprobadas:
@@ -307,6 +310,7 @@ Migracións implementadas e comprobadas:
 v1 → v2
 v2 → v3
 v3 → v4
+v4 → v5
 ```
 
 As migracións son acumulativas e conservan os datos existentes.
@@ -318,6 +322,7 @@ gardens
 plant_species
 garden_plants
 plant_evolution_records
+garden_layout_items
 ```
 
 ## Main Entities
@@ -348,13 +353,26 @@ Campos actualmente implementados:
 
 `height` e `notes` son opcionais.
 
+### garden_layout_items
+
+Elementos que representan a posición dunha planta dentro do deseño visual dunha horta.
+
+Campos implementados:
+
+- `id`
+- `garden_id`
+- `garden_plant_id`
+- `x_position`
+- `y_position`
+
+As posicións almacénanse como valores normalizados independentes do tamaño real da pantalla. `garden_plant_id` é único, polo que unha planta só pode ocupar unha posición no deseño dunha horta.
+
 ### Future Entities
 
 Previstas no deseño global, pero aínda non implementadas fisicamente:
 
 - `users`
 - `weather_records`
-- `garden_layout_items`
 
 ## Current Relationships
 
@@ -362,6 +380,8 @@ Previstas no deseño global, pero aínda non implementadas fisicamente:
 gardens 1:N garden_plants
 plant_species 1:N garden_plants
 garden_plants 1:N plant_evolution_records
+gardens 1:N garden_layout_items
+garden_plants 1:0..1 garden_layout_items
 ```
 
 Integridade referencial:
@@ -369,6 +389,9 @@ Integridade referencial:
 - `garden_plants.garden_id → gardens.id` con `ON DELETE CASCADE`.
 - `garden_plants.species_id → plant_species.id` con `ON DELETE RESTRICT`.
 - `plant_evolution_records.plant_id → garden_plants.id` con `ON DELETE CASCADE`.
+- `garden_layout_items.garden_id → gardens.id` con `ON DELETE CASCADE`.
+- `garden_layout_items.garden_plant_id → garden_plants.id` con `ON DELETE CASCADE`.
+- `garden_layout_items.garden_plant_id` ten restrición `UNIQUE`.
 
 As claves foráneas actívanse mediante:
 
@@ -545,6 +568,58 @@ SQLite
 ```
 
 O CRUD foi comprobado tanto directamente contra o Repository/SQLite como desde a interface.
+
+
+## Garden Layout
+
+O módulo de deseño visual da horta dispón xa dun primeiro MVP funcional.
+
+Modelo:
+
+- `GardenLayoutItem`
+
+Infraestrutura:
+
+- `GardenLayoutRepository`
+- `SqliteGardenLayoutRepository`
+- `GardenLayoutViewModel`
+- Táboa SQLite `garden_layout_items` incorporada na versión 5.
+
+Funcionalidades implementadas:
+
+- Cargar os elementos do deseño dunha horta.
+- Engadir ao deseño plantas que pertencen á horta.
+- Evitar que unha mesma planta se engada dúas veces mediante `UNIQUE (garden_plant_id)`.
+- Representar cada planta nun `Stack` mediante `Positioned`.
+- Gardar `xPosition` e `yPosition` como coordenadas normalizadas.
+- Arrastrar individualmente os elementos.
+- Manter cada elemento completamente dentro dos límites do taboleiro.
+- Evitar solapamentos durante o arrastre.
+- Actualizar a posición en memoria durante `onPanUpdate` para non escribir continuamente en SQLite.
+- Persistir a posición final mediante `onPanEnd`.
+- Identificar visualmente os elementos mediante o nome personalizado da planta.
+- Retirar unha planta do deseño mediante pulsación longa e confirmación, sen eliminar a planta da horta.
+- Recuperar as posicións persistidas ao volver entrar na pantalla ou reiniciar a aplicación.
+
+A colocación inicial automática é provisional e distribúe os novos elementos en posicións predefinidas calculadas a partir do número de elementos existentes. A procura automática dun oco libre e a mellora da fluidez do arrastre quedan como refinamentos posteriores.
+
+Fluxo:
+
+```text
+LayoutDesignerScreen
+  ↓
+GardenLayoutViewModel
+  ↓
+GardenLayoutRepository
+  ↓
+SqliteGardenLayoutRepository
+  ↓
+DatabaseService
+  ↓
+SQLite
+```
+
+---
 
 ## Weather
 
@@ -771,6 +846,11 @@ Evolución
 
 Meteoroloxía
 └── Consultar condicións actuais
+
+Deseño da horta
+├── Engadir planta ao deseño
+├── Mover e persistir posición
+└── Retirar planta do deseño
 ```
 
 Funcionalidades futuras previstas no fluxo:
@@ -778,7 +858,6 @@ Funcionalidades futuras previstas no fluxo:
 - Selección de localización mediante mapa.
 - Predición meteorolóxica.
 - Histórico climático.
-- Deseño visual da horta.
 - Configuración.
 - Tarefas e alertas.
 
@@ -802,7 +881,7 @@ O deseño responsive será especialmente relevante para:
 
 - `GardenDetailsScreen`
 - Listas e detalles.
-- Futuro `LayoutDesignerScreen`
+- `LayoutDesignerScreen`
 
 ---
 
@@ -862,7 +941,7 @@ A prioridade actual continúa sendo completar e estabilizar a funcionalidade ant
 
 ## Current Phase
 
-A infraestrutura local principal do MVP está operativa mediante SQLite v4.
+A infraestrutura local principal do MVP está operativa mediante SQLite v5.
 
 Están implementados de extremo a extremo:
 
@@ -872,6 +951,7 @@ Están implementados de extremo a extremo:
 - CRUD de rexistros de evolución.
 - Xeocodificación de localidades mediante OpenWeather.
 - Consulta meteorolóxica actual específica por horta mediante OpenWeather.
+- Primeiro MVP funcional do deseño visual da distribución da horta.
 
 A persistencia foi comprobada entre reinicios e as relacións entre hortas, plantas, especies e evolución están implementadas mediante claves foráneas.
 
@@ -914,6 +994,7 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 - ✅ Repositories SQLite para hortas, especies, plantas e evolución
 - ✅ Repository para acceso á API meteorolóxica
 - ✅ Repository para xeocodificación directa
+- ✅ Repository para deseño visual da horta
 - ✅ Services dedicados á comunicación HTTP con OpenWeather
 
 ## Database
@@ -925,11 +1006,13 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 - ✅ Migración v1 → v2
 - ✅ Migración v2 → v3
 - ✅ Migración v3 → v4
+- ✅ Migración v4 → v5
 - ✅ Conservación dos datos existentes
 - ✅ `gardens`
 - ✅ `plant_species`
 - ✅ `garden_plants`
 - ✅ `plant_evolution_records`
+- ✅ `garden_layout_items`
 - ✅ Claves foráneas
 - ✅ `ON DELETE CASCADE`
 - ✅ `ON DELETE RESTRICT`
@@ -973,6 +1056,13 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 - ✅ Meteoroloxía real específica por horta en `GardenDetailsScreen`
 - ✅ `WeatherCard` reutilizable en `lib/widgets/`
 - ✅ Configuración da API key fóra do código fonte
+- ✅ Modelo `GardenLayoutItem`
+- ✅ `GardenLayoutRepository` / `SqliteGardenLayoutRepository` / `GardenLayoutViewModel`
+- ✅ `LayoutDesignerScreen`
+- ✅ Coordenadas normalizadas para o deseño responsive
+- ✅ Drag individual con límites e prevención de solapamentos
+- ✅ Persistencia da posición final ao rematar o arrastre
+- ✅ Engadir e retirar plantas do deseño
 
 ## Documentation
 
@@ -1004,9 +1094,9 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 - As migracións SQLite son acumulativas mediante comprobacións de `oldVersion`.
 - As claves foráneas actívanse explicitamente con `PRAGMA foreign_keys = ON`.
 - A eliminación dunha horta elimina as súas plantas mediante `ON DELETE CASCADE`.
-- A eliminación dunha planta elimina os seus rexistros de evolución mediante `ON DELETE CASCADE`.
+- A eliminación dunha planta elimina os seus rexistros de evolución e o seu elemento de layout mediante `ON DELETE CASCADE`.
 - Unha especie utilizada por unha planta está protexida mediante `ON DELETE RESTRICT`.
-- `PlantSpeciesRepository`, `GardenPlantRepository`, `PlantEvolutionRecordRepository`, `WeatherRepository` e `GeocodingRepository` mantéñense separados por responsabilidade.
+- `PlantSpeciesRepository`, `GardenPlantRepository`, `PlantEvolutionRecordRepository`, `GardenLayoutRepository`, `WeatherRepository` e `GeocodingRepository` mantéñense separados por responsabilidade.
 - `PlantsViewModel` conserva o contexto da horta activa mediante `_currentGardenId`.
 - `PlantEvolutionViewModel` conserva o contexto da planta activa mediante `_currentPlantId`.
 - Os formularios manteñen o estado temporal na propia View mediante `StatefulWidget` e `setState()`.
@@ -1037,6 +1127,9 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 - `secrets.example.json` documenta as variables necesarias sen conter credenciais.
 - `String.fromEnvironment()` permite recuperar os valores proporcionados durante a execución ou compilación.
 - As claves incorporadas nun cliente compilado non se consideran segredos completamente protexidos; un backend sería necesario para credenciais que deban permanecer realmente privadas.
+- As posicións do Layout Designer almacénanse normalizadas para manter a distribución independente das dimensións reais da pantalla.
+- Durante o drag do layout, a posición actualízase primeiro en memoria e persístese en SQLite ao finalizar o xesto.
+- Os elementos do layout non poden saír do taboleiro nin solaparse durante o arrastre.
 - Flutter e a funcionalidade teñen prioridade fronte ao refinamento visual nesta fase.
 - O deseño seguirá sendo responsive desde o inicio.
 - A documentación técnica mantense sincronizada co estado real do proxecto.
@@ -1047,7 +1140,7 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 
 ## Achieved
 
-A infraestrutura relacional principal do MVP está implementada ata SQLite v4.
+A infraestrutura relacional principal do MVP está implementada ata SQLite v5.
 
 Actualmente funciona:
 
@@ -1099,13 +1192,15 @@ OpenWeather Weather API
 
 A aplicación busca localidades reais, permite seleccionar unha coincidencia, persiste as coordenadas e utiliza esas coordenadas para obter as condicións meteorolóxicas da horta concreta.
 
+Na sesión 19 implementouse o primeiro MVP funcional do deseño visual da horta. Incorporouse SQLite v5 coa táboa `garden_layout_items`, o modelo `GardenLayoutItem`, o Repository correspondente, `GardenLayoutViewModel` e `LayoutDesignerScreen`. As plantas poden engadirse ao taboleiro, moverse individualmente mediante drag, manterse dentro dos límites, evitar solapamentos, persistir a súa posición normalizada e retirarse do deseño sen eliminarse da horta.
+
 Tamén quedaron implementados o tratamento básico de erros HTTP, conexión e timeout, así como a xestión local das credenciais mediante `dart-define`.
 
 ## Next Development Step
 
 O seguinte paso deberá decidirse segundo `ROADMAP.md`, mantendo o desenvolvemento incremental e evitando ampliar innecesariamente o alcance do MVP.
 
-Tras completar a xeocodificación e a meteoroloxía específica por horta, quedan pendentes dentro ou arredor deste bloque:
+Tras completar tamén o primeiro MVP do Layout Designer, o seguinte paso deberá priorizar a estabilización e continuar segundo `ROADMAP.md`. Dentro do bloque meteorolóxico seguen pendentes:
 
 - Incorporar selección de localización mediante mapa.
 - Decidir se o Dashboard debe recuperar no futuro algún resumo meteorolóxico cando existan varias hortas.
@@ -1116,7 +1211,9 @@ Tras completar a xeocodificación e a meteoroloxía específica por horta, queda
 
 Outros bloques principais aínda previstos:
 
-- Deseño visual da distribución da horta.
+- Revisión e refinamento do deseño visual da distribución da horta.
+- Mellorar a fluidez do arrastre e a colocación inicial en ocos libres.
+- Valorar grid/snapping como mellora posterior.
 - Revisión do responsive design.
 - Probas.
 - Refinamento da interface.

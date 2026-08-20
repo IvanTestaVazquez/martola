@@ -1,7 +1,7 @@
-import '../models/geocoding_results.dart';
-import '../services/geocoding_service.dart';
+import '../../models/geocoding_results.dart';
+import '../../services/geocoding_service.dart';
 
-import 'geocoding_repository.dart';
+import '../geocoding_repository.dart';
 
 class OpenWeatherGeocodingRepository implements GeocodingRepository{
   final GeocodingService geocodingService;

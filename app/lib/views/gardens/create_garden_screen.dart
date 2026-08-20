@@ -27,6 +27,19 @@ class _CreateGardenScreenState extends State<CreateGardenScreen> {
   GeocodingResult? _selectedGeocodingResult;
 
   @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      context
+          .read<GeocodingViewModel>()
+          .clearSearch();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final geocodingViewModel = context.watch<GeocodingViewModel>();
 

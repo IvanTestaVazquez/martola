@@ -1,8 +1,8 @@
-import '../services/weather_service.dart';
+import '../../services/weather_service.dart';
 
-import 'weather_repository.dart';
+import '../weather_repository.dart';
 
-import '../models/weather_data.dart';
+import '../../models/weather_data.dart';
 
 class OpenWeatherRepository implements WeatherRepository{
   final WeatherService weatherService;

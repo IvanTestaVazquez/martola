@@ -27,7 +27,7 @@ class DatabaseService {
     final database = await _databaseFactory.openDatabase(
       databasePath,
       options: OpenDatabaseOptions(
-        version: 4,
+        version: 5,
         onConfigure: (db) async{
           await db.execute('PRAGMA foreign_keys = ON');
         },
@@ -40,7 +40,7 @@ class DatabaseService {
               location TEXT NOT NULL,
               area REAL NOT NULL,
               latitude REAL,
-              longirude REAL
+              longitude REAL
             )
             '''
           );
@@ -71,19 +71,42 @@ class DatabaseService {
                 ON DELETE RESTRICT
             )
             ''',
-          );          
-            await db.execute(
-              '''
-              CREATE TABLE plant_evolution_records (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                plant_id INTEGER NOT NULL,
-                date TEXT NOT NULL,
-                height REAL,
-                notes TEXT,
+          );
 
-                FOREIGN KEY (plant_id)
+          await db.execute(
+            '''
+            CREATE TABLE plant_evolution_records (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              plant_id INTEGER NOT NULL,
+              date TEXT NOT NULL,
+              height REAL,
+              notes TEXT,
+
+              FOREIGN KEY (plant_id)
+                REFERENCES garden_plants(id)
+                ON DELETE CASCADE
+            )
+            ''',
+          );
+
+           await db.execute(
+              '''
+              CREATE TABLE garden_layout_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                garden_id INTEGER NOT NULL,
+                garden_plant_id INTEGER NOT NULL,
+                x_position REAL NOT NULL,
+                y_position REAL NOT NULL,
+
+                FOREIGN KEY (garden_id)
+                  REFERENCES gardens(id)
+                  ON DELETE CASCADE,
+
+                FOREIGN KEY (garden_plant_id)
                   REFERENCES garden_plants(id)
-                  ON DELETE CASCADE
+                  ON DELETE CASCADE,
+
+                UNIQUE (garden_plant_id)
               )
               ''',
             );
@@ -146,6 +169,30 @@ class DatabaseService {
 
             await db.execute(
               'ALTER TABLE gardens ADD COLUMN longitude REAL',
+            );
+          }
+
+          if (oldVersion < 5){
+            await db.execute(
+              '''
+              CREATE TABLE garden_layout_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                garden_id INTEGER NOT NULL,
+                garden_plant_id INTEGER NOT NULL,
+                x_position REAL NOT NULL,
+                y_position REAL NOT NULL,
+
+                FOREIGN KEY (garden_id)
+                  REFERENCES gardens(id)
+                  ON DELETE CASCADE,
+
+                FOREIGN KEY (garden_plant_id)
+                  REFERENCES garden_plants(id)
+                  ON DELETE CASCADE,
+
+                UNIQUE (garden_plant_id)
+              )
+              ''',
             );
           }
 

@@ -1,5 +1,5 @@
-import 'garden_repository.dart';
-import '../models/garden.dart';
+import '../garden_repository.dart';
+import '../../models/garden.dart';
 
 class MemoryGardenRepository implements GardenRepository {
 

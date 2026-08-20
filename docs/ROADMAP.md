@@ -117,6 +117,30 @@ O seu obxectivo é:
     interface.
 -   Resolución do nome da especie no detalle dunha planta.
 -   CRUD completo do módulo de plantas integrado con SQLite.
+-   Módulo de evolución de plantas completo con CRUD e SQLite.
+-   Evolución do esquema SQLite á versión 3.
+-   Xeocodificación de localidades mediante OpenWeather.
+-   Coordenadas opcionais (`latitude` e `longitude`) asociadas ás hortas.
+-   Evolución do esquema SQLite á versión 4.
+-   Migración v3 → v4.
+-   Consulta meteorolóxica contextual por horta desde `GardenDetailsScreen`.
+-   Reutilización de `WeatherCard` fóra do Dashboard.
+-   Corrección dos fluxos de creación e edición para manter coherentes
+    localidade e coordenadas.
+-   Creación do modelo `GardenLayoutItem`.
+-   Creación de `GardenLayoutRepository`.
+-   Creación de `SqliteGardenLayoutRepository`.
+-   Creación de `GardenLayoutViewModel`.
+-   Evolución do esquema SQLite á versión 5.
+-   Migración v4 → v5.
+-   Creación da táboa `garden_layout_items`.
+-   Creación de `LayoutDesignerScreen`.
+-   Engadido e retirada de plantas do deseño.
+-   Posicionamento libre mediante arrastre.
+-   Coordenadas normalizadas independentes do tamaño do taboleiro.
+-   Limitación do movemento ao interior do taboleiro.
+-   Prevención de solapamento entre plantas.
+-   Persistencia da disposición en SQLite.
 
 ## In Progress
 
@@ -127,10 +151,14 @@ O seu obxectivo é:
 
 ## Pending
 
--   Completar as ampliacións do módulo meteorolóxico: localización por
-    horta e histórico.
--   Valorar a integración de MeteoSIX como segundo provedor.
--   Layout Designer.
+-   Adaptación responsive para tablet e escritorio.
+-   Refinamento da interface e consolidación do Design System.
+-   Testing, revisión e optimización.
+-   Documentación final e preparación da defensa.
+-   Ampliacións meteorolóxicas opcionais: histórico persistente, predición
+    e posible integración de MeteoSIX.
+-   Melloras opcionais do Layout Designer: grid/snapping, maior fluidez,
+    tamaños variables ou representación específica por especie.
 
 **---**
 
@@ -176,7 +204,7 @@ Construír a navegación principal e as pantallas base da aplicación.
 -   [x] CreateTaskScreen inicial.
 -   [x] PlantListScreen.
 -   [x] PlantDetailsScreen.
--   [ ] LayoutDesignerScreen.
+-   [x] LayoutDesignerScreen.
 -   [ ] SettingsScreen.
 -   [ ] Completar os fluxos de navegación pendentes.
 
@@ -218,6 +246,11 @@ pantallas.
 -   [x] Manter no `PlantsViewModel` as plantas da horta actualmente
     cargada.
 -   [x] Sincronizar as Views de plantas mediante `notifyListeners()`.
+-   [x] Crear `GardenLayoutViewModel`.
+-   [x] Integrar `GardenLayoutViewModel` mediante `MultiProvider`.
+-   [x] Manter o estado contextual do deseño por `gardenId`.
+-   [x] Actualizar localmente a posición durante o arrastre mediante
+    `notifyListeners()`.
 
 ## Deliverable
 
@@ -329,6 +362,14 @@ Integrar SQLite e establecer a capa básica de persistencia.
 -   [x] Consultar plantas mediante `gardenId`.
 -   [x] Engadir un catálogo inicial local de especies cando a táboa está
     baleira.
+-   [x] Evolucionar o esquema á versión 3 para os rexistros de evolución.
+-   [x] Implementar a migración v2 → v3.
+-   [x] Evolucionar o esquema á versión 4 para as coordenadas das hortas.
+-   [x] Implementar a migración v3 → v4.
+-   [x] Evolucionar o esquema á versión 5 para o Layout Designer.
+-   [x] Crear a táboa `garden_layout_items`.
+-   [x] Implementar a migración v4 → v5.
+-   [x] Verificar a persistencia das posicións do Layout Designer.
 
 ## Deliverable
 
@@ -337,38 +378,39 @@ persistencia organizada.
 
 ## Current Progress
 
-A infraestrutura SQLite está operativa e o esquema evolucionou á versión
-2.
+A infraestrutura SQLite está operativa e o esquema evolucionou á versión 5.
 
-O fluxo de persistencia do módulo de hortas continúa sendo:
+O esquema actual inclúe:
 
-    GardensViewModel           ↓     GardenRepository           ↑    
-SQLiteGardenRepository           ↓     DatabaseService           ↓    
-SQLite           ↓     martola.db
+``` text
+gardens
+plant_species
+garden_plants
+plant_evolution_records
+garden_layout_items
+```
 
-A versión 2 do esquema inclúe actualmente:
+As migracións acumulativas implementadas son:
 
-    gardens     plant_species     garden_plants
+``` text
+v1 → v2
+v2 → v3
+v3 → v4
+v4 → v5
+```
 
-A migración:
+As relacións entre táboas utilizan claves foráneas e a integridade
+referencial está activada mediante:
 
-    v1 → v2
+``` text
+PRAGMA foreign_keys = ON
+```
 
-foi implementada mediante `onUpgrade` e comprobouse que conserva os
-datos existentes.
+O Layout Designer engade ademais `UNIQUE (garden_plant_id)` para impedir
+que unha mesma planta teña máis dunha posición simultánea no deseño.
 
-As relacións entre as novas táboas utilizan claves foráneas e a
-integridade referencial está activada mediante:
-
-    PRAGMA foreign_keys = ON
-
-Comprobouse o comportamento de:
-
-    ON DELETE CASCADE     ON DELETE RESTRICT
-
-mediante probas transaccionais.
-
-A infraestrutura queda preparada para futuras migracións acumulativas.
+Comprobouse que as migracións conservan os datos existentes e que a
+persistencia continúa funcionando entre reinicios.
 
 **Estado:** completada.
 
@@ -475,36 +517,35 @@ Implementar a xestión de plantas e especies asociadas ás hortas.
 
 -   [x] Crear contrato `GardenPlantRepository`.
 -   [x] Crear contrato `PlantSpeciesRepository`.
--   [ ] Crear `SQLitePlantSpeciesRepository`.
--   [ ] Crear `SQLiteGardenPlantRepository`.
--   [ ] Implementar CRUD SQLite de especies.
--   [ ] Implementar CRUD SQLite de plantas.
+-   [x] Crear `SQLitePlantSpeciesRepository`.
+-   [x] Crear `SQLiteGardenPlantRepository`.
+-   [x] Implementar CRUD SQLite de especies.
+-   [x] Implementar CRUD SQLite de plantas.
 
 ### State Management
 
--   [ ] Crear ViewModel para plantas.
--   [ ] Cargar as plantas dunha horta.
--   [ ] Integrar o ViewModel con Provider.
--   [ ] Sincronizar as Views co estado das plantas.
+-   [x] Crear ViewModel para plantas.
+-   [x] Cargar as plantas dunha horta.
+-   [x] Integrar o ViewModel con Provider.
+-   [x] Sincronizar as Views co estado das plantas.
 
 ### Interface
 
--   [ ] Crear `PlantListScreen`.
--   [ ] Crear `PlantDetailsScreen`.
--   [ ] Crear formulario de nova planta.
--   [ ] Crear fluxo de edición.
--   [ ] Crear fluxo de eliminación.
--   [ ] Permitir seleccionar unha especie.
--   [ ] Mostrar as plantas asociadas a unha horta.
+-   [x] Crear `PlantListScreen`.
+-   [x] Crear `PlantDetailsScreen`.
+-   [x] Crear formulario de nova planta.
+-   [x] Crear fluxo de edición.
+-   [x] Crear fluxo de eliminación.
+-   [x] Permitir seleccionar unha especie.
+-   [x] Mostrar as plantas asociadas a unha horta.
 
 ## Deliverable
 
 Módulo de plantas funcional, persistido mediante SQLite e integrado co
 módulo de hortas.
 
-**Estado:** en progreso. Modelo de dominio, esquema SQLite e contratos
-Repository preparados. Pendentes as implementacións SQLite, o ViewModel
-e a interface.
+**Estado:** completada a primeira versión funcional. CRUD, persistencia,
+ViewModel e interface están integrados.
 
 **---**
 
@@ -576,11 +617,24 @@ Integrar información meteorolóxica.
 -   [x] Utilizar `--dart-define-from-file` durante o desenvolvemento.
 -   [x] Excluír a clave real do repositorio.
 
+### Garden Location Integration
+
+-   [x] Engadir `latitude` e `longitude` opcionais ao modelo `Garden`.
+-   [x] Evolucionar SQLite á versión 4.
+-   [x] Implementar a migración v3 → v4.
+-   [x] Crear o módulo de xeocodificación.
+-   [x] Buscar localidades mediante OpenWeather Geocoding API.
+-   [x] Permitir seleccionar unha localidade válida nos formularios.
+-   [x] Gardar as coordenadas seleccionadas coa horta.
+-   [x] Consultar a meteoroloxía dunha horta mediante as súas coordenadas.
+-   [x] Mostrar a información meteorolóxica en `GardenDetailsScreen`.
+-   [x] Reutilizar `WeatherCard` como widget compartido.
+-   [x] Invalidar coordenadas cando o nome gardado xa non corresponde coa
+    localización seleccionada.
+-   [x] Limpar os resultados de xeocodificación entre formularios.
+
 ### Pending Weather Extensions
 
--   [ ] Obter a localización meteorolóxica a partir dunha horta.
--   [ ] Permitir seleccionar a localización mediante localidade e/ou
-    mapa.
 -   [ ] Valorar MeteoSIX como segundo provedor meteorolóxico.
 -   [ ] Gardar históricos meteorolóxicos.
 -   [ ] Consultar rexistros meteorolóxicos persistidos.
@@ -588,12 +642,13 @@ Integrar información meteorolóxica.
 
 ## Deliverable
 
-Primeira integración meteorolóxica real funcional, coa arquitectura
-preparada para ampliar o provedor e asociar posteriormente a
-meteoroloxía ás hortas.
+Integración meteorolóxica real asociada ás hortas mediante coordenadas,
+con xeocodificación de localidades e arquitectura preparada para futuras
+ampliacións.
 
-**Estado:** integración meteorolóxica básica completada. Pendentes a
-asociación dinámica coa horta, históricos e posibles ampliacións.
+**Estado:** integración meteorolóxica contextual por horta completada.
+Históricos, predición e posibles provedores adicionais quedan como
+ampliacións.
 
 ------------------------------------------------------------------------
 
@@ -601,19 +656,50 @@ asociación dinámica coa horta, históricos e posibles ampliacións.
 
 ## Objective
 
-Implementar a representación visual da horta.
+Implementar a representación visual e persistente da horta.
 
 ## Tasks
 
--   [ ] Crear área de deseño.
--   [ ] Mostrar plantas.
--   [ ] Posicionar elementos.
--   [ ] Gardar disposición.
--   [ ] Recuperar unha disposición gardada.
+### Domain and Persistence
+
+-   [x] Crear `GardenLayoutItem`.
+-   [x] Crear a táboa `garden_layout_items`.
+-   [x] Evolucionar SQLite á versión 5.
+-   [x] Implementar a migración v4 → v5.
+-   [x] Crear `GardenLayoutRepository`.
+-   [x] Crear `SqliteGardenLayoutRepository`.
+-   [x] Crear `GardenLayoutViewModel`.
+-   [x] Integrar o ViewModel mediante Provider.
+
+### Interface and Interaction
+
+-   [x] Crear `LayoutDesignerScreen`.
+-   [x] Crear a área de deseño mediante `LayoutBuilder` e `Stack`.
+-   [x] Mostrar as plantas colocadas no deseño.
+-   [x] Mostrar no selector só as plantas aínda dispoñibles.
+-   [x] Engadir plantas ao deseño.
+-   [x] Retirar plantas do deseño sen eliminar a `GardenPlant`.
+-   [x] Posicionar elementos mediante coordenadas normalizadas.
+-   [x] Permitir movemento individual mediante arrastre.
+-   [x] Manter os elementos dentro dos límites do taboleiro.
+-   [x] Evitar o solapamento entre plantas.
+-   [x] Actualizar a posición localmente durante o arrastre.
+-   [x] Persistir a posición ao finalizar o arrastre.
+-   [x] Recuperar a disposición gardada.
+-   [x] Verificar a persistencia entre navegacións e reinicios.
+
+### Optional Improvements
+
+-   [ ] Valorar grid ou snapping.
+-   [ ] Mellorar a fluidez do arrastre se resulta necesario.
+-   [ ] Valorar tamaños variables.
+-   [ ] Valorar representación visual específica por especie.
 
 ## Deliverable
 
-Primeira versión funcional do deseñador visual.
+Primeira versión funcional e persistente do deseñador visual.
+
+**Estado:** completada para o MVP.
 
 **---**
 
@@ -686,68 +772,57 @@ Documentación final do TFC.
 
 # Current Development Milestone
 
-## Session 17 - Basic Weather Integration
+## Session 19 - Layout Designer persistente
 
 **Estado:** completada.
 
-Completado:
+### Session 18 - Localización meteorolóxica por horta
 
--   Instalación e integración do paquete `http`.
--   Primeira petición HTTP GET de proba.
--   Comprensión práctica da resposta JSON e de `Map<String, dynamic>`.
--   Conexión coa API de OpenWeather.
--   Verificación dunha resposta meteorolóxica real.
--   Creación de `WeatherData`.
--   Conversión JSON → `WeatherData`.
--   Creación de `WeatherService`.
--   Tratamento básico dos códigos HTTP.
--   Creación de `WeatherException`.
--   Creación de `WeatherRepository`.
--   Creación de `OpenWeatherRepository`.
--   Creación de `WeatherViewModel`.
--   Integración do módulo mediante Provider.
--   Substitución dos datos ficticios de `WeatherCard` por datos reais.
--   Representación dos estados de carga, erro, datos e ausencia de
-    datos.
--   Resolución do erro provocado por `notifyListeners()` durante o
-    primeiro `build()`.
--   Uso de `WidgetsBinding.instance.addPostFrameCallback()`.
--   Configuración da API key mediante `String.fromEnvironment`.
--   Uso de `--dart-define-from-file`.
--   Creación dunha configuración local excluída de Git.
--   Preparación do contrato para permitir no futuro outro provedor como
-    MeteoSIX.
+Na sesión anterior completouse a asociación entre as hortas e a súa
+localización meteorolóxica real:
 
-O fluxo meteorolóxico actual é:
+-   Incorporación de `latitude` e `longitude` opcionais a `Garden`.
+-   Evolución de SQLite á versión 4.
+-   Migración v3 → v4.
+-   Integración da xeocodificación de OpenWeather.
+-   Busca e selección de localidades nos formularios.
+-   Persistencia das coordenadas coa horta.
+-   Consulta meteorolóxica contextual desde `GardenDetailsScreen`.
+-   Reutilización de `WeatherCard`.
+-   Corrección do estado residual das buscas de localidades.
+-   Invalidación das coordenadas cando a localización escrita deixa de
+    corresponder coa selección válida.
 
-``` text
-DashboardScreen
-      ↓
-WeatherViewModel
-      ↓
-WeatherRepository
-      ↑
-OpenWeatherRepository
-      ↓
-WeatherService
-      ↓
-OpenWeather API
-```
+### Session 19 - Layout Designer
 
-A localización utilizada actualmente para validar o módulo baséase en
-coordenadas coñecidas.
+Nesta sesión completouse a primeira versión funcional do deseñador visual:
 
-A asociación dinámica da meteoroloxía coa localización dunha horta queda
-como ampliación posterior, xunto coa posible selección mediante
-localidade ou mapa.
+-   Creación de `GardenLayoutItem`.
+-   Creación de `GardenLayoutRepository`.
+-   Implementación de `SqliteGardenLayoutRepository`.
+-   Creación de `GardenLayoutViewModel`.
+-   Integración mediante Provider.
+-   Evolución de SQLite á versión 5.
+-   Migración v4 → v5.
+-   Creación de `garden_layout_items`.
+-   Restrición `UNIQUE (garden_plant_id)`.
+-   Creación de `LayoutDesignerScreen`.
+-   Uso de coordenadas normalizadas.
+-   Posicionamento mediante `LayoutBuilder`, `Stack` e `Positioned`.
+-   Arrastre mediante `GestureDetector`.
+-   Actualización visual local durante `onPanUpdate`.
+-   Persistencia en `onPanEnd`.
+-   Límites para manter os elementos dentro do taboleiro.
+-   Prevención de solapamento.
+-   Engadido e retirada de plantas do deseño.
+-   Persistencia verificada entre navegacións e reinicios.
 
-Os datos meteorolóxicos actuais non se persisten en SQLite. A base de
-datos continúa na versión 3.
+O Layout Designer deixa de ser un bloque pendente do MVP. As posibles
+melloras de interacción e representación visual quedan como refinamentos
+posteriores.
 
-O seguinte bloque funcional debe seleccionarse segundo a prioridade do
-MVP e o tempo dispoñible. O principal bloque novo aínda sen implementar
-é o Layout Designer; as melloras meteorolóxicas poden desenvolverse
-incrementalmente sen bloquear o resto do proxecto.
+O seguinte bloque principal do proxecto pasa a ser a adaptación responsive,
+seguida de testing, revisión, optimización e documentación final.
 
 ------------------------------------------------------------------------
 
@@ -760,7 +835,9 @@ A primeira versión mínima viable de MARTOLA debe incluír:
 -   [x] SQLite.
 -   [x] Xestión de hortas persistente.
 -   [x] Xestión de plantas.
--   [ ] Rexistros de evolución.
+-   [x] Rexistros de evolución.
+-   [x] Meteoroloxía actual asociada á localización dunha horta.
+-   [x] Layout Designer persistente.
 
 O resto considerarase ampliación ou funcionalidade adicional segundo o
 tempo dispoñible.

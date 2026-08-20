@@ -1,6 +1,6 @@
-import '../models/plant_species.dart';
-import '../services/database_service.dart';
-import 'plant_species_repository.dart';
+import '../../models/plant_species.dart';
+import '../../services/database_service.dart';
+import '../plant_species_repository.dart';
 
 class SQLitePlantSpeciesRepository implements PlantSpeciesRepository {
   final DatabaseService databaseService;

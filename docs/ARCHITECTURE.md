@@ -43,7 +43,7 @@ A arquitectura segue un enfoque Local First.
 # Current Implementation State
 
 A arquitectura está actualmente aplicada aos módulos de hortas,
-especies, plantas, evolución das plantas, meteoroloxía e xeocodificación.
+especies, plantas, evolución das plantas, meteoroloxía, xeocodificación e deseño visual da horta.
 
 A composición principal realízase en `main.dart`.
 
@@ -70,6 +70,7 @@ PlantsViewModel
 PlantEvolutionViewModel
 WeatherViewModel
 GeocodingViewModel
+GardenLayoutViewModel
 ```
 
 Todos eles estenden `ChangeNotifier`.
@@ -81,8 +82,10 @@ SQLiteGardenRepository
 SQLitePlantSpeciesRepository
 SQLiteGardenPlantRepository
 SQLitePlantEvolutionRecordRepository
+SqliteGardenLayoutRepository
 OpenWeatherRepository
 OpenWeatherGeocodingRepository
+GardenLayoutRepository
 ```
 
 Todos os Repositories SQLite comparten a mesma instancia de
@@ -91,7 +94,7 @@ Todos os Repositories SQLite comparten a mesma instancia de
 A base de datos utiliza actualmente:
 
 ``` text
-version: 4
+version: 5
 ```
 
 Táboas implementadas:
@@ -101,6 +104,7 @@ gardens
 plant_species
 garden_plants
 plant_evolution_records
+garden_layout_items
 ```
 
 Migracións comprobadas:
@@ -109,6 +113,7 @@ Migracións comprobadas:
 v1 → v2
 v2 → v3
 v3 → v4
+v4 → v5
 ```
 
 A arquitectura xa soporta o seguinte fluxo funcional:
@@ -153,12 +158,12 @@ Modelos actualmente implementados:
 -   `PlantEvolutionRecord`
 -   `WeatherData`
 -   `GeocodingResult`
+-   `GardenLayoutItem`
 
 Modelos previstos:
 
 -   `User`
 -   `WeatherRecord`
--   `GardenLayoutItem`
 
 Os modelos manteñen, na medida do posible, un carácter inmutable.
 
@@ -271,6 +276,10 @@ Pantallas actualmente implementadas:
 -   `AddPlantEvolutionRecordScreen`
 -   `PlantEvolutionDetailsScreen`
 -   `EditPlantEvolutionRecordScreen`
+
+## Garden Layout
+
+-   `LayoutDesignerScreen`
 
 ## Provisional
 
@@ -454,6 +463,34 @@ Isto segue o mesmo patrón usado previamente en `PlantsViewModel`.
 
 ------------------------------------------------------------------------
 
+## GardenLayoutViewModel
+
+Mantén os elementos de deseño da horta actual:
+
+``` dart
+final List<GardenLayoutItem> _items = [];
+```
+
+Operacións principais:
+
+``` text
+loadItems(gardenId)
+addItem()
+updateItem()
+removeItem()
+updateItemPositionLocally()
+```
+
+Depende de:
+
+``` text
+GardenLayoutRepository
+```
+
+O movemento durante `onPanUpdate` actualízase primeiro en memoria mediante `updateItemPositionLocally()`. A persistencia en SQLite realízase ao finalizar o arrastre con `updateItem()`, evitando escrituras continuas durante cada pequeno movemento do punteiro.
+
+------------------------------------------------------------------------
+
 ## WeatherViewModel
 
 Mantén:
@@ -553,6 +590,9 @@ PlantsViewModel
 
 PlantEvolutionViewModel
 → rexistros da planta actual
+
+GardenLayoutViewModel
+→ elementos do deseño da horta actual
 ```
 
 Compartido non implica necesariamente cargar todos os datos da
@@ -586,6 +626,7 @@ SQLiteGardenPlantRepository
 SQLitePlantEvolutionRecordRepository
 OpenWeatherRepository
 OpenWeatherGeocodingRepository
+SqliteGardenLayoutRepository
 ```
 
 Implementación alternativa:
@@ -655,6 +696,25 @@ A lectura principal está contextualizada por:
 ``` text
 plantId
 ```
+
+------------------------------------------------------------------------
+
+## GardenLayoutRepository
+
+``` text
+getItemsByGardenId()
+addItem()
+updateItem()
+removeItem()
+```
+
+A implementación actual é:
+
+``` text
+SqliteGardenLayoutRepository
+```
+
+A lectura está contextualizada por `gardenId`. A táboa garante ademais que unha mesma planta non poida aparecer máis dunha vez no deseño.
 
 ------------------------------------------------------------------------
 
@@ -826,7 +886,7 @@ martola.db
 ## Current Version
 
 ``` text
-version: 4
+version: 5
 ```
 
 ## Version 1
@@ -852,6 +912,20 @@ Engadiu:
 plant_evolution_records
 ```
 
+## Version 4
+
+Engadiu `latitude` e `longitude` opcionais a `gardens`.
+
+## Version 5
+
+Engadiu:
+
+``` text
+garden_layout_items
+```
+
+coas relacións a `gardens` e `garden_plants`, coordenadas normalizadas e `UNIQUE (garden_plant_id)`.
+
 ------------------------------------------------------------------------
 
 # Migration Strategy
@@ -859,13 +933,14 @@ plant_evolution_records
 `onCreate()` crea directamente o esquema correspondente á versión
 actual.
 
-Nunha instalación nova v4:
+Nunha instalación nova v5:
 
 ``` text
 gardens
 plant_species
 garden_plants
 plant_evolution_records
+garden_layout_items
 ```
 
 `onUpgrade()` utiliza migracións acumulativas:
@@ -882,6 +957,10 @@ if (oldVersion < 3) {
 if (oldVersion < 4) {
   // engade latitude e longitude a gardens
 }
+
+if (oldVersion < 5) {
+  // crea garden_layout_items
+}
 ```
 
 Isto permite actualizar desde versións antigas sen perder datos.
@@ -895,6 +974,8 @@ v2 → v3
 foi comprobada mantendo hortas e plantas xa existentes.
 
 A migración `v3 → v4` engade `latitude` e `longitude` opcionais á táboa `gardens`, conservando as hortas xa persistidas.
+
+A migración `v4 → v5` crea `garden_layout_items` para persistir o deseño visual das hortas.
 
 ------------------------------------------------------------------------
 
@@ -953,6 +1034,32 @@ Eliminar Garden
 ```
 
 A especie mantense protexida se está sendo utilizada.
+
+## Garden → GardenLayoutItem
+
+``` text
+garden_layout_items.garden_id
+        ↓
+gardens.id
+```
+
+``` text
+ON DELETE CASCADE
+```
+
+## GardenPlant → GardenLayoutItem
+
+``` text
+garden_layout_items.garden_plant_id
+        ↓
+garden_plants.id
+```
+
+``` text
+ON DELETE CASCADE
+```
+
+`UNIQUE (garden_plant_id)` garante que cada planta poida ter como máximo unha única posición no deseño.
 
 ------------------------------------------------------------------------
 
@@ -1017,7 +1124,8 @@ MultiProvider
 ├── PlantsViewModel
 ├── PlantEvolutionViewModel
 ├── WeatherViewModel
-└── GeocodingViewModel
+├── GeocodingViewModel
+└── GardenLayoutViewModel
     ↓
 MaterialApp
     ↓
@@ -1042,6 +1150,9 @@ PlantsViewModel
 
 PlantEvolutionViewModel
 → loadRecords(plantId)
+
+GardenLayoutViewModel
+→ loadItems(gardenId)
 ```
 
 Carga meteorolóxica:
@@ -1268,6 +1379,7 @@ Fluxos secundarios:
 ``` text
 GardenDetailsScreen
 ├── EditGardenScreen
+├── LayoutDesignerScreen
 └── eliminar horta
 
 PlantListScreen
@@ -1314,7 +1426,9 @@ models/
 ├── plant_species.dart
 ├── garden_plant.dart
 ├── plant_evolution_record.dart
-└── weather_data.dart
+├── garden_layout_item.dart
+├── weather_data.dart
+└── geocoding_result.dart
 ```
 
 ------------------------------------------------------------------------
@@ -1328,7 +1442,8 @@ viewmodels/
 ├── plants_viewmodel.dart
 ├── plant_evolution_viewmodel.dart
 ├── weather_viewmodel.dart
-└── geocoding_viewmodel.dart
+├── geocoding_viewmodel.dart
+└── garden_layout_viewmodel.dart
 ```
 
 ------------------------------------------------------------------------
@@ -1349,6 +1464,9 @@ repositories/
 ├── weather_repository.dart
 ├── open_weather_repository.dart
 ├── geocoding_repository.dart
+├── garden_layout_repository.dart
+├── sqlite/
+│   └── sqlite_garden_layout_repository.dart
 └── open_weather_geocoding_repository.dart
 ```
 
@@ -1527,6 +1645,14 @@ PlantEvolutionRecordRepository
 SQLitePlantEvolutionRecordRepository
 ```
 
+``` text
+GardenLayoutViewModel
+  ↓
+GardenLayoutRepository
+  ↑
+SqliteGardenLayoutRepository
+```
+
 Todos os Repositories SQLite converxen en:
 
 ``` text
@@ -1637,6 +1763,32 @@ As coordenadas persistidas son reutilizadas posteriormente por `GardenDetailsScr
 
 ---
 
+## Session 19 — Garden Layout Designer
+
+A sesión 19 incorporou un novo módulo persistente reutilizando a mesma arquitectura:
+
+``` text
+LayoutDesignerScreen
+  ↓
+GardenLayoutViewModel
+  ↓
+GardenLayoutRepository
+  ↓
+SqliteGardenLayoutRepository
+  ↓
+DatabaseService
+  ↓
+SQLite v5
+```
+
+`GardenLayoutItem` relaciona unha planta concreta coa súa horta e persiste a súa posición mediante coordenadas normalizadas `xPosition` e `yPosition`.
+
+A View utiliza `LayoutBuilder` para converter esas coordenadas ás dimensións reais do taboleiro. O movemento actualízase localmente durante `onPanUpdate` e só se persiste ao finalizar con `onPanEnd`.
+
+O deseñador limita os elementos ao interior do taboleiro, evita o solapamento entre plantas e permite retirar unha planta do deseño sen eliminala da horta. As posicións persisten entre navegacións e reinicios da aplicación.
+
+---
+
 # Future Architecture Evolution
 
 Posibles ampliacións:
@@ -1646,7 +1798,7 @@ Posibles ampliacións:
 -   Posible horta principal para o Dashboard.
 -   Predición meteorolóxica.
 -   Histórico climático.
--   Layout Designer.
+-   Melloras do Layout Designer: maior fluidez, grid/snapping, colocación inicial libre e representación visual por especie.
 -   Sincronización cloud.
 -   Firebase ou Supabase.
 -   Authentication.
@@ -1694,7 +1846,7 @@ funcional real.
 # Notes
 
 A arquitectura actual é suficiente para o MVP e xa soporta varios
-módulos persistentes e relacionados entre si, ademais dos fluxos meteorolóxico e de xeocodificación integrados con APIs externas.
+módulos persistentes e relacionados entre si, incluído o deseño visual das hortas, ademais dos fluxos meteorolóxico e de xeocodificación integrados con APIs externas.
 
 As futuras ampliacións deberán respectar a separación de
 responsabilidades definida neste documento.

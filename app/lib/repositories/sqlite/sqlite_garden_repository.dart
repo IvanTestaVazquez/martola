@@ -1,6 +1,6 @@
-import '../models/garden.dart';
-import '../services/database_service.dart';
-import 'garden_repository.dart';
+import '../../models/garden.dart';
+import '../../services/database_service.dart';
+import '../garden_repository.dart';
 
 class SQLiteGardenRepository implements GardenRepository {
   final DatabaseService databaseService;
@@ -24,7 +24,9 @@ class SQLiteGardenRepository implements GardenRepository {
       id: id.toString(),
       location: garden.location,
       name: garden.name,
-      area: garden.area
+      area: garden.area,
+      longitude: garden.longitude,
+      latitude: garden.latitude,
     );
   }
 
@@ -87,6 +89,8 @@ class SQLiteGardenRepository implements GardenRepository {
       name: updatedGarden.name,
       location: updatedGarden.location,
       area: updatedGarden.area,
+      longitude: updatedGarden.longitude,
+      latitude: updatedGarden.latitude,
     );
   }
 }

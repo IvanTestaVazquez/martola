@@ -1,6 +1,6 @@
-import '../models/plant_evolution_record.dart';
-import '../services/database_service.dart';
-import 'plant_evolution_record_repository.dart';
+import '../../models/plant_evolution_record.dart';
+import '../../services/database_service.dart';
+import '../plant_evolution_record_repository.dart';
 
 class SQLitePlantEvolutionRecordRepository
     implements PlantEvolutionRecordRepository {

@@ -1,6 +1,6 @@
-import '../services/database_service.dart';
-import '../models/garden_plant.dart';
-import 'garden_plant_repository.dart';
+import '../../services/database_service.dart';
+import '../../models/garden_plant.dart';
+import '../garden_plant_repository.dart';
 
 class SQLiteGardenPlantRepository implements GardenPlantRepository{
   final DatabaseService databaseService;

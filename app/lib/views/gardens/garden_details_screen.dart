@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../plants/plant_list_screen.dart';
+import '../layout/layout_designer_screen.dart';
 import 'edit_garden_screen.dart';
 
 import '../../widgets/weather_card.dart';
@@ -126,6 +127,22 @@ class _GardenDetailsScreenState  extends State<GardenDetailsScreen> {
                 );
               }, 
               child: const Text('Editar horta')
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        LayoutDesignerScreen(
+                      gardenId: widget.gardenId,
+                    ),
+                  ),
+                );
+              },
+              child: const Text(
+                'Deseñar horta',
+              ),
             ),
             const SizedBox(height: 16),
             FilledButton(

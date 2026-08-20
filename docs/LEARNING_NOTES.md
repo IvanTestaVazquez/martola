@@ -12802,3 +12802,638 @@ obtiveron.
 
 Esta separación mantén independentes a interface, a persistencia, a
 xeocodificación e o provedor meteorolóxico.
+
+------------------------------------------------------------------------
+
+# Sesión 19 - Layout Designer persistente
+
+## Obxectivo
+
+Construír a primeira versión funcional do deseñador visual dunha horta e
+aprender a relacionar interaccións gráficas continuas con estado,
+coordenadas e persistencia.
+
+Nesta sesión aplicáronse conceptos xa coñecidos de MVVM, Provider,
+Repository Pattern e SQLite a un problema diferente: posicionar libremente
+as plantas dunha horta dentro dun taboleiro.
+
+------------------------------------------------------------------------
+
+## GardenLayoutItem
+
+Creouse un modelo específico para representar a posición dunha planta no
+deseño:
+
+``` text
+GardenLayoutItem
+```
+
+Conceptualmente contén:
+
+``` text
+gardenId
+gardenPlantId
+xPosition
+yPosition
+```
+
+A planta continúa sendo unha `GardenPlant`.
+
+`GardenLayoutItem` non representa unha planta nova, senón a información
+necesaria para saber onde se mostra unha planta existente dentro do
+Layout Designer.
+
+### Regra
+
+Separar a entidade do dominio da información específica da súa
+representación permite evolucionar cada responsabilidade de forma
+independente.
+
+------------------------------------------------------------------------
+
+## Coordenadas normalizadas
+
+As posicións non se gardan directamente en píxeles.
+
+Utilízanse valores normalizados entre:
+
+``` text
+0.0 e 1.0
+```
+
+Por exemplo:
+
+``` text
+xPosition = 0.5
+yPosition = 0.5
+```
+
+representa unha posición proporcional dentro do taboleiro.
+
+Isto evita ligar os datos persistidos a unha resolución ou tamaño concreto.
+
+### Conversión conceptual
+
+De coordenada normalizada a píxeles:
+
+``` text
+xPixels = xPosition * boardWidth
+yPixels = yPosition * boardHeight
+```
+
+Durante o movemento, un desprazamento en píxeles pode converterse novamente
+a unha variación normalizada:
+
+``` text
+deltaXNormalizado = delta.dx / boardWidth
+deltaYNormalizado = delta.dy / boardHeight
+```
+
+### Regra
+
+Cando unha posición debe sobrevivir a cambios de tamaño da interface,
+é preferible almacenar unha representación relativa en lugar dunha
+coordenada absoluta dependente dos píxeles.
+
+------------------------------------------------------------------------
+
+## LayoutBuilder
+
+`LayoutBuilder` permite construír unha parte da interface coñecendo as
+restricións de tamaño que lle proporciona o widget pai.
+
+No Layout Designer utilízase para obter o ancho e o alto reais dispoñibles
+para o taboleiro.
+
+Conceptualmente:
+
+``` text
+LayoutBuilder
+        ↓
+constraints
+        ↓
+boardWidth / boardHeight
+        ↓
+conversión de coordenadas
+```
+
+### Responsabilidade
+
+`LayoutBuilder` non posiciona as plantas.
+
+Proporciona a información de tamaño necesaria para calcular correctamente
+as súas posicións.
+
+------------------------------------------------------------------------
+
+## Stack
+
+`Stack` permite colocar varios widgets uns enriba doutros dentro dunha mesma
+zona.
+
+A diferenza de `Column` ou `Row`, non organiza os fillos secuencialmente
+nun único eixe.
+
+Isto convérteo nun widget adecuado para un taboleiro no que cada planta
+pode ter unha posición independente.
+
+Estrutura utilizada:
+
+``` text
+LayoutBuilder
+└── Container
+    └── Stack
+        ├── Positioned
+        ├── Positioned
+        └── Positioned
+```
+
+------------------------------------------------------------------------
+
+## Positioned
+
+`Positioned` permite indicar onde debe aparecer un fillo dentro dun
+`Stack`.
+
+No Layout Designer, a posición almacenada de cada planta convértese a
+píxeles e utilízase para calcular a súa posición visual.
+
+### Idea importante
+
+As coordenadas do modelo representan o centro do elemento, mentres que
+`Positioned` traballa coa posición da súa esquina superior esquerda.
+
+Por este motivo é necesario ter en conta a metade do tamaño da caixa ao
+converter entre ambas representacións.
+
+------------------------------------------------------------------------
+
+## GestureDetector
+
+`GestureDetector` permite detectar xestos e interaccións sobre un widget.
+
+Nesta sesión utilízase para facer que cada planta poida arrastrarse.
+
+O movemento divídese principalmente en dous momentos:
+
+``` text
+onPanUpdate
+onPanEnd
+```
+
+------------------------------------------------------------------------
+
+## onPanUpdate
+
+`onPanUpdate` execútase repetidamente mentres o usuario continúa arrastrando
+o elemento.
+
+Recibe un obxecto con información sobre a actualización do xesto.
+
+Utilizouse:
+
+``` dart
+details.delta
+```
+
+`delta` representa o desprazamento producido desde a actualización anterior,
+non a posición absoluta do punteiro.
+
+Contén:
+
+``` dart
+details.delta.dx
+details.delta.dy
+```
+
+### Fluxo
+
+``` text
+Usuario move o punteiro
+        ↓
+onPanUpdate
+        ↓
+details.delta
+        ↓
+conversión a coordenadas normalizadas
+        ↓
+nova posición
+        ↓
+actualización visual
+```
+
+------------------------------------------------------------------------
+
+## onPanEnd
+
+`onPanEnd` execútase cando finaliza o arrastre.
+
+Nesta implementación utilízase como punto no que a posición final se garda
+en SQLite.
+
+Isto permite diferenciar:
+
+``` text
+movemento continuo
+        ↓
+estado local observable
+
+fin do movemento
+        ↓
+persistencia
+```
+
+------------------------------------------------------------------------
+
+## Estado temporal e estado persistente
+
+Un dos conceptos principais da sesión foi distinguir entre unha
+actualización necesaria para a interface e unha actualización que debe
+gardarse permanentemente.
+
+Durante o arrastre hai moitas pequenas modificacións de posición.
+
+Persistir cada unha delas produciría numerosas escrituras innecesarias.
+
+Por iso utilízase:
+
+``` text
+onPanUpdate
+        ↓
+updateItemPositionLocally()
+        ↓
+notifyListeners()
+        ↓
+rebuild
+```
+
+e só ao finalizar:
+
+``` text
+onPanEnd
+        ↓
+updateItem()
+        ↓
+Repository
+        ↓
+SQLite
+```
+
+### Regra
+
+Non todo cambio visual intermedio necesita persistirse inmediatamente.
+
+Nunha interacción continua pode ser máis eficiente manter temporalmente o
+estado necesario para a interface e persistir o resultado estable ao final.
+
+------------------------------------------------------------------------
+
+## updateItemPositionLocally()
+
+`GardenLayoutViewModel` incorpora unha operación destinada exclusivamente a
+actualizar a posición observable durante o arrastre:
+
+``` text
+updateItemPositionLocally()
+```
+
+Esta operación:
+
+-   modifica o estado mantido polo ViewModel;
+-   executa `notifyListeners()`;
+-   permite reconstruír a posición visual;
+-   non escribe directamente en SQLite.
+
+Isto mantén separadas a resposta inmediata da interface e a persistencia.
+
+------------------------------------------------------------------------
+
+## Límites mediante clamp()
+
+Un elemento non debe poder arrastrarse fóra do taboleiro.
+
+Para limitar unha coordenada a un intervalo utilízase:
+
+``` dart
+clamp(minValue, maxValue)
+```
+
+Conceptualmente:
+
+``` text
+valor < mínimo  → mínimo
+valor válido    → valor
+valor > máximo  → máximo
+```
+
+No Layout Designer os límites tamén teñen en conta a metade do tamaño da
+caixa para impedir que parte da planta quede fóra da zona visible.
+
+------------------------------------------------------------------------
+
+## Detección de solapamento
+
+Engadiuse unha comprobación para impedir que dúas plantas ocupen o mesmo
+espazo visual.
+
+Para cada planta distinta da que se está movendo compáranse as distancias
+entre os seus centros.
+
+Conceptualmente:
+
+``` text
+horizontalDistance < itemSize
+        AND
+verticalDistance < itemSize
+        ↓
+existe solapamento
+```
+
+Se a nova posición produciría solapamento, non se aplica.
+
+### Idea importante
+
+Non foi necesario introducir un sistema físico complexo.
+
+Para elementos rectangulares do mesmo tamaño é suficiente unha comprobación
+xeométrica sinxela baseada nas distancias horizontal e vertical.
+
+------------------------------------------------------------------------
+
+## Restrición UNIQUE en SQLite
+
+A táboa:
+
+``` text
+garden_layout_items
+```
+
+incorpora unha restrición:
+
+``` text
+UNIQUE (garden_plant_id)
+```
+
+Isto expresa unha regra do dominio directamente na base de datos:
+
+> Unha planta só pode ocupar unha posición dentro do Layout Designer.
+
+A interface intenta cumprir esta regra mostrando no selector unicamente as
+plantas que aínda non forman parte do deseño.
+
+SQLite constitúe ademais unha segunda garantía de integridade.
+
+------------------------------------------------------------------------
+
+## Retirar do deseño non é eliminar a planta
+
+Unha distinción importante é:
+
+``` text
+GardenPlant
+```
+
+e:
+
+``` text
+GardenLayoutItem
+```
+
+Se o usuario retira unha planta do Layout Designer elimínase unicamente o
+seu `GardenLayoutItem`.
+
+A planta continúa pertencendo á horta.
+
+### Regra
+
+Eliminar unha relación ou representación dunha entidade non implica
+necesariamente eliminar a entidade principal.
+
+------------------------------------------------------------------------
+
+## Filtrado de plantas dispoñibles
+
+O selector do Layout Designer mostra só plantas que aínda non teñen un
+`GardenLayoutItem`.
+
+Conceptualmente:
+
+``` text
+plantas da horta
+        -
+plantas xa presentes no layout
+        =
+plantas dispoñibles
+```
+
+Este filtrado evita ofrecer ao usuario accións que xa non son válidas no
+estado actual da pantalla.
+
+------------------------------------------------------------------------
+
+## Estado contextual por gardenId
+
+O Layout Designer pertence a unha horta concreta.
+
+A pantalla recibe:
+
+``` text
+gardenId
+```
+
+e carga:
+
+``` text
+GardenLayoutViewModel.loadItems(gardenId)
+PlantsViewModel.loadPlants(gardenId)
+```
+
+Isto permite que tanto as posicións como as plantas dispoñibles correspondan
+ao mesmo contexto.
+
+### Regra
+
+Cando unha colección pertence a unha entidade pai, o identificador desa
+entidade pode utilizarse para delimitar o estado que debe cargarse e
+mostrarse.
+
+------------------------------------------------------------------------
+
+## Reutilización da arquitectura
+
+O módulo reutiliza a arquitectura xa coñecida:
+
+``` text
+LayoutDesignerScreen
+        ↓
+GardenLayoutViewModel
+        ↓
+GardenLayoutRepository
+        ↑
+SqliteGardenLayoutRepository
+        ↓
+DatabaseService
+        ↓
+SQLite
+```
+
+A View non accede directamente á base de datos.
+
+O ViewModel tampouco depende directamente da implementación SQLite.
+
+Isto demostra que unha arquitectura útil non serve só para organizar código
+existente: tamén proporciona unha estrutura previsible para incorporar novas
+funcionalidades.
+
+------------------------------------------------------------------------
+
+## Migración v4 → v5
+
+A incorporación da persistencia do Layout Designer require evolucionar o
+esquema SQLite.
+
+A base de datos pasa a:
+
+``` text
+version 5
+```
+
+e engádese:
+
+``` text
+garden_layout_items
+```
+
+mediante a migración:
+
+``` text
+v4 → v5
+```
+
+Os datos das versións anteriores mantéñense.
+
+### Regra
+
+Modificar o esquema dunha aplicación xa utilizada non significa recrear
+sempre a base de datos.
+
+As migracións permiten evolucionar a estrutura conservando os datos
+existentes.
+
+------------------------------------------------------------------------
+
+## Fluidez e reconstrucións
+
+A posición visual actualízase durante `onPanUpdate` mediante o ViewModel e
+Provider.
+
+Cada actualización chama a:
+
+``` text
+notifyListeners()
+```
+
+e provoca as reconstrucións necesarias.
+
+Esta solución é suficientemente simple e funcional para o MVP, aínda que o
+movemento pode percibirse algo menos fluído que unha implementación máis
+especializada.
+
+### Aprendizaxe
+
+Unha solución correcta non ten que ser a máis sofisticada posible.
+
+Primeiro debe cumprir os requisitos funcionais e encaixar coa arquitectura
+do proxecto.
+
+A optimización pode realizarse posteriormente cando exista unha necesidade
+real e medible.
+
+------------------------------------------------------------------------
+
+## Fluxo completo do Layout Designer
+
+``` text
+GardenDetailsScreen
+        ↓
+LayoutDesignerScreen(gardenId)
+        ↓
+carga plantas + layout
+        ↓
+usuario engade unha planta
+        ↓
+GardenLayoutViewModel
+        ↓
+GardenLayoutRepository
+        ↓
+SQLite
+        ↓
+planta visible no Stack
+        ↓
+usuario arrastra
+        ↓
+onPanUpdate
+        ↓
+nova posición normalizada
+        ↓
+comprobación de límites
+        ↓
+comprobación de solapamento
+        ↓
+updateItemPositionLocally()
+        ↓
+rebuild
+        ↓
+onPanEnd
+        ↓
+updateItem()
+        ↓
+SQLite
+```
+
+------------------------------------------------------------------------
+
+## Conceptos clave da sesión
+
+-   `GardenLayoutItem`.
+-   `GardenLayoutRepository`.
+-   `SqliteGardenLayoutRepository`.
+-   `GardenLayoutViewModel`.
+-   `LayoutBuilder`.
+-   `Stack`.
+-   `Positioned`.
+-   `GestureDetector`.
+-   `onPanUpdate`.
+-   `onPanEnd`.
+-   `DragUpdateDetails.delta`.
+-   Coordenadas normalizadas.
+-   Conversión entre coordenadas relativas e píxeles.
+-   Límites mediante `clamp()`.
+-   Detección de solapamento.
+-   Estado temporal durante unha interacción.
+-   Persistencia ao finalizar unha interacción.
+-   `UNIQUE` en SQLite.
+-   Migración `v4 → v5`.
+-   Estado contextual mediante `gardenId`.
+-   Reutilización de MVVM + Repository Pattern.
+
+------------------------------------------------------------------------
+
+## Principio principal da sesión
+
+Unha interacción visual continua pode modelarse separando tres
+responsabilidades:
+
+``` text
+Interacción
+        ↓
+estado observable inmediato
+        ↓
+persistencia do resultado estable
+```
+
+No Layout Designer isto permite que a planta responda ao arrastre en tempo
+real sen converter cada pequeno movemento nunha escritura na base de datos.
+
+------------------------------------------------------------------------
+

@@ -40,4 +40,12 @@ class GeocodingViewModel extends ChangeNotifier {
     }
     
   }
+
+  void clearSearch(){
+    _results = null;
+    _errorMessage = null;
+    _isLoading = false;
+
+    notifyListeners();
+  }
 }

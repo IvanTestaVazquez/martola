@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../viewmodels/gardens_viewmodel.dart';
+import '../../viewmodels/geocoding_viewmodel.dart';
 
 import '../../models/garden.dart';
+import '../../models/geocoding_results.dart';
 
 class EditGardenScreen extends StatefulWidget {
 
@@ -24,20 +26,31 @@ class _EditGardenScreenState extends State<EditGardenScreen>{
 
   final _formKey = GlobalKey<FormState>();
 
-  late final TextEditingController nameController;
-  late final TextEditingController locationController;
-  late final TextEditingController areaController;
+  late final TextEditingController _nameController;
+  late final TextEditingController _locationController;
+  late final TextEditingController _areaController;
+
+  GeocodingResult? _selectedGeocodingResult;
 
   @override
   void initState(){
     super.initState();
-    nameController = TextEditingController(text: widget.garden.name);
-    locationController = TextEditingController(text: widget.garden.location);
-    areaController = TextEditingController(text: widget.garden.area.toString());
+    _nameController = TextEditingController(text: widget.garden.name);
+    _locationController = TextEditingController(text: widget.garden.location);
+    _areaController = TextEditingController(text: widget.garden.area.toString());
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      context
+          .read<GeocodingViewModel>()
+          .clearSearch();
+    });
   }
   
   @override
   Widget build(BuildContext context) {
+    final geocodingViewModel = context.watch<GeocodingViewModel>();
 
     return Scaffold(
       appBar: AppBar(
@@ -53,7 +66,7 @@ class _EditGardenScreenState extends State<EditGardenScreen>{
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                     TextFormField(
-                      controller: nameController,
+                      controller: _nameController,
                       decoration: const InputDecoration(
                         labelText: 'Nome'
                         ),
@@ -63,19 +76,95 @@ class _EditGardenScreenState extends State<EditGardenScreen>{
                           : null,
                     ),
                     const SizedBox(height: 8.0),
-                    TextFormField(
-                      controller: locationController,
-                      decoration: const InputDecoration(
-                        labelText: 'Localización',
-                      ),
-                      validator:(value) => 
-                        value == null || value.trim().isEmpty
-                          ?'Introduce unha localización para a horta' 
-                          : null,
-                    ),              
+                    Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _locationController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Localización',
+                                ),
+                                validator: (value) =>
+                                    value == null || value.trim().isEmpty
+                                        ? 'Introduce unha localización para a horta'
+                                        : null,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            ElevatedButton(
+                              onPressed: () async {
+                                await context
+                                    .read<GeocodingViewModel>()
+                                    .searchLocation(
+                                      location: _locationController.text,
+                                    );
+                              },
+                              child: const Text('Buscar localización'),
+                            ),
+                          ],
+                        ),
+
+                        if (geocodingViewModel.isLoading)
+                          const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(),
+                          ),
+                        if (geocodingViewModel.errorMessage != null)
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              geocodingViewModel.errorMessage!,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        if (!geocodingViewModel.isLoading &&
+                          geocodingViewModel.errorMessage == null &&
+                          geocodingViewModel.results != null &&
+                          geocodingViewModel.results!.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            'Non se atoparon localizacións',
+                          ),
+                        ),
+                        if (!geocodingViewModel.isLoading &&
+                            geocodingViewModel.results != null &&
+                            geocodingViewModel.results!.isNotEmpty)
+                          RadioGroup<GeocodingResult>(
+                            groupValue: _selectedGeocodingResult,
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedGeocodingResult = value;
+
+                                if (value != null){
+                                  _locationController.text = value.name;
+                                }
+                              });
+                            },
+                            child: Column(
+                              children: [
+                                for (final result in geocodingViewModel.results!)
+                                  RadioListTile<GeocodingResult>(
+                                    title: Text(
+                                      '${result.name} — '
+                                      '${result.state ?? 'Sen rexión'}, '
+                                      '${result.country ?? ''}',
+                                    ),
+                                    subtitle: Text(
+                                      '${result.latitude}, ${result.longitude}',
+                                    ),
+                                    value: result,
+                                  ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),            
                     const SizedBox(height: 8.0),
                     TextFormField(
-                      controller: areaController,
+                      controller: _areaController,
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
                         labelText: 'Superficie (m²)', 
@@ -107,18 +196,33 @@ class _EditGardenScreenState extends State<EditGardenScreen>{
                           return;
                         }
 
-                        final area = double.parse(areaController.text);
+                        final area = double.parse(_areaController.text);
+
+                        final location = _locationController.text.trim();
+                        final selectedLocation = _selectedGeocodingResult;
+                        final locationChanged = (location != widget.garden.location);
                         
                         final gardenId = widget.garden.id;
 
                         if (gardenId == null){
                           return;
                         }
-                        
+                                              
+
                         final updatedGarden = Garden(
-                          name: nameController.text.trim(),
-                          location: locationController.text.trim(),
+                          name: _nameController.text.trim(),
+                          location: location,
                           area: area,
+                          latitude:selectedLocation != null
+                              ? selectedLocation.latitude
+                              : locationChanged
+                                  ? null
+                                  : widget.garden.latitude,
+                          longitude: selectedLocation != null
+                              ? selectedLocation.longitude
+                              : locationChanged
+                                  ? null
+                                  : widget.garden.longitude,
                         );
 
                         await context.read<GardensViewModel>().updateGarden(gardenId, updatedGarden);
@@ -140,9 +244,9 @@ class _EditGardenScreenState extends State<EditGardenScreen>{
 
   @override
   void dispose() {
-    nameController.dispose();
-    locationController.dispose();
-    areaController.dispose();
+    _nameController.dispose();
+    _locationController.dispose();
+    _areaController.dispose();
     super.dispose();
   }
 }

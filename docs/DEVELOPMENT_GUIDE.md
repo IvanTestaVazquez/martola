@@ -53,19 +53,28 @@ Actualmente MARTOLA dispón de:
 -   Meteoroloxía específica segundo a localización de cada horta.
 -   `WeatherCard` reutilizable no Dashboard e no detalle dunha horta.
 -   Xestión dos estados de carga e erro nas operacións de rede.
+-   Layout Designer persistente por horta.
+-   Engadido e retirada de plantas do deseño sen modificar as plantas da horta.
+-   Posicionamento libre mediante arrastre.
+-   Coordenadas normalizadas independentes do tamaño do taboleiro.
+-   Límites de movemento para manter os elementos dentro do taboleiro.
+-   Prevención de solapamento entre plantas.
+-   Persistencia das posicións en SQLite.
 
 A infraestrutura SQLite dispón actualmente de:
 
 -   `DatabaseService`.
 -   Base de datos `martola.db`.
--   Esquema na versión 4.
+-   Esquema na versión 5.
 -   Migración v1 → v2.
 -   Migración v2 → v3.
 -   Migración v3 → v4.
+-   Migración v4 → v5.
 -   Táboa `gardens`, con `latitude` e `longitude` opcionais.
 -   Táboa `plant_species`.
 -   Táboa `garden_plants`.
 -   Táboa `plant_evolution_records`.
+-   Táboa `garden_layout_items`.
 -   Claves foráneas activadas mediante `PRAGMA foreign_keys = ON`.
 -   `ON DELETE CASCADE` entre `gardens` e `garden_plants`.
 -   `ON DELETE RESTRICT` entre `plant_species` e `garden_plants`.
@@ -80,6 +89,7 @@ Os ViewModels actualmente integrados son:
 -   `PlantEvolutionViewModel`.
 -   `WeatherViewModel`.
 -   `GeocodingViewModel`.
+-   `GardenLayoutViewModel`.
 
 Os Repositories e implementacións actualmente integrados inclúen:
 
@@ -89,23 +99,26 @@ Os Repositories e implementacións actualmente integrados inclúen:
 -   `SQLitePlantEvolutionRecordRepository`.
 -   `OpenWeatherRepository`.
 -   `OpenWeatherGeocodingRepository`.
+-   `GardenLayoutRepository`.
+-   `SqliteGardenLayoutRepository`.
 
 ## Next Action
 
 Revisar o `ROADMAP.md` actualizado e seleccionar o seguinte bloque
 funcional do MVP.
 
-A Session 18 deixa completada a asociación entre hortas, coordenadas e
-meteorología actual. MARTOLA xa pode buscar unha localidade, gardar as
-coordenadas escollidas e consultar o tempo correspondente á localización
-real dunha horta.
+A Session 19 deixa implementada a primeira versión funcional do Layout
+Designer. MARTOLA xa pode asociar as plantas dunha horta cunha posición
+visual persistente, movelas libremente dentro dun taboleiro e impedir que
+dúas plantas ocupen o mesmo espazo.
 
 Os principais bloques aínda pendentes son:
 
-1.  Layout Designer.
-2.  Adaptación responsive.
-3.  Testing, revisión e optimización.
-4.  Documentación final e preparación da defensa.
+1.  Adaptación responsive.
+2.  Testing, revisión e optimización.
+3.  Documentación final e preparación da defensa.
+4.  Melloras opcionais do Layout Designer, como maior fluidez, grid/snapping
+    ou representación visual específica por especie.
 5.  Ampliacións meteorolóxicas non imprescindibles para o MVP, como
     MeteoSIX, predición ou histórico persistente.
 
@@ -485,18 +498,34 @@ Layout Designer
 
 Status:
 
-⬜ Pending
+✅ Completed
 
 ### Concepts
 
--   Drag & Drop
--   GestureDetector
--   Positioned
--   Stack
+-   `LayoutBuilder`
+-   `Stack`
+-   `Positioned`
+-   `GestureDetector`
+-   `onPanUpdate`
+-   `onPanEnd`
+-   Coordenadas normalizadas
+-   Conversión entre coordenadas relativas e píxeles
+-   `clamp()`
+-   Detección de solapamento
+-   Actualización local durante interaccións continuas
+-   Persistencia ao finalizar unha interacción
+-   Reutilización de MVVM + Repository Pattern nun novo módulo
 
 ### Practical Objective
 
-Deseño visual da horta.
+Deseño visual persistente da horta mediante plantas posicionables.
+
+### Result
+
+Implementouse unha primeira versión funcional de `LayoutDesignerScreen`
+na que as plantas poden engadirse ao deseño, moverse individualmente,
+permanecer dentro dos límites do taboleiro, evitar solapamentos e conservar
+a súa posición despois de navegar ou reiniciar a aplicación.
 
 **---**
 
@@ -4652,3 +4681,387 @@ API meteorolóxica, sen depender da posición física do dispositivo.
 
 A arquitectura da Session 17 puido ampliarse cun segundo fluxo HTTP
 mantendo as mesmas responsabilidades e sen introducir capas adicionais.
+
+**---**
+
+## Session 19 - Layout Designer persistente
+
+### Status
+
+✅ Completed
+
+### Objective
+
+Implementar a primeira versión funcional do deseñador visual dunha horta,
+reutilizando a arquitectura xa empregada nos módulos persistentes de
+MARTOLA.
+
+### Concepts Learned
+
+-   Modelado dunha entidade de posición mediante `GardenLayoutItem`.
+-   Coordenadas normalizadas entre `0.0` e `1.0`.
+-   Uso de `LayoutBuilder` para coñecer as dimensións reais dispoñibles.
+-   Conversión de coordenadas normalizadas a píxeles.
+-   `Stack` e `Positioned` para colocar elementos libremente.
+-   `GestureDetector`.
+-   `onPanUpdate` para movemento continuo.
+-   `DragUpdateDetails.delta`.
+-   `onPanEnd` para detectar o final do arrastre.
+-   `clamp()` para limitar valores.
+-   Separación entre actualización visual local e persistencia.
+-   Detección simple de colisións mediante distancia horizontal e vertical.
+-   Restrición `UNIQUE` en SQLite.
+-   Reutilización de estado contextual por `gardenId`.
+
+### Architecture Implemented
+
+O novo módulo segue o mesmo fluxo arquitectónico que os módulos anteriores:
+
+``` text
+LayoutDesignerScreen
+        ↓
+GardenLayoutViewModel
+        ↓
+GardenLayoutRepository
+        ↑
+SqliteGardenLayoutRepository
+        ↓
+DatabaseService
+        ↓
+SQLite
+```
+
+Isto permite incorporar unha funcionalidade nova sen introducir acceso
+directo a SQLite desde a View nin desde o ViewModel.
+
+### Model
+
+Creouse:
+
+``` text
+GardenLayoutItem
+```
+
+Cada elemento relaciona:
+
+``` text
+gardenId
+gardenPlantId
+xPosition
+yPosition
+```
+
+As coordenadas almacénanse normalizadas, polo que non dependen directamente
+da resolución nin do tamaño concreto do taboleiro.
+
+Conceptualmente:
+
+``` text
+0.0 ---------------- 1.0
+```
+
+A posición real na interface calcúlase a partir das dimensións obtidas con
+`LayoutBuilder`.
+
+### Persistence
+
+A base de datos evolucionou á versión:
+
+``` text
+v5
+```
+
+Engadiuse a táboa:
+
+``` text
+garden_layout_items
+```
+
+Esta táboa permite persistir a posición de cada planta dentro do deseño.
+
+As relacións coas hortas e plantas utilizan claves foráneas con eliminación
+en cascada.
+
+Ademais, a restrición:
+
+``` text
+UNIQUE (garden_plant_id)
+```
+
+impide que unha mesma planta teña máis dunha posición simultánea no deseño.
+
+Implementouse e comprobouse a migración:
+
+``` text
+v4 → v5
+```
+
+mantendo os datos existentes.
+
+### Repository
+
+Creouse o contrato:
+
+``` text
+GardenLayoutRepository
+```
+
+e a implementación SQLite:
+
+``` text
+SqliteGardenLayoutRepository
+```
+
+As operacións permiten:
+
+-   Recuperar os elementos dunha horta.
+-   Engadir unha planta ao deseño.
+-   Actualizar a súa posición.
+-   Retirala do deseño.
+
+Retirar unha planta do deseño elimina unicamente o seu `GardenLayoutItem`;
+a `GardenPlant` continúa existindo na horta.
+
+### ViewModel
+
+Creouse:
+
+``` text
+GardenLayoutViewModel
+```
+
+O ViewModel mantén a colección correspondente á horta actual e proporciona,
+entre outras, as operacións:
+
+``` text
+loadItems(gardenId)
+addItem()
+updateItem()
+removeItem()
+updateItemPositionLocally()
+```
+
+`updateItemPositionLocally()` permite modificar inmediatamente a posición
+observable durante o arrastre sen escribir en SQLite en cada pequeno
+movemento.
+
+### Provider Integration
+
+`GardenLayoutViewModel` integrouse no `MultiProvider` da aplicación mediante
+inxección de dependencias desde `main.dart`.
+
+Deste modo a View depende do ViewModel e este do contrato Repository,
+mantendo a separación arquitectónica existente.
+
+### LayoutDesignerScreen
+
+Creouse:
+
+``` text
+LayoutDesignerScreen
+```
+
+A pantalla recibe:
+
+``` text
+gardenId
+```
+
+e carga no `initState()`:
+
+``` text
+GardenLayoutViewModel.loadItems(gardenId)
+PlantsViewModel.loadPlants(gardenId)
+```
+
+Deste modo o deseño e a lista de plantas quedan contextualizados pola horta
+seleccionada.
+
+### Adding Plants to the Layout
+
+A pantalla mostra nun `DropdownButton` unicamente as plantas que aínda non
+forman parte do deseño.
+
+A lista dispoñible obtense comparando as plantas da horta cos
+`GardenLayoutItem` existentes.
+
+Ao engadir unha planta créase un novo elemento cunha posición inicial
+normalizada.
+
+A selección do Dropdown límpase despois de completar correctamente a
+operación.
+
+### Free Positioning
+
+O taboleiro utiliza:
+
+``` text
+LayoutBuilder
+  ↓
+Container
+  ↓
+Stack
+  ↓
+Positioned
+  ↓
+GestureDetector
+```
+
+Cada planta represéntase actualmente mediante unha caixa cadrada de tamaño
+fixo que contén unha icona e o seu nome personalizado.
+
+### Dragging
+
+Durante:
+
+``` text
+onPanUpdate
+```
+
+`details.delta` proporciona o desprazamento producido desde a actualización
+anterior do punteiro.
+
+Ese desprazamento en píxeles convértese a coordenadas normalizadas:
+
+``` text
+delta.dx / boardWidth
+delta.dy / boardHeight
+```
+
+e engádese á posición actual do elemento.
+
+### Board Limits
+
+Como `Positioned` utiliza a esquina superior esquerda pero as coordenadas
+do modelo representan o centro da caixa, calcúlase unha marxe equivalente
+á metade do tamaño do elemento.
+
+Os valores mínimos e máximos evitan que unha planta poida arrastrarse fóra
+do taboleiro.
+
+A limitación realízase mediante:
+
+``` text
+clamp(minX, maxX)
+clamp(minY, maxY)
+```
+
+### Collision Prevention
+
+Antes de aceptar unha nova posición compróbase se a caixa ocuparía o espazo
+doutra planta.
+
+Para cada elemento distinto do que se está movendo calcúlase a distancia
+horizontal e vertical entre os seus centros.
+
+Existe solapamento cando ambas distancias son menores que o tamaño do
+elemento.
+
+Se existe solapamento, a nova posición non se aplica.
+
+Deste modo cada zona ocupada queda reservada para unha única planta.
+
+### Local Update vs Persistence
+
+Durante o arrastre:
+
+``` text
+onPanUpdate
+        ↓
+updateItemPositionLocally()
+        ↓
+notifyListeners()
+        ↓
+rebuild
+```
+
+Non se escribe continuamente na base de datos.
+
+Ao finalizar:
+
+``` text
+onPanEnd
+        ↓
+posición actual do ViewModel
+        ↓
+updateItem()
+        ↓
+SQLite
+```
+
+Esta separación reduce o número de escrituras durante unha interacción
+continua.
+
+### Functional Verification
+
+Comprobouse que:
+
+-   As plantas dunha horta poden engadirse individualmente ao deseño.
+-   Unha planta xa colocada deixa de aparecer entre as plantas dispoñibles.
+-   As plantas poden moverse individualmente.
+-   O movemento queda limitado ao interior do taboleiro.
+-   Dúas plantas non poden superpoñerse.
+-   As posicións persisten ao saír e volver entrar na pantalla.
+-   As posicións persisten despois de reiniciar a aplicación.
+-   Retirar unha planta do deseño non elimina a planta da horta.
+-   A arquitectura continúa separando View, ViewModel, Repository e SQLite.
+
+### Current Limitations
+
+A primeira versión prioriza deliberadamente a simplicidade.
+
+O movemento das caixas pode percibirse algo menos fluído que unha
+implementación baseada nunha capa visual temporal de arrastre, xa que a
+posición observable se actualiza continuamente mediante Provider.
+
+Considérase aceptable para o MVP actual.
+
+Tamén quedan como posibles melloras:
+
+-   Grid ou snapping.
+-   Colocación inicial máis intelixente.
+-   Representación visual diferente segundo a especie.
+-   Tamaños variables.
+-   Melloras na fluidez do arrastre.
+-   Deseño responsive específico do taboleiro.
+
+Estas melloras non son necesarias para considerar funcional a primeira
+versión do Layout Designer.
+
+### Skills Acquired
+
+-   Crear unha funcionalidade persistente completa reutilizando unha
+    arquitectura existente.
+-   Traballar con coordenadas independentes da resolución.
+-   Traducir movementos do punteiro a cambios de estado.
+-   Diferenciar estado temporal de interacción e persistencia.
+-   Evitar escrituras innecesarias durante unha interacción continua.
+-   Aplicar límites xeométricos a elementos posicionados.
+-   Implementar unha detección básica de colisións.
+-   Contextualizar coleccións mediante o identificador dunha entidade pai.
+-   Evolucionar un esquema SQLite mediante unha nova migración.
+
+### Documentation Updated
+
+-   `DEVELOPMENT_GUIDE.md`
+-   `ARCHITECTURE.md`
+-   `DATABASE_DESIGN.md`
+-   `PROJECT_CONTEXT.md`
+-   `ROADMAP.md`
+-   `LEARNING_NOTES.md`
+
+### Commit
+
+Pendente ao finalizar a actualización da documentación.
+
+### Notes
+
+A Session 19 completa un dos bloques funcionais principais previstos para o
+MVP. O Layout Designer deixa de ser unha funcionalidade futura e pasa a
+formar parte da aplicación real.
+
+A implementación mantense deliberadamente sinxela: primeiro garántese un
+fluxo funcional, persistente e coherente coa arquitectura existente; as
+melloras visuais e de interacción poderán realizarse posteriormente se o
+tempo do proxecto o permite.
+
