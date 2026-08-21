@@ -184,7 +184,7 @@ Arquitectura MVVM simplificada orientada a:
 
 ## Current Implementation State
 
-A arquitectura está aplicada actualmente aos módulos de hortas, plantas, especies, evolución das plantas, xeocodificación, meteoroloxía e deseño visual da distribución da horta.
+A arquitectura está aplicada actualmente aos módulos de hortas, plantas, especies, evolución das plantas, xeocodificación, meteoroloxía, deseño visual da distribución da horta e tarefas.
 
 A composición principal realízase en `main.dart`, onde se crean e inxectan as implementacións concretas dos Repositories, Services e ViewModels mediante `MultiProvider`.
 
@@ -301,7 +301,7 @@ Implementacións:
 ## Current SQLite Version
 
 ```text
-version: 5
+version: 6
 ```
 
 Migracións implementadas e comprobadas:
@@ -311,6 +311,7 @@ v1 → v2
 v2 → v3
 v3 → v4
 v4 → v5
+v5 → v6
 ```
 
 As migracións son acumulativas e conservan os datos existentes.
@@ -323,6 +324,7 @@ plant_species
 garden_plants
 plant_evolution_records
 garden_layout_items
+tasks
 ```
 
 ## Main Entities
@@ -382,6 +384,9 @@ plant_species 1:N garden_plants
 garden_plants 1:N plant_evolution_records
 gardens 1:N garden_layout_items
 garden_plants 1:0..1 garden_layout_items
+
+As tarefas constitúen rexistros independentes de apoio á planificación no MVP actual.
+tasks
 ```
 
 Integridade referencial:
@@ -601,7 +606,7 @@ Funcionalidades implementadas:
 - Retirar unha planta do deseño mediante pulsación longa e confirmación, sen eliminar a planta da horta.
 - Recuperar as posicións persistidas ao volver entrar na pantalla ou reiniciar a aplicación.
 
-A colocación inicial automática é provisional e distribúe os novos elementos en posicións predefinidas calculadas a partir do número de elementos existentes. A procura automática dun oco libre e a mellora da fluidez do arrastre quedan como refinamentos posteriores.
+A colocación inicial automática procura unha posición libre antes de engadir unha nova planta ao taboleiro, evitando que un elemento novo apareza superposto a outro xa existente. A mellora da fluidez do arrastre e posibles mecanismos de grid/snapping quedan como refinamentos posteriores.
 
 Fluxo:
 
@@ -618,6 +623,27 @@ DatabaseService
   ↓
 SQLite
 ```
+
+---
+
+## Tasks
+
+O MVP incorpora un módulo básico de tarefas para apoiar a planificación do traballo. Mantense deliberadamente sinxelo para non ampliar innecesariamente o alcance do TFC.
+
+Funcionalidades actuais:
+
+- Listar tarefas.
+- Crear novas tarefas.
+- Manter os datos mediante persistencia local en SQLite.
+- Actualizar a interface de forma reactiva mediante Provider.
+- Mostrar no Dashboard un resumo das tarefas pendentes.
+
+Pantallas principais:
+
+- `TasksScreen`
+- `CreateTaskScreen`
+
+O módulo segue a mesma separación de responsabilidades do resto da aplicación: View → ViewModel → Repository → SQLite. Funcionalidades máis avanzadas como alertas, notificacións ou recorrencia quedan fóra do MVP actual.
 
 ---
 
@@ -808,6 +834,7 @@ Fluxo funcional actualmente relevante:
 Inicio
   ↓
 Dashboard
+  ├── Tarefas → Lista / Crear tarefa
   ↓
 Lista de Hortas
   ├── Crear horta → Buscar/seleccionar localización → Coordenadas
@@ -848,9 +875,13 @@ Meteoroloxía
 └── Consultar condicións actuais
 
 Deseño da horta
-├── Engadir planta ao deseño
+├── Engadir planta ao deseño nun oco libre
 ├── Mover e persistir posición
 └── Retirar planta do deseño
+
+Tarefas
+├── Listar tarefas
+└── Crear tarefa
 ```
 
 Funcionalidades futuras previstas no fluxo:
@@ -858,8 +889,9 @@ Funcionalidades futuras previstas no fluxo:
 - Selección de localización mediante mapa.
 - Predición meteorolóxica.
 - Histórico climático.
-- Configuración.
-- Tarefas e alertas.
+- Autenticación de usuario, como ampliación opcional se o tempo dispoñible o permite.
+- Configuración avanzada da aplicación, fóra do alcance actual do MVP.
+- Alertas e notificacións asociadas ás tarefas, como ampliación futura.
 
 ---
 
@@ -867,21 +899,29 @@ Funcionalidades futuras previstas no fluxo:
 
 ## Mobile
 
-Navegación principalmente secuencial e vertical.
+A interface está adaptada para navegación principalmente secuencial e vertical. Como referencia práctica de probas establécese un ancho mínimo aproximado de 360 px lóxicos.
 
 ## Tablet
 
-Prevese uso de múltiples columnas e paneis simultáneos.
+As pantallas aproveitan o espazo dispoñible mediante cambios de composición e, nas listas principais, mediante distribucións en varias columnas cando o ancho o permite.
 
 ## Desktop
 
-Prevese maior aproveitamento do espazo horizontal e posible navegación mediante sidebar.
+O contido limita o ancho cando convén para evitar formularios excesivamente estirados e aproveita o espazo horizontal mediante layouts máis amplos e grids.
 
-O deseño responsive será especialmente relevante para:
+## Current responsive implementation
 
-- `GardenDetailsScreen`
-- Listas e detalles.
-- `LayoutDesignerScreen`
+A revisión responsive principal do MVP está realizada. Implementáronse e comprobaron, entre outros:
+
+- `HomeScreen` con contido centrado e ancho máximo controlado.
+- Formularios de hortas, plantas e evolución con ancho limitado e composición adaptable.
+- Cambio entre `Row` e `Column` nos controis que o requiren cando diminúe o ancho.
+- Listas adaptables a `GridView` en pantallas amplas.
+- Pantallas de detalle con distribución adaptable.
+- Dashboard e tarxetas principais comprobados en diferentes anchos.
+- `LayoutDesignerScreen` con coordenadas normalizadas e taboleiro adaptable ao espazo dispoñible.
+
+As probas manuais toman como referencias aproximadas 360–400 px para móbil, arredor de 700 px para tablet/transición e 1200 px para escritorio, comprobando tamén o comportamento continuo ao redimensionar a ventá.
 
 ---
 
@@ -937,11 +977,11 @@ A prioridade actual continúa sendo completar e estabilizar a funcionalidade ant
 
 ## Last Updated
 
-2026-08-20
+2026-08-22
 
 ## Current Phase
 
-A infraestrutura local principal do MVP está operativa mediante SQLite v5.
+A infraestrutura local principal do MVP está operativa mediante SQLite v6.
 
 Están implementados de extremo a extremo:
 
@@ -952,6 +992,8 @@ Están implementados de extremo a extremo:
 - Xeocodificación de localidades mediante OpenWeather.
 - Consulta meteorolóxica actual específica por horta mediante OpenWeather.
 - Primeiro MVP funcional do deseño visual da distribución da horta.
+- Módulo básico de tarefas con persistencia local.
+- Adaptación responsive principal das pantallas do MVP.
 
 A persistencia foi comprobada entre reinicios e as relacións entre hortas, plantas, especies e evolución están implementadas mediante claves foráneas.
 
@@ -1007,12 +1049,14 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 - ✅ Migración v2 → v3
 - ✅ Migración v3 → v4
 - ✅ Migración v4 → v5
+- ✅ Migración v5 → v6
 - ✅ Conservación dos datos existentes
 - ✅ `gardens`
 - ✅ `plant_species`
 - ✅ `garden_plants`
 - ✅ `plant_evolution_records`
 - ✅ `garden_layout_items`
+- ✅ `tasks`
 - ✅ Claves foráneas
 - ✅ `ON DELETE CASCADE`
 - ✅ `ON DELETE RESTRICT`
@@ -1063,6 +1107,12 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 - ✅ Drag individual con límites e prevención de solapamentos
 - ✅ Persistencia da posición final ao rematar o arrastre
 - ✅ Engadir e retirar plantas do deseño
+- ✅ Colocación inicial nun oco libre para evitar superposicións ao engadir elementos
+- ✅ Módulo básico de tarefas con persistencia SQLite
+- ✅ Listaxe e creación de tarefas desde a interface
+- ✅ Integración das tarefas no Dashboard
+- ✅ Revisión responsive principal do MVP
+- ✅ Layouts adaptables mediante `LayoutBuilder`, límites de ancho, `Row`/`Column` e listas/grids segundo o espazo dispoñible
 
 ## Documentation
 
@@ -1131,7 +1181,7 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 - Durante o drag do layout, a posición actualízase primeiro en memoria e persístese en SQLite ao finalizar o xesto.
 - Os elementos do layout non poden saír do taboleiro nin solaparse durante o arrastre.
 - Flutter e a funcionalidade teñen prioridade fronte ao refinamento visual nesta fase.
-- O deseño seguirá sendo responsive desde o inicio.
+- O deseño responsive aplícase de forma progresiva e a revisión principal do MVP xa foi realizada.
 - A documentación técnica mantense sincronizada co estado real do proxecto.
 
 ---
@@ -1140,7 +1190,7 @@ A aplicación tamén dispón xa dunha primeira integración cun servizo externo 
 
 ## Achieved
 
-A infraestrutura relacional principal do MVP está implementada ata SQLite v5.
+A infraestrutura relacional principal do MVP está implementada ata SQLite v6.
 
 Actualmente funciona:
 
@@ -1194,13 +1244,15 @@ A aplicación busca localidades reais, permite seleccionar unha coincidencia, pe
 
 Na sesión 19 implementouse o primeiro MVP funcional do deseño visual da horta. Incorporouse SQLite v5 coa táboa `garden_layout_items`, o modelo `GardenLayoutItem`, o Repository correspondente, `GardenLayoutViewModel` e `LayoutDesignerScreen`. As plantas poden engadirse ao taboleiro, moverse individualmente mediante drag, manterse dentro dos límites, evitar solapamentos, persistir a súa posición normalizada e retirarse do deseño sen eliminarse da horta.
 
+Na sesión posterior completouse a revisión responsive principal das pantallas do MVP, reforzouse o Layout Designer para procurar un oco libre ao engadir unha planta e incorporouse un módulo básico de tarefas con persistencia local. As pantallas baleiras de configuración e meteoroloxía independente elimináronse ao non seren necesarias no alcance actual; a meteoroloxía permanece contextualizada no detalle de cada horta. A autenticación queda como posible ampliación posterior, unha vez pechados os obxectivos actuais e só se o tempo dispoñible o permite.
+
 Tamén quedaron implementados o tratamento básico de erros HTTP, conexión e timeout, así como a xestión local das credenciais mediante `dart-define`.
 
 ## Next Development Step
 
 O seguinte paso deberá decidirse segundo `ROADMAP.md`, mantendo o desenvolvemento incremental e evitando ampliar innecesariamente o alcance do MVP.
 
-Tras completar tamén o primeiro MVP do Layout Designer, o seguinte paso deberá priorizar a estabilización e continuar segundo `ROADMAP.md`. Dentro do bloque meteorolóxico seguen pendentes:
+Tras completar o primeiro MVP do Layout Designer, o módulo básico de tarefas e a revisión responsive principal, o seguinte paso debe priorizar estabilización, probas e documentación segundo `ROADMAP.md`. Dentro do bloque meteorolóxico quedan como posibles ampliacións:
 
 - Incorporar selección de localización mediante mapa.
 - Decidir se o Dashboard debe recuperar no futuro algún resumo meteorolóxico cando existan varias hortas.
@@ -1212,9 +1264,9 @@ Tras completar tamén o primeiro MVP do Layout Designer, o seguinte paso deberá
 Outros bloques principais aínda previstos:
 
 - Revisión e refinamento do deseño visual da distribución da horta.
-- Mellorar a fluidez do arrastre e a colocación inicial en ocos libres.
+- Mellorar a fluidez do arrastre se resulta necesario tras as probas finais.
 - Valorar grid/snapping como mellora posterior.
-- Revisión do responsive design.
+- Probas finais do responsive design e corrección de incidencias puntuais.
 - Probas.
 - Refinamento da interface.
 - Preparación progresiva da memoria final.
@@ -1224,7 +1276,7 @@ Outros bloques principais aínda previstos:
 # Future Improvements
 
 - Sincronización cloud.
-- Autenticación avanzada.
+- Autenticación de usuario, como bloque opcional posterior ao peche dos obxectivos actuais.
 - Notificacións.
 - Sensores ambientais.
 - IA para recomendacións.

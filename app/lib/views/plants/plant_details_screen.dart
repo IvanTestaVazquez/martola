@@ -46,11 +46,128 @@ class _PlantDetailsScreen extends State<PlantDetailsScreen>{
 
     PlantSpecies? species;
 
-    if(plant != null){
-      species = context.select<PlantSpeciesViewModel, PlantSpecies?>(
-        (viewModel) => viewModel.getSpeciesById(plant.speciesId),
-    );
+    if (plant == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Detalle da planta'),
+        ),
+        body: Center(
+          child: Text(
+            'Planta non atopada',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ),
+      );
     }
+
+    species = context.select<PlantSpeciesViewModel, PlantSpecies?>(
+        (viewModel) => viewModel.getSpeciesById(plant.speciesId),
+      );
+
+    final infoSection = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Nome: ${plant.customName}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Especie: ${species?.commonName ?? 'Descoñecida'}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Data de plantación: '
+          '${plant.plantingDate.day}/'
+          '${plant.plantingDate.month}/'
+          '${plant.plantingDate.year}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Rexistros de evolución: ${records.length}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ],
+    );
+
+    final actionsSection = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => EditPlantScreen(
+                  plant: plant,
+                ),
+              ),
+            );
+          },
+          child: const Text('Editar planta'),
+        ),
+
+        const SizedBox(height: 8),
+
+        FilledButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) =>
+                    PlantEvolutionListScreen(
+                  plantId: widget.plantId,
+                ),
+              ),
+            );
+          },
+          child: const Text('Ver evolución'),
+        ),
+
+        const SizedBox(height: 8),
+
+        FilledButton(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (dialogContext) {
+                return AlertDialog(
+                  title: const Text('Eliminar planta'),
+                  content: Text(
+                    'Seguro que queres eliminar ${plant.customName}?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                      },
+                      child: const Text('Cancelar'),
+                    ),
+                    FilledButton(
+                      onPressed: () async {
+                        await context
+                            .read<PlantsViewModel>()
+                            .removePlant(plant.id!);
+
+                        if (!context.mounted ||
+                            !dialogContext.mounted) {
+                          return;
+                        }
+
+                        Navigator.of(dialogContext).pop();
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Eliminar'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+          child: const Text('Eliminar planta'),
+        ),
+      ],
+    );
     
 
     return Scaffold(
@@ -59,106 +176,41 @@ class _PlantDetailsScreen extends State<PlantDetailsScreen>{
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: plant == null          
-          ? Center(
-              child:Text(
-                'Planta non atopada',
-                style: Theme.of(context).textTheme.bodyLarge,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 800;
+
+            if (!isWide) {
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    infoSection,
+                    const SizedBox(height: 24),
+                    actionsSection,
+                  ],
                 ),
-              )
-          : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children:[
-              Text(
-                'Nome: ${plant.customName}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Especie: ${species?.commonName ?? 'Descoñecida'}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Data de plantación: ' 
-                '${plant.plantingDate.day}/'
-                '${plant.plantingDate.month}/'
-                '${plant.plantingDate.year}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                 'Rexistros de evolución: ${records.length}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: (){
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => EditPlantScreen(plant: plant,),
-                    )
-                  );
-                }, 
-                child: const Text('Editar planta')
-              ),
-              const SizedBox(height: 8),
-              FilledButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => PlantEvolutionListScreen(
-                         plantId: widget.plantId,
-                      ),
-                    ),
-                  );
-                },
-                child: const Text('Ver evolución'),
-              ),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (dialogContext) {
-                      return AlertDialog(
-                        title: const Text('Eliminar planta'),
-                        content: Text(
-                          'Seguro que queres eliminar ${plant.customName}?',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(dialogContext).pop();
-                            },
-                            child: const Text('Cancelar'),
-                          ),
-                          FilledButton(
-                            onPressed: () async {
-                              await context
-                                  .read<PlantsViewModel>()
-                                  .removePlant(plant.id!);
+              );
+            }
 
-                              if (!context.mounted ||
-                                  !dialogContext.mounted) {
-                                return;
-                              }
-
-                              Navigator.of(dialogContext).pop();
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text('Eliminar'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-                child: const Text('Eliminar planta'),
+            return SingleChildScrollView(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: infoSection,
+                  ),
+                  const SizedBox(width: 32),
+                  Expanded(
+                    child: actionsSection,
+                  ),
+                ],
               ),
-            ]
-          ))
-
+            );
+          },
+        ),
+      ),
     );
   }
 }

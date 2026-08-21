@@ -49,94 +49,126 @@ class _EditPlantScreenState extends State<EditPlantScreen> {
       appBar: AppBar(
         title: const Text('Editar planta'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                      controller: _customNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nome da planta'
-                        ),
-                      validator:(value) => 
-                        value == null || value.trim().isEmpty
-                          ?'Introduce un nome para a planta' 
-                          : null,
-                    ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedSpeciesId,
-                decoration: const InputDecoration(
-                  labelText: 'Especie',
+      body: SafeArea(
+        child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 600,
                 ),
-                items: species.map((plantSpecies) {
-                  return DropdownMenuItem<String>(
-                    value: plantSpecies.id,
-                    child: Text(
-                      plantSpecies.commonName,
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedSpeciesId = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'Selecciona unha especie';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: SingleChildScrollView(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Data de plantación: '
-                    '${_plantingDate.day}/'
-                    '${_plantingDate.month}/'
-                    '${_plantingDate.year}',
+                  TextFormField(
+                          controller: _customNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Nome da planta'
+                            ),
+                          validator:(value) => 
+                            value == null || value.trim().isEmpty
+                              ?'Introduce un nome para a planta' 
+                              : null,
+                        ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedSpeciesId,
+                    decoration: const InputDecoration(
+                      labelText: 'Especie',
+                    ),
+                    items: species.map((plantSpecies) {
+                      return DropdownMenuItem<String>(
+                        value: plantSpecies.id,
+                        child: Text(
+                          plantSpecies.commonName,
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedSpeciesId = value;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Selecciona unha especie';
+                      }
+                      return null;
+                    },
                   ),
-                  TextButton(
-                    onPressed: _selectPlantingDate,
-                    child: const Text('Cambiar'),
+                  const SizedBox(height: 16),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isNarrow = constraints.maxWidth < 400;
+
+                      final dateText = Text(
+                        'Data de plantación: '
+                        '${_plantingDate.day}/'
+                        '${_plantingDate.month}/'
+                        '${_plantingDate.year}',
+                      );
+
+                      final changeButton = TextButton(
+                        onPressed: _selectPlantingDate,
+                        child: const Text('Cambiar'),
+                      );
+
+                      if (isNarrow) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            dateText,
+                            changeButton,
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          dateText,
+                          changeButton,
+                        ],
+                      );
+                    },
                   ),
-                ],
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: () async {
+                      if (!_formKey.currentState!.validate()) {
+                        return;
+                      }
+
+                      final speciesId = _selectedSpeciesId;
+
+                      if (speciesId == null) {
+                        return;
+                      }
+
+                      await context.read<PlantsViewModel>().updatePlant(
+                        plantId: widget.plant.id!,
+                        speciesId: speciesId,
+                        customName: _customNameController.text.trim(),
+                        plantingDate: _plantingDate,
+                      );
+
+                      if (!context.mounted) {
+                        return;
+                      }
+
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Gardar'),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () async {
-                  if (!_formKey.currentState!.validate()) {
-                    return;
-                  }
-
-                  final speciesId = _selectedSpeciesId;
-
-                  if (speciesId == null) {
-                    return;
-                  }
-
-                  await context.read<PlantsViewModel>().updatePlant(
-                    plantId: widget.plant.id!,
-                    speciesId: speciesId,
-                    customName: _customNameController.text.trim(),
-                    plantingDate: _plantingDate,
-                  );
-
-                  if (!context.mounted) {
-                    return;
-                  }
-
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Gardar'),
-              ),
-            ],
+            ),
           ),
+        ),
         ),
       ),
     );

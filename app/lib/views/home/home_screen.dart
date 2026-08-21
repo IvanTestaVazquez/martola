@@ -9,36 +9,40 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-       const Text('MARTOLA')
+        title: const Text('MARTOLA')
       ),
       body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: EdgeInsets.all(24.0),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 500,
+              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                    const MartolaLogo(),
-                    const SizedBox(
-                      height: 24.0,
-                    ),
-                    ElevatedButton(
-                      onPressed: (){
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const DashboardScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text("Entrar"),
-                    )
-                ]      
-              )
-            )
-          )
-        )
+                  const MartolaLogo(),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const DashboardScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text('Entrar'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

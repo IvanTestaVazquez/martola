@@ -65,16 +65,18 @@ A infraestrutura SQLite dispón actualmente de:
 
 -   `DatabaseService`.
 -   Base de datos `martola.db`.
--   Esquema na versión 5.
+-   Esquema na versión 6.
 -   Migración v1 → v2.
 -   Migración v2 → v3.
 -   Migración v3 → v4.
 -   Migración v4 → v5.
+-   Migración v5 → v6.
 -   Táboa `gardens`, con `latitude` e `longitude` opcionais.
 -   Táboa `plant_species`.
 -   Táboa `garden_plants`.
 -   Táboa `plant_evolution_records`.
 -   Táboa `garden_layout_items`.
+-   Táboa `tasks`.
 -   Claves foráneas activadas mediante `PRAGMA foreign_keys = ON`.
 -   `ON DELETE CASCADE` entre `gardens` e `garden_plants`.
 -   `ON DELETE RESTRICT` entre `plant_species` e `garden_plants`.
@@ -90,6 +92,7 @@ Os ViewModels actualmente integrados son:
 -   `WeatherViewModel`.
 -   `GeocodingViewModel`.
 -   `GardenLayoutViewModel`.
+-   `TasksViewModel`.
 
 Os Repositories e implementacións actualmente integrados inclúen:
 
@@ -101,6 +104,8 @@ Os Repositories e implementacións actualmente integrados inclúen:
 -   `OpenWeatherGeocodingRepository`.
 -   `GardenLayoutRepository`.
 -   `SqliteGardenLayoutRepository`.
+-   `TaskRepository`.
+-   `SQLiteTaskRepository`.
 
 ## Next Action
 
@@ -114,13 +119,9 @@ dúas plantas ocupen o mesmo espazo.
 
 Os principais bloques aínda pendentes son:
 
-1.  Adaptación responsive.
-2.  Testing, revisión e optimización.
-3.  Documentación final e preparación da defensa.
-4.  Melloras opcionais do Layout Designer, como maior fluidez, grid/snapping
-    ou representación visual específica por especie.
-5.  Ampliacións meteorolóxicas non imprescindibles para o MVP, como
-    MeteoSIX, predición ou histórico persistente.
+1.  Testing, revisión e optimización.
+2.  Documentación final e preparación da defensa.
+3.  Melloras opcionais non imprescindibles, como autenticación, grid/snapping no Layout Designer ou ampliacións meteorolóxicas.
 
 Antes de comezar unha nova implementación revisarase o roadmap para
 fixar o seguinte obxectivo concreto.
@@ -535,7 +536,7 @@ Responsive Design
 
 Status:
 
-⬜ Pending
+✅ Completed
 
 ### Practical Objective
 
@@ -544,6 +545,10 @@ Adaptar a aplicación para:
 -   móbil
 -   tablet
 -   escritorio
+
+### Result
+
+Revisáronse e adaptáronse as pantallas principais mediante `LayoutBuilder`, límites de ancho, cambios entre `Row` e `Column` e, nos listados, entre lista e `GridView` segundo o espazo dispoñible. Probouse o comportamento en diferentes anchos e corrixíronse overflows detectados. O Layout Designer mantén as coordenadas normalizadas e incorporouse unha colocación inicial que evita superposicións.
 
 **---**
 
@@ -5065,3 +5070,67 @@ fluxo funcional, persistente e coherente coa arquitectura existente; as
 melloras visuais e de interacción poderán realizarse posteriormente se o
 tempo do proxecto o permite.
 
+
+
+---
+
+## Session 20 - Responsive Design e peche funcional do MVP
+
+### Status
+
+✅ Completed
+
+### Objective
+
+Adaptar as pantallas principais de MARTOLA a distintos anchos de pantalla e pechar pequenos bloques funcionais pendentes do MVP.
+
+### Concepts Learned and Practiced
+
+- `LayoutBuilder` e uso de `constraints.maxWidth`.
+- Breakpoints simples baseados no espazo realmente dispoñible.
+- Cambio responsive entre `Row` e `Column`.
+- Limitación do ancho máximo do contido en escritorio.
+- Uso de `GridView` en listados cando existe espazo suficiente.
+- Detección e corrección de `RenderFlex overflow`.
+- Mantemento do scroll en formularios e pantallas con contido variable.
+- Reutilización da arquitectura MVVM + Repository Pattern nun módulo pequeno de tarefas.
+- Evolución do esquema SQLite mediante unha nova migración.
+
+### Practical Work
+
+- Adaptación responsive dos formularios de creación e edición de hortas.
+- Adaptación dos listados e pantallas de detalle de hortas.
+- Adaptación do módulo de plantas e dos formularios de creación e edición.
+- Adaptación do listado, detalle e formularios dos rexistros de evolución.
+- Revisión do Dashboard e das súas cards.
+- Probas manuais en diferentes anchos de ventá e corrección dos overflows relevantes para os tamaños obxectivo.
+- Mellora da colocación inicial no Layout Designer para evitar que unha planta nova apareza sobre outra xa colocada.
+- Implementación dun módulo simple de tarefas seguindo a arquitectura existente: modelo, Repository, implementación SQLite, ViewModel e pantallas de creación/listado.
+- Evolución da base de datos á versión 6 coa táboa `tasks`.
+- Eliminación das pantallas provisionais baleiras de Settings e Weather, ao non formar parte do alcance actual.
+
+### Functional Verification
+
+Comprobouse manualmente que os cambios responsive manteñen o funcionamento dos CRUD existentes, a navegación e a persistencia. O Layout Designer conserva as posicións e evita tanto o solapamento durante o movemento como na colocación inicial. O módulo simple de tarefas funciona e persiste os datos.
+
+### Architecture Decisions
+
+- O responsive mantense deliberadamente simple e orientado aos tamaños obxectivo do TFC, evitando complexidade innecesaria para anchos extremadamente pequenos.
+- A autenticación de usuario queda como ampliación opcional se existe tempo antes da presentación.
+- Settings e unha pantalla meteorolóxica independente non forman parte do MVP actual. A meteoroloxía mantense integrada onde achega contexto á horta.
+
+### Current State
+
+Co responsive e o módulo simple de tarefas implementados, os bloques funcionais principais previstos para o MVP están cubertos. O seguinte traballo debe centrarse en testing, revisión/optimización, documentación final e preparación da defensa.
+
+### Documentation Updated
+
+- `PROJECT_CONTEXT.md`
+- `ROADMAP.md`
+- `DATABASE_DESIGN.md`
+- `ARCHITECTURE.md`
+- `DEVELOPMENT_GUIDE.md`
+
+### Commit
+
+Pendente ao finalizar a actualización da documentación da sesión.

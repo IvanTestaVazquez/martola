@@ -87,14 +87,14 @@ Mostra un resumo da información meteorolóxica.
 
 **\### Uso actual**
 
-\- DashboardScreen - GardenDetailsScreen
+\- GardenDetailsScreen
 
 **\### Estado**
 
 ✅ Implementado con datos meteorolóxicos reais.
 
-O widget foi trasladado a `lib/widgets/` ao aparecer unha necesidade
-real de reutilización entre o Dashboard e o detalle dunha horta.
+O widget permanece en `lib/widgets/` como compoñente reutilizable. Na
+versión actual utilízase de forma contextual no detalle dunha horta.
 
 **\*\*---\*\***
 
@@ -145,7 +145,7 @@ tarefas.
 
 **\### Estado**
 
-✅ Implementado con datos ficticios.
+✅ Implementado con datos reais procedentes de `TasksViewModel`.
 
 **\*\*---\*\***
 
@@ -305,12 +305,11 @@ módulos.
 
 **\### Seccións actuais**
 
-\- Resumo meteorolóxico. - Resumo de hortas. - Resumo de tarefas. -
-Accións rápidas.
+\- Resumo de hortas. - Resumo de tarefas. - Accións rápidas.
 
 **\### Widgets utilizados**
 
-\- WeatherCard - GardenCard - TasksCard - QuickActionsCard
+\- GardenCard - TasksCard - QuickActionsCard
 
 **\### Navegación actual**
 
@@ -322,15 +321,13 @@ CreateGardenScreen        └── CreateTaskScreen \`\`\`
 
 ✅ Primeira versión funcional implementada.
 
-A información mostrada combina actualmente datos reais do estado da
-aplicación con datos ficticios:
+A información mostrada procede actualmente do estado real da aplicación:
 
-\- O número de hortas procede de \`GardensViewModel\`. - A información
-meteorolóxica procede de OpenWeather mediante `WeatherViewModel`. - A
-información de tarefas continúa sendo ficticia.
+\- O número de hortas procede de \`GardensViewModel\`. - O número de
+tarefas pendentes procede de `TasksViewModel`.
 
-Os datos ficticios substituiranse progresivamente polos módulos
-funcionais correspondentes.
+A meteoroloxía deixa de mostrarse no Dashboard e permanece asociada ao
+contexto dunha horta concreta mediante `GardenDetailsScreen`.
 
 **\*\*---\*\***
 
@@ -421,7 +418,8 @@ mostrando a nova instancia almacenada no ViewModel.
 
 **\### Accións actuais**
 
-\- Editar horta. - Eliminar horta. - Acceder á lista de plantas. - Acceder ao deseño visual da horta.
+\- Editar horta. - Eliminar horta. - Acceder á lista de plantas. -
+Acceder ao deseño visual da horta.
 
 **\### Eliminación**
 
@@ -437,8 +435,8 @@ Se o usuario confirma:
 
 **\### Funcionalidades previstas**
 
-\- Plantas. - Evolución. - Meteoroloxía. - Outras
-accións relacionadas coa horta.
+\- Plantas. - Evolución. - Meteoroloxía. - Outras accións relacionadas
+coa horta.
 
 **\### Estado**
 
@@ -624,13 +622,25 @@ modelo \`Garden\` é inmutable.
 
 **\### Propósito**
 
-Mostrar as tarefas pendentes do usuario.
+Mostrar as tarefas pendentes rexistradas na aplicación.
+
+**\### Seccións actuais**
+
+\- AppBar. - Lista de tarefas. - Estado baleiro cando non existen
+tarefas. - Acceso á creación dunha nova tarefa.
+
+**\### Datos**
+
+A colección procede de `TasksViewModel` e mantense sincronizada mediante
+Provider.
 
 **\### Estado**
 
-🟡 Pantalla provisional creada.
+✅ Implementada e funcional.
 
-A implementación funcional realizarase nunha fase posterior.
+✅ Integrada con Provider.
+
+✅ Persistencia mediante SQLite.
 
 **\*\*---\*\***
 
@@ -640,11 +650,31 @@ A implementación funcional realizarase nunha fase posterior.
 
 Permitir crear unha nova tarefa.
 
+**\### Tipo**
+
+StatefulWidget
+
+**\### Fluxo**
+
+``` text
+CreateTaskScreen
+    ↓
+TasksViewModel
+    ↓
+TaskRepository
+    ↓
+SQLite
+    ↓
+estado compartido
+    ↓
+notifyListeners()
+```
+
 **\### Estado**
 
-🟡 Pantalla provisional creada.
+✅ Implementada e funcional.
 
-O formulario funcional implementarase nunha fase posterior.
+✅ Integrada co módulo persistente de tarefas.
 
 **\*\*---\*\***
 
@@ -1094,8 +1124,8 @@ Recibe:
 String gardenId
 ```
 
-A pantalla utiliza este identificador para cargar tanto as plantas da horta
-como os elementos xa gardados no deseño.
+A pantalla utiliza este identificador para cargar tanto as plantas da
+horta como os elementos xa gardados no deseño.
 
 ### Carga inicial
 
@@ -1118,8 +1148,8 @@ Deste modo o deseño queda contextualizado pola horta seleccionada.
 
 ### Selector de plantas
 
-O `DropdownButton<GardenPlant>` mostra unicamente as plantas da horta que
-aínda non forman parte do deseño.
+O `DropdownButton<GardenPlant>` mostra unicamente as plantas da horta
+que aínda non forman parte do deseño.
 
 Conceptualmente:
 
@@ -1151,7 +1181,8 @@ GestureDetector
 
 `LayoutBuilder` proporciona as dimensións reais do taboleiro.
 
-Cada planta represéntase actualmente mediante unha caixa cadrada que contén:
+Cada planta represéntase actualmente mediante unha caixa cadrada que
+contén:
 
 -   icona `Icons.eco`;
 -   nome personalizado da planta.
@@ -1167,8 +1198,8 @@ yPosition
 
 A interface convérteas ás dimensións reais do taboleiro.
 
-Isto permite que a disposición non dependa directamente do tamaño concreto
-da pantalla.
+Isto permite que a disposición non dependa directamente do tamaño
+concreto da pantalla.
 
 ### Arrastre
 
@@ -1192,20 +1223,28 @@ persístese a posición final mediante `GardenLayoutViewModel`.
 
 ### Límites
 
-O movemento está limitado para manter toda a caixa da planta dentro da área
-de deseño.
+O movemento está limitado para manter toda a caixa da planta dentro da
+área de deseño.
 
-Os límites teñen en conta a metade do tamaño do elemento e aplícanse mediante
-`clamp()`.
+Os límites teñen en conta a metade do tamaño do elemento e aplícanse
+mediante `clamp()`.
 
 ### Prevención de solapamento
 
-Antes de aceptar unha nova posición compróbase se a planta se superpoñería
-con outro elemento.
+Antes de aceptar unha nova posición compróbase se a planta se
+superpoñería con outro elemento.
 
 Se existe solapamento, a nova posición non se aplica.
 
 Deste modo cada zona ocupada queda reservada para unha única planta.
+
+### Colocación inicial
+
+Ao engadir unha planta nova, a interface busca unha posición dispoñible
+no taboleiro antes de crear o `GardenLayoutItem`.
+
+Isto evita que unha planta recentemente engadida apareza directamente
+sobre outra xa colocada e impida o movemento de ambas.
 
 ### Retirada do deseño
 
@@ -1247,6 +1286,8 @@ despois de reiniciar a aplicación.
 
 ✅ Prevención de solapamento implementada.
 
+✅ Colocación inicial sen solapamentos implementada.
+
 ### Melloras opcionais
 
 -   Grid ou snapping.
@@ -1286,11 +1327,8 @@ DashboardScreen
     │                                       ├── EditPlantEvolutionRecordScreen
     │                                       └── Eliminar rexistro
     │
-    ├── WeatherCard
-    │       ↑
-    │   WeatherViewModel
-    │
     ├── TasksScreen
+    │       └── CreateTaskScreen
     │
     ├── CreateGardenScreen
     │
@@ -1314,7 +1352,7 @@ os ViewModels correspondentes.
 
 # Current UI State Management
 
-A interface utiliza actualmente sete ViewModels compartidos:
+A interface utiliza actualmente oito ViewModels compartidos:
 
 ``` text
 GardensViewModel
@@ -1324,6 +1362,7 @@ PlantEvolutionViewModel
 WeatherViewModel
 GeocodingViewModel
 GardenLayoutViewModel
+TasksViewModel
 ```
 
 Distribuídos mediante:
@@ -1400,10 +1439,14 @@ horta cargada mediante:
 loadItems(gardenId)
 ```
 
-e actualiza as posicións observables durante o arrastre antes de persistir a
-posición final.
+e actualiza as posicións observables durante o arrastre antes de
+persistir a posición final.
 
 Isto evita mesturar coleccións pertencentes a diferentes entidades pai.
+
+`TasksViewModel` mantén a colección de tarefas cargada desde o
+Repository e notifica á interface cando se crean ou modifican os datos
+observables.
 
 `WeatherViewModel` non mantén actualmente un contexto persistente por
 horta. Conserva o estado da consulta meteorolóxica actual:
@@ -1455,7 +1498,7 @@ A persistencia local está integrada mediante SQLite.
 Versión actual:
 
 ``` text
-version: 5
+version: 6
 ```
 
 Táboas relacionadas coa interface actual:
@@ -1466,6 +1509,7 @@ plant_species
 garden_plants
 plant_evolution_records
 garden_layout_items
+tasks
 ```
 
 A táboa `gardens` inclúe agora `latitude` e `longitude` opcionais. Estes
@@ -1478,6 +1522,7 @@ Os CRUD de:
 -   plantas;
 -   rexistros de evolución;
 -   disposición visual das plantas;
+-   tarefas;
 
 funcionan desde a interface ata SQLite.
 
@@ -1503,8 +1548,11 @@ UI
 A versión 4 incorpora a migración v3 → v4 para engadir as coordenadas ás
 hortas conservando os datos existentes.
 
-A versión 5 incorpora a migración v4 → v5 e crea `garden_layout_items` para
-persistir a disposición visual das plantas.
+A versión 5 incorpora a migración v4 → v5 e crea `garden_layout_items`
+para persistir a disposición visual das plantas.
+
+A versión 6 incorpora a migración v5 → v6 e crea `tasks` para persistir
+o módulo básico de tarefas.
 
 `WeatherData` continúa sen persistirse; o histórico meteorolóxico queda
 pendente.
@@ -1741,44 +1789,131 @@ SQLite
 
 A posición das plantas non se define en píxeles absolutos.
 
-Utilízanse coordenadas normalizadas para que a disposición almacenada sexa
-independente das dimensións concretas da pantalla ou do taboleiro.
+Utilízanse coordenadas normalizadas para que a disposición almacenada
+sexa independente das dimensións concretas da pantalla ou do taboleiro.
 
-A interface é responsable de converter esas coordenadas ás dimensións reais
-dispoñibles.
+A interface é responsable de converter esas coordenadas ás dimensións
+reais dispoñibles.
 
 ## Estado tras a sesión
 
-O Layout Designer deixa de ser unha pantalla prevista e pasa a formar parte
-do fluxo funcional real da aplicación.
+O Layout Designer deixa de ser unha pantalla prevista e pasa a formar
+parte do fluxo funcional real da aplicación.
 
 A primeira versión prioriza funcionalidade e simplicidade. O refinamento
-responsive, a posible incorporación de grid/snapping, a representación por
-especie e as melloras de fluidez quedan como iteracións posteriores.
+responsive, a posible incorporación de grid/snapping, a representación
+por especie e as melloras de fluidez quedan como iteracións posteriores.
 
 ------------------------------------------------------------------------
 
-# Desktop Adaptation\*\*
+# Session 20 - Tasks and Responsive Review
 
-**\## Main Navigation**
+## Estado
 
-A navegación inferior substituirase por:
+✅ Completada.
 
-\- NavigationRail - Sidebar
+## Tasks
 
-**\*\*---\*\***
+O módulo de tarefas deixa de ser provisional e pasa a formar parte do
+fluxo funcional da aplicación.
 
-**\## Layout**
+Cambios principais:
 
-En escritorio utilizaranse:
+-   `TasksScreen` funcional.
+-   `CreateTaskScreen` funcional.
+-   Integración con `TasksViewModel`.
+-   Uso da capa `TaskRepository`.
+-   Persistencia mediante SQLite.
+-   Actualización de `TasksCard` con datos reais.
+-   Evolución da base de datos á versión 6.
 
-\- múltiples columnas - paneis simultáneos - maior área de traballo
+O módulo mantense deliberadamente simple para cubrir o obxectivo de
+tarefas pendentes sen ampliar innecesariamente o alcance do TFC.
 
-Especialmente en:
+## Dashboard
 
-\- GardenDetailsScreen - LayoutDesignerScreen
+Elimínase a meteoroloxía do Dashboard.
 
-**\*\*---\*\***
+A información meteorolóxica queda asociada á horta correspondente dentro
+de `GardenDetailsScreen`, onde existe o contexto necesario de
+localización.
+
+O Dashboard queda centrado en:
+
+``` text
+DashboardScreen
+├── GardenCard
+├── TasksCard
+└── QuickActionsCard
+```
+
+## Layout Designer
+
+Durante as probas detectouse que unha planta retirada e engadida de novo
+podía aparecer inicialmente sobre outra xa existente.
+
+Corrixiuse a colocación inicial para buscar unha posición libre antes de
+engadir o elemento ao deseño.
+
+Verificouse posteriormente:
+
+-   movemento individual;
+-   prevención de solapamentos;
+-   retirada;
+-   nova incorporación;
+-   persistencia da posición.
+
+## Responsive
+
+Realizáronse probas manuais con diferentes anchos de pantalla sobre as
+pantallas principais.
+
+A interface mantense estable nos tamaños obxectivo habituais de móbil,
+tablet e escritorio.
+
+Detectáronse posibles overflows nalgunhas `Row` internas das Cards do
+Dashboard ao reducir a ventá a anchos excepcionalmente estreitos,
+aproximadamente por baixo de 314 px.
+
+Non se modifica a estrutura actual porque ese rango queda fóra do tamaño
+práctico previsto para os dispositivos obxectivo e a solución engadiría
+complexidade sen beneficio relevante para o MVP.
+
+## Pantallas descartadas do alcance actual
+
+`SettingsScreen` e a antiga `WeatherScreen` non se consideran necesarias
+para o MVP.
+
+-   Os axustes avanzados quedan como posible ampliación.
+-   A meteoroloxía xa está integrada contextualmente en
+    `GardenDetailsScreen`.
+-   A autenticación (`LoginScreen` / `RegisterScreen`) continúa como
+    posible funcionalidade futura se existe tempo antes da entrega.
+
+------------------------------------------------------------------------
+
+# Desktop Adaptation
+
+## Estado actual
+
+A aplicación utiliza a mesma navegación baseada en `Navigator` nas
+plataformas obxectivo.
+
+Non se considera necesario introducir nesta fase unha navegación
+específica mediante `NavigationRail` ou Sidebar.
+
+A adaptación actual baséase principalmente en:
+
+-   layouts flexibles;
+-   uso de `Expanded`, `LayoutBuilder` e scroll cando corresponde;
+-   coordenadas normalizadas no Layout Designer;
+-   validación manual en diferentes tamaños de ventá.
+
+Unha navegación ou composición específica para escritorio poderá
+valorarse como refinamento futuro se achega unha mellora real de
+usabilidade.
+
+**---**
 
 **\# Future Screens**
 
@@ -1794,17 +1929,18 @@ StatisticsScreen
 A implementación actual continúa priorizando funcionalidade fronte a
 deseño visual.
 
-Os módulos de hortas, plantas, evolución e deseño visual dispoñen xa
-dunha primeira interface funcional con persistencia real. O módulo
-meteorolóxico está integrado mediante datos remotos reais e pode
-contextualizarse por horta usando as coordenadas persistidas.
+Os módulos de hortas, plantas, evolución, tarefas e deseño visual
+dispoñen xa dunha interface funcional con persistencia real. O módulo
+meteorolóxico está integrado mediante datos remotos reais e
+contextualízase por horta usando as coordenadas persistidas.
 `WeatherData` continúa sen persistirse.
 
 Os refinamentos visuais poderán realizarse posteriormente sen alterar o
 fluxo básico de navegación.
 
-O deseño definitivo definirase posteriormente mediante o Design System e
-os mockups de Figma.
+O Design System e os mockups de Figma poden empregarse para o
+refinamento visual e para documentar a interface, sen bloquear a versión
+funcional actual.
 
 Este documento considérase a referencia principal para a implementación
 das pantallas en Flutter.

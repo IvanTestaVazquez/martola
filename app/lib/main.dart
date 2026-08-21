@@ -10,12 +10,14 @@ import 'repositories/garden_plant_repository.dart';
 import 'repositories/plant_species_repository.dart';
 import 'repositories/plant_evolution_record_repository.dart';
 import 'repositories/garden_layout_repository.dart';
+import 'repositories/task_repository.dart';
 
 import 'repositories/sqlite/sqlite_garden_repository.dart';
 import 'repositories/sqlite/sqlite_garden_plant_repository.dart';
 import 'repositories/sqlite/sqlite_plant_species_repository.dart';
 import 'repositories/sqlite/sqlite_plant_evolution_record_repository.dart';
 import 'repositories/sqlite/sqlite_garden_layout_repository.dart';
+import 'repositories/sqlite/sqlite_task_repository.dart';
 
 import 'repositories/weather_repository.dart';
 import 'repositories/open_weather/open_weather_repository.dart';
@@ -30,6 +32,7 @@ import 'viewmodels/plant_evolution_viewmodel.dart';
 import 'viewmodels/weather_viewmodel.dart';
 import 'viewmodels/geocoding_viewmodel.dart';
 import 'viewmodels/garden_layout_viewmodel.dart';
+import 'viewmodels/tasks_viewmodel.dart';
 
 import 'views/home/home_screen.dart';
 
@@ -65,6 +68,9 @@ Future<void> main() async {
   final gardenLayoutRepository = SQLiteGardenLayoutRepository(
     databaseService: databaseService
   );
+  final taskRepository = SQLiteTaskRepository(
+    databaseService: databaseService
+  );
   final weatherRepository = OpenWeatherRepository(
     weatherService: weatherService,
   );
@@ -82,6 +88,7 @@ Future<void> main() async {
       weatherRepository: weatherRepository,
       geocodingRepository: geocodingRepository,
       gardenLayoutRepository: gardenLayoutRepository,
+      taskRepository: taskRepository,
     ),
   );
 }
@@ -96,6 +103,7 @@ class MartolaApp extends StatelessWidget {
     required this.weatherRepository,
     required this.geocodingRepository,
     required this.gardenLayoutRepository,
+    required this.taskRepository,
   });
 
   final GardenRepository gardenRepository;
@@ -103,6 +111,7 @@ class MartolaApp extends StatelessWidget {
   final GardenPlantRepository gardenPlantRepository;
   final PlantEvolutionRecordRepository plantEvolutionRecordRepository;
   final GardenLayoutRepository gardenLayoutRepository;
+  final TaskRepository taskRepository;
 
   final WeatherRepository weatherRepository;
   final GeocodingRepository geocodingRepository;
@@ -135,6 +144,11 @@ class MartolaApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => GardenLayoutViewModel(
           gardenLayoutRepository: gardenLayoutRepository,
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => TasksViewModel(
+          repository: taskRepository,
           ),
         ),
         ChangeNotifierProvider(

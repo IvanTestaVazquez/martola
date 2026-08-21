@@ -27,7 +27,7 @@ class DatabaseService {
     final database = await _databaseFactory.openDatabase(
       databasePath,
       options: OpenDatabaseOptions(
-        version: 5,
+        version: 6,
         onConfigure: (db) async{
           await db.execute('PRAGMA foreign_keys = ON');
         },
@@ -89,24 +89,36 @@ class DatabaseService {
             ''',
           );
 
-           await db.execute(
+          await db.execute(
+            '''
+            CREATE TABLE garden_layout_items (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              garden_id INTEGER NOT NULL,
+              garden_plant_id INTEGER NOT NULL,
+              x_position REAL NOT NULL,
+              y_position REAL NOT NULL,
+
+              FOREIGN KEY (garden_id)
+                REFERENCES gardens(id)
+                ON DELETE CASCADE,
+
+              FOREIGN KEY (garden_plant_id)
+                REFERENCES garden_plants(id)
+                ON DELETE CASCADE,
+
+              UNIQUE (garden_plant_id)
+            )
+            ''',
+          );
+
+          await db.execute(
               '''
-              CREATE TABLE garden_layout_items (
+              CREATE TABLE tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                garden_id INTEGER NOT NULL,
-                garden_plant_id INTEGER NOT NULL,
-                x_position REAL NOT NULL,
-                y_position REAL NOT NULL,
-
-                FOREIGN KEY (garden_id)
-                  REFERENCES gardens(id)
-                  ON DELETE CASCADE,
-
-                FOREIGN KEY (garden_plant_id)
-                  REFERENCES garden_plants(id)
-                  ON DELETE CASCADE,
-
-                UNIQUE (garden_plant_id)
+                title TEXT NOT NULL,
+                description TEXT,
+                due_date TEXT,
+                is_completed INTEGER NOT NULL DEFAULT 0
               )
               ''',
             );
@@ -191,6 +203,20 @@ class DatabaseService {
                   ON DELETE CASCADE,
 
                 UNIQUE (garden_plant_id)
+              )
+              ''',
+            );
+          }
+
+          if (oldVersion < 6){
+            await db.execute(
+              '''
+               CREATE TABLE tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                description TEXT,
+                due_date TEXT,
+                is_completed INTEGER NOT NULL DEFAULT 0
               )
               ''',
             );

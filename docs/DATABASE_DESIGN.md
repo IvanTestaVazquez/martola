@@ -59,7 +59,9 @@ users
      │
      ├── weather_records
      │
-     └── garden_layout_items
+     ├── garden_layout_items
+     │
+     └── tasks
 
 plant_species
 │
@@ -85,6 +87,7 @@ garden_plants
    ▼
 plant_evolution_records
 garden_layout_items
+tasks
 ```
 
 ------------------------------------------------------------------------
@@ -339,6 +342,24 @@ Os campos obxectivo `width`, `height`, `rotation`, `color` e `icon` quedan como 
 
 ------------------------------------------------------------------------
 
+## tasks
+
+Representa tarefas sinxelas de mantemento ou seguimento creadas polo usuario.
+
+### Current Implemented Fields
+
+-   `id`
+-   `title`
+-   `is_completed`
+
+`is_completed` almacénase en SQLite como `INTEGER` (`0` ou `1`) e represéntase no dominio como `bool`.
+
+### Status
+
+✅ Implementada desde SQLite v6.
+
+------------------------------------------------------------------------
+
 # Relationship Summary
 
 Modelo obxectivo:
@@ -357,6 +378,8 @@ gardens 1:N weather_records
 gardens 1:N garden_layout_items
 
 garden_plants 1:1 garden_layout_items
+
+As tarefas do MVP son independentes e non teñen actualmente clave foránea cara a unha horta ou planta.
 ```
 
 Relacións fisicamente implementadas:
@@ -371,6 +394,7 @@ garden_plants 1:N plant_evolution_records
 gardens 1:N garden_layout_items
 
 garden_plants 1:1 garden_layout_items
+tasks
 ```
 
 ------------------------------------------------------------------------
@@ -411,7 +435,7 @@ DatabaseService
 ## Current Version
 
 ``` text
-version: 5
+version: 6
 ```
 
 ## Implemented Migrations
@@ -421,6 +445,7 @@ v1 → v2
 v2 → v3
 v3 → v4
 v4 → v5
+v5 → v6
 ```
 
 Ambas migracións foron executadas e comprobadas conservando os datos
@@ -568,6 +593,22 @@ CREATE TABLE garden_layout_items (
 ```
 
 As posicións representan o centro do elemento mediante coordenadas normalizadas. A interface convérteas a píxeles segundo o tamaño dispoñible do taboleiro.
+
+------------------------------------------------------------------------
+
+## tasks
+
+A táboa `tasks` persiste o módulo básico de tarefas do MVP.
+
+``` sql
+CREATE TABLE tasks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  is_completed INTEGER NOT NULL DEFAULT 0
+)
+```
+
+A implementación actual mantén o módulo deliberadamente simple: unha tarefa dispón dun título e dun estado pendente/completada.
 
 ------------------------------------------------------------------------
 
@@ -808,6 +849,12 @@ yPosition
 
 ------------------------------------------------------------------------
 
+## Task
+
+O modelo de tarefa mantén un identificador opcional, un título e o estado de completado. Na fronteira con SQLite, o booleano convértese entre `bool` e `INTEGER` (`0`/`1`).
+
+------------------------------------------------------------------------
+
 # Implemented Repository Operations
 
 ## Gardens
@@ -888,6 +935,12 @@ Durante o arrastre, `GardenLayoutViewModel` actualiza a posición en memoria. A 
 
 ------------------------------------------------------------------------
 
+## Tasks
+
+O Repository SQLite de tarefas permite cargar, crear, actualizar o estado e eliminar tarefas segundo as operacións utilizadas polo módulo actual.
+
+------------------------------------------------------------------------
+
 # CRUD Verification
 
 ## Gardens
@@ -945,6 +998,17 @@ Comprobouse desde a interface:
 -   Integridade mediante `ON DELETE CASCADE`.
 -   Unicidade mediante `UNIQUE (garden_plant_id)`.
 
+## Tasks
+
+Comprobouse desde a interface:
+
+-   Crear tarefas.
+-   Recuperalas desde SQLite.
+-   Marcalas como completadas ou pendentes.
+-   Eliminalas.
+-   Persistencia entre reinicios.
+-   Actualización reactiva do contador de tarefas pendentes no Dashboard.
+
 ------------------------------------------------------------------------
 
 # Database Evolution
@@ -988,6 +1052,8 @@ Engadiu:
 
 ``` text
 plant_evolution_records
+garden_layout_items
+tasks
 ```
 
 Migración:
@@ -1043,10 +1109,22 @@ A migración `v4 → v5` crea a nova táboa coas relacións cara a `gardens` e `
 
 ------------------------------------------------------------------------
 
+## Version 6
+
+Engadiu:
+
+``` text
+tasks
+```
+
+A migración `v5 → v6` incorpora a persistencia do módulo básico de tarefas.
+
+------------------------------------------------------------------------
+
 ## New Installations
 
 Nunha instalación nova, `onCreate()` crea directamente o esquema
-completo correspondente á versión 5:
+completo correspondente á versión 6:
 
 ``` text
 gardens
@@ -1054,6 +1132,7 @@ plant_species
 garden_plants
 plant_evolution_records
 garden_layout_items
+tasks
 ```
 
 A táboa `gardens` inclúe tamén `latitude` e `longitude`.
@@ -1065,7 +1144,7 @@ nova.
 
 ## Existing Installations
 
-Unha instalación anterior que pase directamente a v5 executará acumulativamente as migracións necesarias:
+Unha instalación anterior que pase directamente a v6 executará acumulativamente as migracións necesarias:
 
 ``` text
 oldVersion < 2
@@ -1080,6 +1159,9 @@ oldVersion < 4
 
 oldVersion < 5
 → crea garden_layout_items
+
+oldVersion < 6
+→ crea tasks
 ```
 
 Unha instalación v2 executará:
@@ -1093,6 +1175,9 @@ oldVersion < 4
 
 oldVersion < 5
 → crea garden_layout_items
+
+oldVersion < 6
+→ crea tasks
 ```
 
 ------------------------------------------------------------------------
@@ -1116,6 +1201,10 @@ if (oldVersion < 4) {
 
 if (oldVersion < 5) {
   // cambios v5
+}
+
+if (oldVersion < 6) {
+  // cambios v6
 }
 ```
 
@@ -1180,7 +1269,7 @@ representa a resposta meteorolóxica utilizada pola aplicación, pero
 Por este motivo:
 
 -   `weather_records` continúa como táboa obxectivo non implementada.
--   A versión da base de datos é `5`.
+-   A versión da base de datos é `6`.
 -   A migración `v3 → v4` engadiu `latitude` e `longitude` a `gardens`.
 -   Non se almacenan aínda históricos meteorolóxicos.
 -   Os datos meteorolóxicos actuais pérdense ao pechar a aplicación e
@@ -1201,7 +1290,7 @@ As seguintes táboas do deseño obxectivo aínda non están implementadas:
 
 Serán incorporadas cando se desenvolvan os seus módulos.
 
-`plant_evolution_records` forma parte do esquema físico desde v3 e `garden_layout_items` desde v5.
+`plant_evolution_records` forma parte do esquema físico desde v3, `garden_layout_items` desde v5 e `tasks` desde v6.
 
 ------------------------------------------------------------------------
 
@@ -1227,7 +1316,7 @@ Posibles ampliacións:
 
 # Current Implementation Note
 
-A infraestrutura SQLite está actualmente operativa na versión 5.
+A infraestrutura SQLite está actualmente operativa na versión 6.
 
 A arquitectura de persistencia é:
 
@@ -1251,6 +1340,7 @@ SQLitePlantSpeciesRepository
 SQLiteGardenPlantRepository
 SQLitePlantEvolutionRecordRepository
 SqliteGardenLayoutRepository
+SQLiteTaskRepository
 ```
 
 Táboas activas:

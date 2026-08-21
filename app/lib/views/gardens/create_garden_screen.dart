@@ -43,6 +43,30 @@ class _CreateGardenScreenState extends State<CreateGardenScreen> {
   Widget build(BuildContext context) {
     final geocodingViewModel = context.watch<GeocodingViewModel>();
 
+    final locationField = TextFormField(
+      controller: _locationController,
+      decoration: const InputDecoration(
+        labelText: 'Localización',
+      ),
+      validator: (value) =>
+          value == null || value.trim().isEmpty
+              ? 'Introduce unha localización para a horta'
+              : null,
+    );
+
+    final searchButton = ElevatedButton(
+      onPressed: () async {
+        await context
+            .read<GeocodingViewModel>()
+            .searchLocation(
+              location: _locationController.text,
+            );
+      },
+      child: const Text(
+        'Buscar localización',
+      ),
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Formulario nova horta'),
@@ -50,168 +74,175 @@ class _CreateGardenScreenState extends State<CreateGardenScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nome'
-                        ),
-                      validator:(value) => 
-                        value == null || value.trim().isEmpty
-                          ?'Introduce un nome para a horta' 
-                          : null,
-                    ),
-                    const SizedBox(height: 8.0),
-                    Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: _locationController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Localización',
-                                ),
-                                validator: (value) =>
-                                    value == null || value.trim().isEmpty
-                                        ? 'Introduce unha localización para a horta'
-                                        : null,
+          child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                maxWidth: 700,
+              ),
+              child:           SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Nome'
+                          ),
+                        validator:(value) => 
+                          value == null || value.trim().isEmpty
+                            ?'Introduce un nome para a horta' 
+                            : null,
+                      ),
+                      const SizedBox(height: 8.0),
+                      Column(
+                        children: [
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isNarrow = constraints.maxWidth < 500;
+
+                              if (isNarrow) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    locationField,
+                                    const SizedBox(height: 8),
+                                    searchButton,
+                                  ],
+                                );
+                              }
+
+                              return Row(
+                                children: [
+                                  Expanded(
+                                    child: locationField,
+                                  ),
+                                  const SizedBox(width: 16),
+                                  searchButton,
+                                ],
+                              );
+                            },
+                          ),
+
+                          if (geocodingViewModel.isLoading)
+                            const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: CircularProgressIndicator(),
+                            ),
+                          if (geocodingViewModel.errorMessage != null)
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(
+                                geocodingViewModel.errorMessage!,
+                                style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            ElevatedButton(
-                              onPressed: () async {
-                                await context
-                                    .read<GeocodingViewModel>()
-                                    .searchLocation(
-                                      location: _locationController.text,
-                                    );
-                              },
-                              child: const Text('Buscar localización'),
-                            ),
-                          ],
-                        ),
-
-                        if (geocodingViewModel.isLoading)
+                          if (!geocodingViewModel.isLoading &&
+                            geocodingViewModel.errorMessage == null &&
+                            geocodingViewModel.results != null &&
+                            geocodingViewModel.results!.isEmpty)
                           const Padding(
                             padding: EdgeInsets.all(16),
-                            child: CircularProgressIndicator(),
-                          ),
-                        if (geocodingViewModel.errorMessage != null)
-                          Padding(
-                            padding: const EdgeInsets.all(16),
                             child: Text(
-                              geocodingViewModel.errorMessage!,
-                              style: Theme.of(context).textTheme.bodyMedium,
+                              'Non se atoparon localizacións',
                             ),
                           ),
-                        if (!geocodingViewModel.isLoading &&
-                          geocodingViewModel.errorMessage == null &&
-                          geocodingViewModel.results != null &&
-                          geocodingViewModel.results!.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text(
-                            'Non se atoparon localizacións',
-                          ),
+                          if (!geocodingViewModel.isLoading &&
+                              geocodingViewModel.results != null &&
+                              geocodingViewModel.results!.isNotEmpty)
+                            RadioGroup<GeocodingResult>(
+                              groupValue: _selectedGeocodingResult,
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedGeocodingResult = value;
+
+                                  if (value != null){
+                                    _locationController.text = value.name;
+                                  }
+                                });
+                              },
+                              child: Column(
+                                children: [
+                                  for (final result in geocodingViewModel.results!)
+                                    RadioListTile<GeocodingResult>(
+                                      title: Text(
+                                        '${result.name} — '
+                                        '${result.state ?? 'Sen rexión'}, '
+                                        '${result.country ?? ''}',
+                                      ),
+                                      subtitle: Text(
+                                        '${result.latitude}, ${result.longitude}',
+                                      ),
+                                      value: result,
+                                    ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),     
+                      const SizedBox(height: 8.0),
+                      TextFormField(
+                        controller: _areaController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Superficie (m²)', 
                         ),
-                        if (!geocodingViewModel.isLoading &&
-                            geocodingViewModel.results != null &&
-                            geocodingViewModel.results!.isNotEmpty)
-                          RadioGroup<GeocodingResult>(
-                            groupValue: _selectedGeocodingResult,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedGeocodingResult = value;
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Introduce unha superficie';
+                          }
 
-                                if (value != null){
-                                  _locationController.text = value.name;
-                                }
-                              });
-                            },
-                            child: Column(
-                              children: [
-                                for (final result in geocodingViewModel.results!)
-                                  RadioListTile<GeocodingResult>(
-                                    title: Text(
-                                      '${result.name} — '
-                                      '${result.state ?? 'Sen rexión'}, '
-                                      '${result.country ?? ''}',
-                                    ),
-                                    subtitle: Text(
-                                      '${result.latitude}, ${result.longitude}',
-                                    ),
-                                    value: result,
-                                  ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),     
-                    const SizedBox(height: 8.0),
-                    TextFormField(
-                      controller: _areaController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Superficie (m²)', 
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Introduce unha superficie';
-                        }
+                          final area = double.tryParse(value);
 
-                        final area = double.tryParse(value);
+                          if (area == null) {
+                            return 'Introduce unha superficie válida';
+                          }
 
-                        if (area == null) {
-                          return 'Introduce unha superficie válida';
-                        }
+                          if (area <= 0) {
+                            return 'A superficie debe ser maior que 0';
+                          }
 
-                        if (area <= 0) {
-                          return 'A superficie debe ser maior que 0';
-                        }
+                          return null;
+                        },
+                      ),              
+                      const SizedBox(height: 16.0),
+                      FilledButton(
+                        onPressed: () async {
+                          final isValid = _formKey.currentState!.validate();
+                          
+                          if(!isValid) {
+                            return;
+                          }
 
-                        return null;
-                      },
-                    ),              
-                    const SizedBox(height: 16.0),
-                    FilledButton(
-                      onPressed: () async {
-                        final isValid = _formKey.currentState!.validate();
-                        
-                        if(!isValid) {
-                          return;
-                        }
+                          final area = double.parse(_areaController.text);
 
-                        final area = double.parse(_areaController.text);
+                          final selectedLocation = _selectedGeocodingResult;
 
-                        final selectedLocation = _selectedGeocodingResult;
+                          final garden = Garden(
+                            name: _nameController.text.trim(),
+                            location: selectedLocation?.name
+                                  ?? _locationController.text.trim(),
+                            area: area,
+                            latitude: _selectedGeocodingResult?.latitude,
+                            longitude: _selectedGeocodingResult?.longitude,
+                          );
 
-                        final garden = Garden(
-                          name: _nameController.text.trim(),
-                          location: selectedLocation?.name
-                                 ?? _locationController.text.trim(),
-                          area: area,
-                          latitude: _selectedGeocodingResult?.latitude,
-                          longitude: _selectedGeocodingResult?.longitude,
-                        );
+                          await context.read<GardensViewModel>().addGarden(garden);
 
-                        await context.read<GardensViewModel>().addGarden(garden);
-
-                        if (!context.mounted) return;
-                        
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('Crear horta'),
-                    )
-                  ],
-                ),
-              ) 
+                          if (!context.mounted) return;
+                          
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('Crear horta'),
+                      )
+                    ],
+                  ),
+                ), 
+            ),
           ),
+        ),
+
         ),
       )
     );

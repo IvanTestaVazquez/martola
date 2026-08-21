@@ -40,94 +40,128 @@ class _AddPlantEvolutionRecordScreenState extends State<AddPlantEvolutionRecordS
       appBar: AppBar(
         title: const Text('Engadir rexistro de evolución'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Data: '
-                    '${_date.day}/'
-                    '${_date.month}/'
-                    '${_date.year}',
-                  ),
-                  TextButton(
-                    onPressed: _selectDate,
-                    child: const Text('Cambiar'),
-                  ),
-                ],
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 600,
               ),
-              TextFormField(
-                  controller: _heightController,
-                  decoration: const InputDecoration(
-                    labelText: 'Altura (cm)'
-                    ),
-                  validator:(value) {
-                    if (value == null || value.trim().isEmpty){
-                      return null;
-                    }
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isNarrow = constraints.maxWidth < 400;
 
-                    final height = double.tryParse(value);
+                          final dateText = Text(
+                            'Data: '
+                            '${_date.day}/'
+                            '${_date.month}/'
+                            '${_date.year}',
+                          );
 
-                    if (height == null){
-                      return 'A altura non é un valor válido';
-                    }
+                          final changeButton = TextButton(
+                            onPressed: _selectDate,
+                            child: const Text('Cambiar'),
+                          );
 
-                    if (height <= 0) {
-                      return 'A altura debe ser maior que 0';
-                    }
+                          if (isNarrow) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                dateText,
+                                changeButton,
+                              ],
+                            );
+                          }
 
-                    return null;
-                  },
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),                                       
-                ),              
-              const SizedBox(height: 16),
-              TextFormField(
-                  controller: _notesController,
-                  decoration: const InputDecoration(
-                    labelText: 'Notas adicionais'
-                    ),             
-                ),        
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () async {
-                  if (!_formKey.currentState!.validate()) {
-                    return;
-                  }
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              dateText,
+                              changeButton,
+                            ],
+                          );
+                        },
+                      ),
+                      TextFormField(
+                          controller: _heightController,
+                          decoration: const InputDecoration(
+                            labelText: 'Altura (cm)'
+                            ),
+                          validator:(value) {
+                            if (value == null || value.trim().isEmpty){
+                              return null;
+                            }
 
-                  final heightText = _heightController.text.trim();
+                            final height = double.tryParse(value);
 
-                  final height = (heightText.isEmpty)
-                    ? null
-                    : double.parse(heightText);
+                            if (height == null){
+                              return 'A altura non é un valor válido';
+                            }
 
-                  final notesText = _notesController.text.trim();
+                            if (height <= 0) {
+                              return 'A altura debe ser maior que 0';
+                            }
 
-                  final notes = notesText.isEmpty
-                      ? null
-                      : notesText;
+                            return null;
+                          },
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),                                       
+                        ),              
+                      const SizedBox(height: 16),
+                      TextFormField(
+                          controller: _notesController,
+                          decoration: const InputDecoration(
+                            labelText: 'Notas adicionais'
+                          ),
+                          minLines: 3,
+                          maxLines: 5,             
+                        ),        
+                      const SizedBox(height: 24),
+                      FilledButton(
+                        onPressed: () async {
+                          if (!_formKey.currentState!.validate()) {
+                            return;
+                          }
 
-                  await context.read<PlantEvolutionViewModel>().addRecord(
-                    date: _date,
-                    height: height,
-                    notes: notes,
-                  );
+                          final heightText = _heightController.text.trim();
 
-                  if (!context.mounted) {
-                    return;
-                  }
+                          final height = (heightText.isEmpty)
+                            ? null
+                            : double.parse(heightText);
 
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Gardar'),
+                          final notesText = _notesController.text.trim();
+
+                          final notes = notesText.isEmpty
+                              ? null
+                              : notesText;
+
+                          await context.read<PlantEvolutionViewModel>().addRecord(
+                            date: _date,
+                            height: height,
+                            notes: notes,
+                          );
+
+                          if (!context.mounted) {
+                            return;
+                          }
+
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('Gardar'),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
+            ),
           ),
         ),
       ),

@@ -43,7 +43,7 @@ A arquitectura segue un enfoque Local First.
 # Current Implementation State
 
 A arquitectura está actualmente aplicada aos módulos de hortas,
-especies, plantas, evolución das plantas, meteoroloxía, xeocodificación e deseño visual da horta.
+especies, plantas, evolución das plantas, meteoroloxía, xeocodificación, deseño visual da horta e tarefas.
 
 A composición principal realízase en `main.dart`.
 
@@ -71,6 +71,7 @@ PlantEvolutionViewModel
 WeatherViewModel
 GeocodingViewModel
 GardenLayoutViewModel
+TasksViewModel
 ```
 
 Todos eles estenden `ChangeNotifier`.
@@ -94,7 +95,7 @@ Todos os Repositories SQLite comparten a mesma instancia de
 A base de datos utiliza actualmente:
 
 ``` text
-version: 5
+version: 6
 ```
 
 Táboas implementadas:
@@ -105,6 +106,7 @@ plant_species
 garden_plants
 plant_evolution_records
 garden_layout_items
+tasks
 ```
 
 Migracións comprobadas:
@@ -114,6 +116,7 @@ v1 → v2
 v2 → v3
 v3 → v4
 v4 → v5
+v5 → v6
 ```
 
 A arquitectura xa soporta o seguinte fluxo funcional:
@@ -159,6 +162,7 @@ Modelos actualmente implementados:
 -   `WeatherData`
 -   `GeocodingResult`
 -   `GardenLayoutItem`
+-   `Task`
 
 Modelos previstos:
 
@@ -281,7 +285,7 @@ Pantallas actualmente implementadas:
 
 -   `LayoutDesignerScreen`
 
-## Provisional
+## Tasks
 
 -   `TasksScreen`
 -   `CreateTaskScreen`
@@ -488,6 +492,23 @@ GardenLayoutRepository
 ```
 
 O movemento durante `onPanUpdate` actualízase primeiro en memoria mediante `updateItemPositionLocally()`. A persistencia en SQLite realízase ao finalizar o arrastre con `updateItem()`, evitando escrituras continuas durante cada pequeno movemento do punteiro.
+
+------------------------------------------------------------------------
+
+## TasksViewModel
+
+Xestiona as tarefas locais da aplicación seguindo o mesmo patrón MVVM dos demais módulos persistentes.
+
+Operacións principais:
+
+``` text
+loadTasks()
+addTask()
+toggleTask()
+removeTask()
+```
+
+Depende de `TaskRepository`. As tarefas son globais no MVP actual e non están asociadas obrigatoriamente a unha horta ou planta. O estado permite obter tamén o número de tarefas pendentes para o Dashboard.
 
 ------------------------------------------------------------------------
 
@@ -718,6 +739,21 @@ A lectura está contextualizada por `gardenId`. A táboa garante ademais que unh
 
 ------------------------------------------------------------------------
 
+## TaskRepository
+
+Operacións principais:
+
+``` text
+getTasks()
+addTask()
+updateTask()
+removeTask()
+```
+
+A implementación actual é `SQLiteTaskRepository`. As tarefas persístense localmente e son independentes doutras entidades no MVP.
+
+------------------------------------------------------------------------
+
 ## WeatherRepository
 
 Operación:
@@ -886,7 +922,7 @@ martola.db
 ## Current Version
 
 ``` text
-version: 5
+version: 6
 ```
 
 ## Version 1
@@ -926,6 +962,16 @@ garden_layout_items
 
 coas relacións a `gardens` e `garden_plants`, coordenadas normalizadas e `UNIQUE (garden_plant_id)`.
 
+## Version 6
+
+Engadiu:
+
+``` text
+tasks
+```
+
+para persistir o módulo básico de tarefas locais.
+
 ------------------------------------------------------------------------
 
 # Migration Strategy
@@ -933,7 +979,7 @@ coas relacións a `gardens` e `garden_plants`, coordenadas normalizadas e `UNIQU
 `onCreate()` crea directamente o esquema correspondente á versión
 actual.
 
-Nunha instalación nova v5:
+Nunha instalación nova v6:
 
 ``` text
 gardens
@@ -961,6 +1007,10 @@ if (oldVersion < 4) {
 if (oldVersion < 5) {
   // crea garden_layout_items
 }
+
+if (oldVersion < 6) {
+  // crea tasks
+}
 ```
 
 Isto permite actualizar desde versións antigas sen perder datos.
@@ -976,6 +1026,8 @@ foi comprobada mantendo hortas e plantas xa existentes.
 A migración `v3 → v4` engade `latitude` e `longitude` opcionais á táboa `gardens`, conservando as hortas xa persistidas.
 
 A migración `v4 → v5` crea `garden_layout_items` para persistir o deseño visual das hortas.
+
+A migración `v5 → v6` crea `tasks` para persistir as tarefas locais.
 
 ------------------------------------------------------------------------
 
@@ -1125,7 +1177,8 @@ MultiProvider
 ├── PlantEvolutionViewModel
 ├── WeatherViewModel
 ├── GeocodingViewModel
-└── GardenLayoutViewModel
+├── GardenLayoutViewModel
+└── TasksViewModel
     ↓
 MaterialApp
     ↓
@@ -1427,6 +1480,7 @@ models/
 ├── garden_plant.dart
 ├── plant_evolution_record.dart
 ├── garden_layout_item.dart
+├── task.dart
 ├── weather_data.dart
 └── geocoding_result.dart
 ```
@@ -1443,7 +1497,8 @@ viewmodels/
 ├── plant_evolution_viewmodel.dart
 ├── weather_viewmodel.dart
 ├── geocoding_viewmodel.dart
-└── garden_layout_viewmodel.dart
+├── garden_layout_viewmodel.dart
+└── tasks_viewmodel.dart
 ```
 
 ------------------------------------------------------------------------
@@ -1466,7 +1521,9 @@ repositories/
 ├── geocoding_repository.dart
 ├── garden_layout_repository.dart
 ├── sqlite/
-│   └── sqlite_garden_layout_repository.dart
+│   ├── sqlite_garden_layout_repository.dart
+│   └── sqlite_task_repository.dart
+├── task_repository.dart
 └── open_weather_geocoding_repository.dart
 ```
 
@@ -1785,7 +1842,7 @@ SQLite v5
 
 A View utiliza `LayoutBuilder` para converter esas coordenadas ás dimensións reais do taboleiro. O movemento actualízase localmente durante `onPanUpdate` e só se persiste ao finalizar con `onPanEnd`.
 
-O deseñador limita os elementos ao interior do taboleiro, evita o solapamento entre plantas e permite retirar unha planta do deseño sen eliminala da horta. As posicións persisten entre navegacións e reinicios da aplicación.
+O deseñador limita os elementos ao interior do taboleiro, evita o solapamento entre plantas e permite retirar unha planta do deseño sen eliminala da horta. As posicións persisten entre navegacións e reinicios da aplicación. A colocación inicial busca unha posición predefinida libre, evitando inserir unha planta directamente sobre outra existente.
 
 ---
 
@@ -1798,10 +1855,10 @@ Posibles ampliacións:
 -   Posible horta principal para o Dashboard.
 -   Predición meteorolóxica.
 -   Histórico climático.
--   Melloras do Layout Designer: maior fluidez, grid/snapping, colocación inicial libre e representación visual por especie.
+-   Melloras do Layout Designer: maior fluidez, grid/snapping e representación visual por especie.
 -   Sincronización cloud.
 -   Firebase ou Supabase.
--   Authentication.
+-   Autenticación de usuario como ampliación opcional se o tempo dispoñible antes da presentación o permite.
 -   Push Notifications.
 -   AI Services.
 -   Exportación de históricos.
@@ -1846,7 +1903,7 @@ funcional real.
 # Notes
 
 A arquitectura actual é suficiente para o MVP e xa soporta varios
-módulos persistentes e relacionados entre si, incluído o deseño visual das hortas, ademais dos fluxos meteorolóxico e de xeocodificación integrados con APIs externas.
+módulos persistentes e relacionados entre si, incluídos o deseño visual das hortas e o módulo persistente de tarefas, ademais dos fluxos meteorolóxico e de xeocodificación integrados con APIs externas.
 
 As futuras ampliacións deberán respectar a separación de
 responsabilidades definida neste documento.

@@ -24,6 +24,24 @@ class LayoutDesignerScreen extends StatefulWidget {
 class _LayoutDesignerScreenState extends State<LayoutDesignerScreen> {  
 
   static const double _itemSize = 64.0;
+  static const List<(double, double)> _initialPositions = [
+    (0.2, 0.2),
+    (0.4, 0.2),
+    (0.6, 0.2),
+    (0.8, 0.2),
+    (0.2, 0.4),
+    (0.4, 0.4),
+    (0.6, 0.4),
+    (0.8, 0.4),
+    (0.2, 0.6),
+    (0.4, 0.6),
+    (0.6, 0.6),
+    (0.8, 0.6),
+    (0.2, 0.8),
+    (0.4, 0.8),
+    (0.6, 0.8),
+    (0.8, 0.8),
+  ];
 
   GardenPlant? _selectedPlant;
 
@@ -59,13 +77,7 @@ class _LayoutDesignerScreenState extends State<LayoutDesignerScreen> {
           },
         ).toList();
 
-        final index = layoutItems.length;
-
-    final xPosition =
-        0.2 + (index % 4) * 0.2;
-
-    final yPosition =
-        0.2 + (index ~/ 4) * 0.2;
+    
     
 
     return Scaffold(
@@ -76,10 +88,11 @@ class _LayoutDesignerScreenState extends State<LayoutDesignerScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                child: DropdownButton<GardenPlant>(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 500;
+
+                final plantSelector = DropdownButton<GardenPlant>(
                   value: _selectedPlant,
                   hint: const Text(
                     'Selecciona unha planta',
@@ -100,39 +113,63 @@ class _LayoutDesignerScreenState extends State<LayoutDesignerScreen> {
                       _selectedPlant = plant;
                     });
                   },
-                ),
-              ),
-              const SizedBox(width: 16),
-              FilledButton(
-                onPressed: _selectedPlant == null
-                    ? null
-                    : () async {
-                        final plant = _selectedPlant!;
+                );
 
-                        await context
-                            .read<
-                                GardenLayoutViewModel>()
-                            .addItem(
-                              GardenLayoutItem(
-                                gardenId: widget.gardenId,
-                                gardenPlantId: plant.id!,
-                                xPosition: xPosition,
-                                yPosition: yPosition,
-                              ),
-                            );
+                final addButton = FilledButton(
+                  onPressed: _selectedPlant == null
+                      ? null
+                      : () async {
+                          final plant = _selectedPlant!;
+                          final position = _findAvailableInitialPosition(layoutItems);
 
-                        if (!mounted) return;
+                          if (position == null) {
+                            return;
+                          }
 
-                        setState(() {
-                          _selectedPlant = null;
-                        });
-                      },
-                child: const Text(
-                  'Engadir ao deseño',
-                ),
-              ),
-              ],
-            ), 
+                          await context
+                              .read<GardenLayoutViewModel>()
+                              .addItem(
+                                GardenLayoutItem(
+                                  gardenId: widget.gardenId,
+                                  gardenPlantId: plant.id!,
+                                  xPosition: position.$1,
+                                  yPosition: position.$2,
+                                ),
+                              );
+
+                          if (!mounted) return;
+
+                          setState(() {
+                            _selectedPlant = null;
+                          });
+                        },
+                  child: const Text(
+                    'Engadir ao deseño',
+                  ),
+                );
+
+                if (isNarrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      plantSelector,
+                      const SizedBox(height: 8),
+                      addButton,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: plantSelector,
+                    ),
+                    const SizedBox(width: 16),
+                    addButton,
+                  ],
+                );
+              },
+            ),
               const SizedBox(height: 16),
               Expanded(
                 child:LayoutBuilder(
@@ -322,6 +359,31 @@ class _LayoutDesignerScreenState extends State<LayoutDesignerScreen> {
         )
       ), 
     );
+  }
+
+  (double, double)? _findAvailableInitialPosition(
+    List<GardenLayoutItem> layoutItems,
+  ) {
+    for (final position in _initialPositions) {
+      final isOccupied = layoutItems.any(
+        (item) {
+          final horizontalDistance =
+              (item.xPosition - position.$1).abs();
+
+          final verticalDistance =
+              (item.yPosition - position.$2).abs();
+
+          return horizontalDistance < 0.15 &&
+              verticalDistance < 0.15;
+        },
+      );
+
+      if (!isOccupied) {
+        return position;
+      }
+    }
+
+    return null;
   }
 
   

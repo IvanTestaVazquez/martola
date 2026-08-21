@@ -120,10 +120,12 @@ O seu obxectivo é:
 -   Módulo de evolución de plantas completo con CRUD e SQLite.
 -   Evolución do esquema SQLite á versión 3.
 -   Xeocodificación de localidades mediante OpenWeather.
--   Coordenadas opcionais (`latitude` e `longitude`) asociadas ás hortas.
+-   Coordenadas opcionais (`latitude` e `longitude`) asociadas ás
+    hortas.
 -   Evolución do esquema SQLite á versión 4.
 -   Migración v3 → v4.
--   Consulta meteorolóxica contextual por horta desde `GardenDetailsScreen`.
+-   Consulta meteorolóxica contextual por horta desde
+    `GardenDetailsScreen`.
 -   Reutilización de `WeatherCard` fóra do Dashboard.
 -   Corrección dos fluxos de creación e edición para manter coherentes
     localidade e coordenadas.
@@ -141,22 +143,37 @@ O seu obxectivo é:
 -   Limitación do movemento ao interior do taboleiro.
 -   Prevención de solapamento entre plantas.
 -   Persistencia da disposición en SQLite.
+-   Corrección da colocación inicial de novos elementos no Layout
+    Designer para evitar solapamentos.
+-   Implementación funcional do módulo de tarefas.
+-   Creación do modelo `Task`.
+-   Creación de `TaskRepository` e implementación SQLite.
+-   Creación de `TasksViewModel` e integración mediante Provider.
+-   Creación e consulta de tarefas desde a interface.
+-   Persistencia das tarefas en SQLite.
+-   Evolución do esquema SQLite á versión 6.
+-   Migración v5 → v6.
+-   Primeira revisión responsive das pantallas principais.
+-   Probas manuais con diferentes anchos de pantalla.
+-   Identificación dos límites prácticos das `Row` en compoñentes do
+    Dashboard.
 
 ## In Progress
 
 -   Aprendizaxe de Flutter e Dart.
--   Primeira iteración da interface.
+-   Revisión e consolidación da interface.
 -   Design System.
--   Navegación entre pantallas.
+-   Testing e revisión final.
 
 ## Pending
 
--   Adaptación responsive para tablet e escritorio.
+-   Refinamento responsive adicional se aparece algunha necesidade real
+    en tablet ou escritorio.
 -   Refinamento da interface e consolidación do Design System.
 -   Testing, revisión e optimización.
 -   Documentación final e preparación da defensa.
--   Ampliacións meteorolóxicas opcionais: histórico persistente, predición
-    e posible integración de MeteoSIX.
+-   Ampliacións meteorolóxicas opcionais: histórico persistente,
+    predición e posible integración de MeteoSIX.
 -   Melloras opcionais do Layout Designer: grid/snapping, maior fluidez,
     tamaños variables ou representación específica por especie.
 
@@ -200,13 +217,12 @@ Construír a navegación principal e as pantallas base da aplicación.
 -   [x] GardensScreen.
 -   [x] GardenDetailsScreen.
 -   [x] CreateGardenScreen.
--   [x] TasksScreen inicial.
--   [x] CreateTaskScreen inicial.
+-   [x] TasksScreen funcional.
+-   [x] CreateTaskScreen funcional.
 -   [x] PlantListScreen.
 -   [x] PlantDetailsScreen.
 -   [x] LayoutDesignerScreen.
--   [ ] SettingsScreen.
--   [ ] Completar os fluxos de navegación pendentes.
+-   [x] Completar os fluxos de navegación necesarios para o MVP.
 
 ## Deliverable
 
@@ -215,7 +231,7 @@ Navegación completa entre as pantallas principais.
 Nesta fase poden empregarse datos ficticios, sen necesidade de
 persistencia real.
 
-**Estado:** en progreso.
+**Estado:** completada para o MVP.
 
 **---**
 
@@ -250,6 +266,10 @@ pantallas.
 -   [x] Integrar `GardenLayoutViewModel` mediante `MultiProvider`.
 -   [x] Manter o estado contextual do deseño por `gardenId`.
 -   [x] Actualizar localmente a posición durante o arrastre mediante
+    `notifyListeners()`.
+-   [x] Crear `TasksViewModel`.
+-   [x] Integrar `TasksViewModel` mediante Provider.
+-   [x] Manter sincronizada a colección de tarefas mediante
     `notifyListeners()`.
 
 ## Deliverable
@@ -362,14 +382,20 @@ Integrar SQLite e establecer a capa básica de persistencia.
 -   [x] Consultar plantas mediante `gardenId`.
 -   [x] Engadir un catálogo inicial local de especies cando a táboa está
     baleira.
--   [x] Evolucionar o esquema á versión 3 para os rexistros de evolución.
+-   [x] Evolucionar o esquema á versión 3 para os rexistros de
+    evolución.
 -   [x] Implementar a migración v2 → v3.
--   [x] Evolucionar o esquema á versión 4 para as coordenadas das hortas.
+-   [x] Evolucionar o esquema á versión 4 para as coordenadas das
+    hortas.
 -   [x] Implementar a migración v3 → v4.
 -   [x] Evolucionar o esquema á versión 5 para o Layout Designer.
 -   [x] Crear a táboa `garden_layout_items`.
 -   [x] Implementar a migración v4 → v5.
 -   [x] Verificar a persistencia das posicións do Layout Designer.
+-   [x] Evolucionar o esquema á versión 6 para o módulo de tarefas.
+-   [x] Crear a táboa `tasks`.
+-   [x] Implementar a migración v5 → v6.
+-   [x] Verificar a persistencia das tarefas.
 
 ## Deliverable
 
@@ -378,7 +404,8 @@ persistencia organizada.
 
 ## Current Progress
 
-A infraestrutura SQLite está operativa e o esquema evolucionou á versión 5.
+A infraestrutura SQLite está operativa e o esquema evolucionou á versión
+6.
 
 O esquema actual inclúe:
 
@@ -388,6 +415,7 @@ plant_species
 garden_plants
 plant_evolution_records
 garden_layout_items
+tasks
 ```
 
 As migracións acumulativas implementadas son:
@@ -397,6 +425,7 @@ v1 → v2
 v2 → v3
 v3 → v4
 v4 → v5
+v5 → v6
 ```
 
 As relacións entre táboas utilizan claves foráneas e a integridade
@@ -626,11 +655,12 @@ Integrar información meteorolóxica.
 -   [x] Buscar localidades mediante OpenWeather Geocoding API.
 -   [x] Permitir seleccionar unha localidade válida nos formularios.
 -   [x] Gardar as coordenadas seleccionadas coa horta.
--   [x] Consultar a meteoroloxía dunha horta mediante as súas coordenadas.
+-   [x] Consultar a meteoroloxía dunha horta mediante as súas
+    coordenadas.
 -   [x] Mostrar a información meteorolóxica en `GardenDetailsScreen`.
 -   [x] Reutilizar `WeatherCard` como widget compartido.
--   [x] Invalidar coordenadas cando o nome gardado xa non corresponde coa
-    localización seleccionada.
+-   [x] Invalidar coordenadas cando o nome gardado xa non corresponde
+    coa localización seleccionada.
 -   [x] Limpar os resultados de xeocodificación entre formularios.
 
 ### Pending Weather Extensions
@@ -686,6 +716,8 @@ Implementar a representación visual e persistente da horta.
 -   [x] Actualizar a posición localmente durante o arrastre.
 -   [x] Persistir a posición ao finalizar o arrastre.
 -   [x] Recuperar a disposición gardada.
+-   [x] Evitar que unha planta nova se coloque inicialmente sobre outra
+    xa existente.
 -   [x] Verificar a persistencia entre navegacións e reinicios.
 
 ### Optional Improvements
@@ -703,7 +735,38 @@ Primeira versión funcional e persistente do deseñador visual.
 
 **---**
 
-# Phase 11 - UI Improvement
+# Phase 11 - Tasks Module
+
+## Objective
+
+Implementar unha xestión básica e persistente de tarefas mantendo a
+mesma arquitectura do resto da aplicación.
+
+## Tasks
+
+-   [x] Crear o modelo `Task`.
+-   [x] Crear o contrato `TaskRepository`.
+-   [x] Crear a implementación SQLite do Repository.
+-   [x] Crear `TasksViewModel`.
+-   [x] Integrar o ViewModel mediante Provider.
+-   [x] Crear `TasksScreen`.
+-   [x] Crear `CreateTaskScreen`.
+-   [x] Mostrar as tarefas pendentes.
+-   [x] Crear novas tarefas desde a interface.
+-   [x] Persistir as tarefas en SQLite.
+-   [x] Evolucionar SQLite á versión 6.
+-   [x] Implementar a migración v5 → v6.
+
+## Deliverable
+
+Módulo básico de tarefas funcional e persistente, integrado coa
+arquitectura MVVM simplificada + Repository Pattern.
+
+**Estado:** completada para o alcance previsto.
+
+**---**
+
+# Phase 12 - UI Improvement
 
 ## Objective
 
@@ -716,9 +779,14 @@ Mellorar a experiencia visual e consolidar o Design System.
 -   [ ] Completar o Design System.
 -   [ ] Refinar compoñentes.
 -   [ ] Unificar estilos de formularios, Cards e botóns.
--   [ ] Adaptar a tablet.
--   [ ] Adaptar a escritorio.
+-   [x] Realizar unha primeira adaptación e validación para tablet.
+-   [x] Realizar unha primeira adaptación e validación para escritorio.
 -   [ ] Revisar accesibilidade e usabilidade.
+-   [x] Probar manualmente diferentes anchos de pantalla.
+-   [x] Revisar `Row`, `Column`, scroll e distribución dos compoñentes
+    principais.
+-   [x] Identificar os overflows do Dashboard en anchos excepcionalmente
+    estreitos e valorar o seu impacto real.
 
 ## Deliverable
 
@@ -726,7 +794,7 @@ Interface consistente, usable e responsive.
 
 **---**
 
-# Phase 12 - Testing
+# Phase 13 - Testing
 
 ## Objective
 
@@ -749,7 +817,7 @@ Versión candidata á entrega.
 
 **---**
 
-# Phase 13 - Documentation
+# Phase 14 - Documentation
 
 ## Objective
 
@@ -772,57 +840,89 @@ Documentación final do TFC.
 
 # Current Development Milestone
 
-## Session 19 - Layout Designer persistente
+## Session 20 - Tarefas, responsive e revisión do MVP
 
 **Estado:** completada.
 
-### Session 18 - Localización meteorolóxica por horta
+Tras completar o Layout Designer na sesión 19, realizouse unha sesión de
+peche e consolidación centrada en funcionalidades pequenas pendentes e
+na validación da interface.
 
-Na sesión anterior completouse a asociación entre as hortas e a súa
-localización meteorolóxica real:
+### Tasks
 
--   Incorporación de `latitude` e `longitude` opcionais a `Garden`.
--   Evolución de SQLite á versión 4.
--   Migración v3 → v4.
--   Integración da xeocodificación de OpenWeather.
--   Busca e selección de localidades nos formularios.
--   Persistencia das coordenadas coa horta.
--   Consulta meteorolóxica contextual desde `GardenDetailsScreen`.
--   Reutilización de `WeatherCard`.
--   Corrección do estado residual das buscas de localidades.
--   Invalidación das coordenadas cando a localización escrita deixa de
-    corresponder coa selección válida.
+Implementouse unha versión básica do módulo de tarefas reutilizando a
+arquitectura xa empregada no resto de MARTOLA:
 
-### Session 19 - Layout Designer
-
-Nesta sesión completouse a primeira versión funcional do deseñador visual:
-
--   Creación de `GardenLayoutItem`.
--   Creación de `GardenLayoutRepository`.
--   Implementación de `SqliteGardenLayoutRepository`.
--   Creación de `GardenLayoutViewModel`.
+-   Modelo `Task`.
+-   `TaskRepository`.
+-   Implementación SQLite.
+-   `TasksViewModel`.
 -   Integración mediante Provider.
--   Evolución de SQLite á versión 5.
--   Migración v4 → v5.
--   Creación de `garden_layout_items`.
--   Restrición `UNIQUE (garden_plant_id)`.
--   Creación de `LayoutDesignerScreen`.
--   Uso de coordenadas normalizadas.
--   Posicionamento mediante `LayoutBuilder`, `Stack` e `Positioned`.
--   Arrastre mediante `GestureDetector`.
--   Actualización visual local durante `onPanUpdate`.
--   Persistencia en `onPanEnd`.
--   Límites para manter os elementos dentro do taboleiro.
--   Prevención de solapamento.
--   Engadido e retirada de plantas do deseño.
--   Persistencia verificada entre navegacións e reinicios.
+-   `TasksScreen`.
+-   `CreateTaskScreen`.
+-   Creación e consulta de tarefas.
+-   Persistencia local.
+-   Evolución de SQLite á versión 6.
+-   Migración v5 → v6.
 
-O Layout Designer deixa de ser un bloque pendente do MVP. As posibles
-melloras de interacción e representación visual quedan como refinamentos
-posteriores.
+O alcance mantívose deliberadamente simple para non introducir
+complexidade innecesaria nesta fase do TFC.
 
-O seguinte bloque principal do proxecto pasa a ser a adaptación responsive,
-seguida de testing, revisión, optimización e documentación final.
+### Layout Designer
+
+Corrixiuse un caso límite detectado durante as probas: ao retirar unha
+planta do deseño e engadila posteriormente, a posición inicial podía
+coincidir coa doutra planta e bloquear o movemento de ambas.
+
+A colocación inicial pasou a buscar unha posición dispoñible antes de
+inserir o novo elemento. Comprobouse posteriormente o movemento e a
+persistencia.
+
+### Responsive
+
+Realizáronse probas manuais da interface con diferentes tamaños de ventá
+e anchos de dispositivo.
+
+Revisáronse especialmente:
+
+-   Dashboard.
+-   Cards e `Row` internas.
+-   Listados.
+-   Formularios.
+-   Layout Designer.
+-   Comportamento en móbil, tablet e escritorio.
+
+Detectouse que determinadas `Row` do Dashboard poden producir overflow
+en anchos extremadamente reducidos, aproximadamente por baixo dos
+tamaños habituais dun móbil actual. Decidiuse non introducir máis
+complexidade para resolver un caso que queda fóra do rango práctico
+previsto para o MVP.
+
+A interface queda, polo tanto, validada para os tamaños obxectivo do
+proxecto, mantendo posibles refinamentos adicionais como melloras
+futuras.
+
+### Revisión de alcance
+
+As pantallas baleiras `SettingsScreen` e `WeatherScreen` deixan de
+formar parte do fluxo previsto. A configuración avanzada non é necesaria
+para o MVP e a meteoroloxía xa se integra de forma contextual dentro de
+`GardenDetailsScreen`.
+
+A autenticación de usuario mantense como funcionalidade futura e só se
+abordará se existe tempo antes da entrega.
+
+O seguinte bloque principal pasa a ser:
+
+``` text
+testing e revisión
+        ↓
+corrección de erros
+        ↓
+documentación final
+        ↓
+preparación da defensa
+```
 
 ------------------------------------------------------------------------
 
@@ -838,6 +938,7 @@ A primeira versión mínima viable de MARTOLA debe incluír:
 -   [x] Rexistros de evolución.
 -   [x] Meteoroloxía actual asociada á localización dunha horta.
 -   [x] Layout Designer persistente.
+-   [x] Xestión básica de tarefas persistente.
 
 O resto considerarase ampliación ou funcionalidade adicional segundo o
 tempo dispoñible.

@@ -13437,3 +13437,451 @@ real sen converter cada pequeno movemento nunha escritura na base de datos.
 
 ------------------------------------------------------------------------
 
+# Sesión 20 - Responsive Design, Tasks e revisión final do MVP
+
+## Obxectivo
+
+Adaptar as principais pantallas de MARTOLA a diferentes anchos dispoñibles,
+resolver problemas de `overflow`, completar unha versión sinxela e persistente
+do módulo de tarefas e realizar pequenos axustes finais do MVP.
+
+Nesta sesión non se buscou crear interfaces diferentes para cada dispositivo,
+senón facer que unha mesma pantalla poida reorganizar o seu contido segundo o
+espazo que realmente recibe.
+
+------------------------------------------------------------------------
+
+## Responsive Design
+
+Un deseño responsive non consiste simplemente en reducir o tamaño dos widgets.
+A interface pode cambiar a súa distribución cando o espazo dispoñible deixa de
+ser suficiente.
+
+Por exemplo:
+
+``` text
+ancho suficiente
+      ↓
+Row
+
+ancho reducido
+      ↓
+Column
+```
+
+Deste xeito consérvanse os mesmos datos e accións, pero cambia a maneira de
+presentalos.
+
+### Regra
+
+> A interface debe adaptarse ao espazo dispoñible, non depender dunha resolución
+> concreta.
+
+------------------------------------------------------------------------
+
+## LayoutBuilder para tomar decisións responsive
+
+`LayoutBuilder` permite coñecer as restricións que o widget pai proporciona ao
+contido mediante `constraints`.
+
+Unha comprobación típica é:
+
+``` dart
+LayoutBuilder(
+  builder: (context, constraints) {
+    final isWide = constraints.maxWidth >= breakpoint;
+
+    // construír a distribución apropiada
+  },
+)
+```
+
+A decisión responsive baséase así no ancho realmente dispoñible nesa parte da
+interface.
+
+### Idea importante
+
+`LayoutBuilder` xa se utilizara no Layout Designer para coñecer o tamaño do
+taboleiro. Nesta sesión reutilizouse o mesmo concepto cunha responsabilidade
+diferente: decidir como organizar visualmente unha pantalla.
+
+Isto reforza que un widget non está ligado a un único caso de uso. O importante
+é comprender que información proporciona e empregala para resolver o problema
+correspondente.
+
+------------------------------------------------------------------------
+
+## Breakpoints
+
+Un breakpoint é un limiar a partir do cal se decide cambiar a distribución.
+
+Conceptualmente:
+
+``` text
+constraints.maxWidth < breakpoint
+        ↓
+distribución compacta
+
+constraints.maxWidth >= breakpoint
+        ↓
+distribución ampla
+```
+
+O breakpoint non representa necesariamente un modelo concreto de teléfono,
+tablet ou ordenador. Representa o punto no que a distribución actual deixa de
+ser adecuada para o contido.
+
+### Regra
+
+> É máis útil adaptar a interface ao espazo que necesita o contido que intentar
+> deseñar para unha lista pechada de dispositivos.
+
+------------------------------------------------------------------------
+
+## Row e Column como variantes da mesma interface
+
+Nas pantallas de creación e edición de hortas, o campo de localización e o botón
+de procura podían compartir unha `Row` cando había ancho suficiente.
+
+En anchos menores, esa mesma composición podía producir falta de espazo.
+
+A solución consiste en conservar os mesmos widgets e cambiar unicamente a súa
+organización:
+
+``` text
+pantalla ampla
+
+[ Localización                  ] [ Buscar localización ]
+
+pantalla estreita
+
+[ Localización                  ]
+
+[ Buscar localización           ]
+```
+
+O `RadioGroup` cos resultados da xeocodificación continúa fóra desta decisión,
+porque a súa responsabilidade e distribución non necesitan cambiar.
+
+### Aprendizaxe
+
+Ao facer responsive unha pantalla non é necesario reconstruír toda a súa árbore.
+Debe modificarse só a parte cuxa distribución depende realmente do ancho.
+
+------------------------------------------------------------------------
+
+## Ancho máximo do contido
+
+Nunha pantalla moi ampla non sempre é conveniente que formularios, textos ou
+controles ocupen todo o ancho dispoñible.
+
+Pode limitarse o contido cun ancho máximo e manterse centrado.
+
+Conceptualmente:
+
+``` text
+ventá pequena
+    ↓
+utilizar o ancho dispoñible
+
+ventá grande
+    ↓
+limitar o contido a un ancho máximo
+    ↓
+centrar
+```
+
+Isto permite que unha mesma interface continúe sendo cómoda tanto en móbil como
+en escritorio.
+
+------------------------------------------------------------------------
+
+## ListView e GridView segundo o ancho
+
+As coleccións tamén poden cambiar a súa representación.
+
+Nun ancho reducido unha lista vertical adoita aproveitar mellor o espazo:
+
+``` text
+ListView
+├── elemento
+├── elemento
+└── elemento
+```
+
+Nun ancho maior pode resultar máis útil distribuír os elementos en varias
+columnas:
+
+``` text
+GridView
+├── elemento    elemento
+├── elemento    elemento
+└── elemento    elemento
+```
+
+Durante a adaptación das listas de MARTOLA utilizouse esta idea para manter unha
+presentación cómoda en diferentes tamaños.
+
+------------------------------------------------------------------------
+
+## GridView e tamaño das celas
+
+Ao pasar dunha lista a unha grade apareceu un problema importante: unha cela
+ten unha altura limitada e o seu contido pode necesitar máis espazo.
+
+Se unha `Column` dentro da cela supera esa altura, Flutter produce un
+`RenderFlex overflow`.
+
+Conceptualmente:
+
+``` text
+altura dispoñible da cela
+        <
+altura natural do contido
+        ↓
+overflow
+```
+
+A solución non consiste necesariamente en ocultar o contido. Debe revisarse o
+tamaño asignado ás celas para que a grade represente correctamente os elementos.
+
+### Regra
+
+> Un overflow é un síntoma de que as restricións recibidas e o tamaño que
+> necesita o contido non son compatibles.
+
+------------------------------------------------------------------------
+
+## Probas responsive
+
+Para comprobar unha interface responsive é útil modificar progresivamente o
+ancho da ventá e observar:
+
+- cando cambia a distribución;
+- se aparecen overflows;
+- se o contido continúa sendo lexible;
+- se os botóns e campos seguen sendo utilizables;
+- se o ancho máximo funciona en escritorio;
+- se as transicións entre variantes son estables.
+
+As probas non deben limitarse exclusivamente ao breakpoint exacto. Tamén deben
+facerse arredor del e en tamaños intermedios.
+
+Durante a revisión comprobouse que o Dashboard comeza a ter problemas en anchos
+extremadamente reducidos debido ás `Row` internas das súas tarxetas. Ao estar por
+debaixo do rango de uso previsto para o MVP, decidiuse non aumentar o alcance da
+sesión con esa refactorización.
+
+------------------------------------------------------------------------
+
+## Mellora da colocación inicial no Layout Designer
+
+A detección de solapamentos da sesión anterior impedía mover unha planta sobre
+outra, pero aínda existía outro caso: unha planta nova podía recibir inicialmente
+unha posición xa ocupada.
+
+Isto podía provocar que dous elementos aparecesen solapados desde a súa creación
+e quedasen bloqueados pola propia regra que impedía atravesar outros elementos.
+
+A solución foi facer que a colocación inicial tamén respecte a dispoñibilidade
+do espazo.
+
+### Regra
+
+> As restricións dunha interface deben aplicarse tanto ás modificacións dun
+> estado como á creación do seu estado inicial.
+
+Non é suficiente impedir que o usuario cree posteriormente unha situación
+inválida se a propia aplicación pode inicializala dese xeito.
+
+------------------------------------------------------------------------
+
+## Tasks como módulo persistente sinxelo
+
+O Dashboard xa incluía `TasksCard` e unha acción rápida para engadir tarefas,
+pero as pantallas correspondentes eran inicialmente provisionais.
+
+Nesta sesión completouse unha versión deliberadamente simple do módulo mantendo
+a mesma arquitectura empregada no resto de MARTOLA.
+
+Fluxo arquitectónico:
+
+``` text
+TasksScreen / CreateTaskScreen
+        ↓
+TasksViewModel
+        ↓
+TaskRepository
+        ↑
+SQLiteTaskRepository
+        ↓
+DatabaseService
+        ↓
+SQLite
+```
+
+A reutilización desta estrutura permitiu incorporar unha funcionalidade nova sen
+introducir un patrón diferente.
+
+------------------------------------------------------------------------
+
+## Modelo Task
+
+As tarefas represéntanse mediante un modelo propio do dominio.
+
+A View traballa con obxectos `Task`, mentres que a persistencia queda delegada no
+Repository.
+
+Isto mantén a mesma separación xa utilizada con hortas, plantas, evolución e
+Layout Designer:
+
+``` text
+modelo
+≠
+presentación
+≠
+persistencia
+```
+
+------------------------------------------------------------------------
+
+## TasksViewModel
+
+`TasksViewModel` mantén o estado observable das tarefas e expón as operacións que
+necesita a interface.
+
+O patrón continúa sendo:
+
+``` text
+View
+  ↓ acción
+ViewModel
+  ↓
+Repository
+  ↓
+SQLite
+  ↓ resultado
+ViewModel
+  ↓ notifyListeners()
+View
+```
+
+Isto permite que `TasksScreen` se reconstrúa cando cambia a colección sen acceder
+directamente á base de datos.
+
+------------------------------------------------------------------------
+
+## Migración SQLite v5 → v6
+
+A incorporación das tarefas persistentes require unha nova evolución do esquema.
+
+A base de datos pasa a:
+
+``` text
+version 6
+```
+
+e incorpórase a táboa correspondente ás tarefas mediante:
+
+``` text
+v5 → v6
+```
+
+Mantense así a estratexia xa aprendida nas sesións anteriores: evolucionar o
+esquema mediante migracións en lugar de destruír os datos existentes.
+
+------------------------------------------------------------------------
+
+## Funcionalidade suficiente fronte a complexidade innecesaria
+
+O módulo de tarefas implementouse cun alcance reducido porque a súa finalidade no
+MVP é cubrir unha necesidade concreta sen abrir un novo bloque grande de traballo.
+
+Esta decisión reforza un criterio utilizado durante o proxecto:
+
+> Un MVP debe implementar de maneira correcta o comportamento necesario antes de
+> ampliar funcionalidades que non son imprescindibles para demostrar o proxecto.
+
+A mesma decisión aplicouse á autenticación: continúa sendo unha posible ampliación
+futura, pero non se introduce antes de pechar, probar e documentar correctamente
+o alcance actual.
+
+------------------------------------------------------------------------
+
+## Eliminación de pantallas sen responsabilidade actual
+
+Existían directorios ou pantallas provisionais para `settings` e `weather` que
+non tiñan unha funcionalidade propia implementada.
+
+Ao revisar o alcance decidiuse eliminalos en lugar de conservar estruturas baleiras
+sen unha responsabilidade real no MVP.
+
+A meteoroloxía continúa formando parte da aplicación a través de
+`GardenDetailsScreen` e `WeatherCard`; non necesita unha pantalla independente
+para cumprir o requisito actual.
+
+### Regra
+
+> A estrutura do proxecto debe representar responsabilidades reais, non posibles
+> funcionalidades creadas "por se acaso".
+
+------------------------------------------------------------------------
+
+## Conceptos clave da sesión 20
+
+-   Responsive Design.
+-   Deseño baseado no espazo dispoñible.
+-   `LayoutBuilder` aplicado a responsive.
+-   `constraints.maxWidth`.
+-   Breakpoints.
+-   Cambio entre `Row` e `Column`.
+-   Ancho máximo do contido.
+-   Centrado de contido en pantallas amplas.
+-   Cambio entre `ListView` e `GridView`.
+-   Restricións de tamaño dunha cela.
+-   `RenderFlex overflow`.
+-   Probas en diferentes anchos.
+-   Adaptación localizada da árbore de widgets.
+-   Colocación inicial sen solapamentos no Layout Designer.
+-   Modelo `Task`.
+-   `TaskRepository`.
+-   `SQLiteTaskRepository`.
+-   `TasksViewModel`.
+-   Persistencia de tarefas.
+-   Migración SQLite `v5 → v6`.
+-   Reutilización da arquitectura existente.
+-   Control do alcance do MVP.
+
+------------------------------------------------------------------------
+
+## Principio principal da sesión 20
+
+Unha aplicación multiplataforma non debe depender dun tamaño fixo nin necesita
+unha implementación completamente distinta para cada dispositivo.
+
+En MARTOLA a adaptación segue este fluxo conceptual:
+
+``` text
+espazo dispoñible
+        ↓
+LayoutBuilder / constraints
+        ↓
+decisión de presentación
+        ↓
+Row / Column
+ListView / GridView
+ancho limitado / ancho dispoñible
+        ↓
+mesma funcionalidade
+```
+
+Ao mesmo tempo, unha arquitectura consistente permite engadir módulos pequenos,
+como Tasks, reutilizando o mesmo fluxo de responsabilidades xa empregado no resto
+do proxecto.
+
+A combinación das dúas ideas permite evolucionar MARTOLA sen ligar a interface a
+un dispositivo concreto nin introducir unha arquitectura diferente para cada
+nova funcionalidade.
+
+------------------------------------------------------------------------
+

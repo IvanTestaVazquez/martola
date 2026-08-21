@@ -23,19 +23,55 @@ class GardensScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: ListView.builder(
-          itemCount: gardens.length,
-          itemBuilder: (context, index) {
-            final garden = gardens[index];
-            return GardenListItem(
-              garden: garden,
-              onTap: (garden) {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => GardenDetailsScreen(
-                      gardenId: garden.id!,
-                    ),
-                  ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 700;
+
+            if (!isWide) {
+              return ListView.builder(
+                itemCount: gardens.length,
+                itemBuilder: (context, index) {
+                  final garden = gardens[index];
+
+                  return GardenListItem(
+                    garden: garden,
+                    onTap: (garden) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => GardenDetailsScreen(
+                            gardenId: garden.id!,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
+            }
+
+            return GridView.builder(
+              itemCount: gardens.length,
+              gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 3,
+              ),
+              itemBuilder: (context, index) {
+                final garden = gardens[index];
+
+                return GardenListItem(
+                  garden: garden,
+                  onTap: (garden) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => GardenDetailsScreen(
+                          gardenId: garden.id!,
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             );
