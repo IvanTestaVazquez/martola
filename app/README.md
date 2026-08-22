@@ -1,17 +1,69 @@
-# app
+# MARTOLA - Flutter App
 
-A new Flutter project.
+Aplicación Flutter do proxecto MARTOLA.
 
-## Getting Started
+Este directorio contén o código fonte da aplicación multiplataforma para a xestión de hortas e xardíns.
 
-This project is a starting point for a Flutter application.
+## Tecnoloxías
 
-A few resources to get you started if this is your first Flutter project:
+- Flutter / Dart
+- Provider
+- SQLite
+- HTTP
+- OpenWeather
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Arquitectura
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+A aplicación utiliza unha arquitectura MVVM simplificada combinada co Repository Pattern:
+
+```text
+View
+  ↓
+ViewModel
+  ↓
+Repository
+  ↓
+Data Source / Service
+```
+
+O código principal atópase en `lib/`:
+
+```text
+lib/
+├── models/
+├── repositories/
+├── services/
+├── viewmodels/
+├── views/
+└── widgets/
+```
+
+## Execución
+
+Instalar as dependencias:
+
+```bash
+flutter pub get
+```
+
+Executar a aplicación:
+
+```bash
+flutter run --dart-define-from-file=config/secrets.json
+```
+
+Comprobar o código co analizador de Flutter:
+
+```bash
+flutter analyze
+```
+
+## Persistencia
+
+A aplicación utiliza SQLite para a persistencia local.
+
+O esquema actual da base de datos é a versión 6.
+
+## Documentación
+
+A documentación completa do proxecto atópase no directorio `docs/` da raíz do repositorio.

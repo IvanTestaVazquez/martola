@@ -196,18 +196,7 @@ class _GardenDetailsScreenState  extends State<GardenDetailsScreen> {
               },
             );
           }, 
-          child: const Text('Eliminar horta')),
-            const SizedBox(height: 16),
-        FilledButton(
-          onPressed: (){
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => PlantListScreen(gardenId: widget.gardenId,),
-                )
-            );
-          }, 
-          child: const Text('Lista de plantas')
-        ),
+          child: const Text('Eliminar horta')),            
       ],
     );
 

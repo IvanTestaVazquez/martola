@@ -17,7 +17,7 @@ class DatabaseService {
   }
 
   Future<Database> _openDatabase() async {
-    final directory = await getApplicationDocumentsDirectory();
+    final directory = await getApplicationSupportDirectory();
 
     final databasePath = join(
       directory.path,

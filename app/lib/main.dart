@@ -149,7 +149,7 @@ class MartolaApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => TasksViewModel(
           repository: taskRepository,
-          ),
+          )..loadTasks(),
         ),
         ChangeNotifierProvider(
           create: (context) => WeatherViewModel(
