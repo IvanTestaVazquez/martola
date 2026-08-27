@@ -324,3 +324,16 @@ ampliarse con funcionalidades como:
 
 Estas funcionalidades non forman parte dos requisitos necesarios do MVP
 actual.
+
+## Descarga
+
+A versión distribuíble de **MARTOLA v1.0.0** está dispoñible na
+[sección Releases do repositorio](https://github.com/IvanTestaVazquez/martola/releases/tag/v1.0.0).
+
+A release inclúe:
+
+- Aplicación para Windows x64.
+- APK para Android.
+- Vídeo de demostración do funcionamento da aplicación.
+
+> A compilación para Linux está contemplada polo proxecto, pero non foi verificada nesta versión.
