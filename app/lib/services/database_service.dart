@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 
 class DatabaseService {
-  Database? _database;
+  Future<Database>? _databaseFuture;
 
   DatabaseFactory get _databaseFactory {
     if (Platform.isWindows || Platform.isLinux) {
@@ -232,9 +232,7 @@ class DatabaseService {
   }
 
   Future<Database> get database async {
-    _database ??= await _openDatabase();
-
-    return _database!;
+    return _databaseFuture ??= _openDatabase();
   }
 
   Future<void> _seedPlantSpecies(Database db) async {
