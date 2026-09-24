@@ -2,412 +2,216 @@
 
 ## Purpose
 
-Este documento define a planificación técnica do desenvolvemento de
-MARTOLA.
+Este documento recolle a evolución técnica de MARTOLA desde a
+planificación inicial ata a versión 1.0.0 presentada como TFC.
 
-O seu obxectivo é:
+O seu obxectivo actual é:
 
--   Dividir o proxecto en fases.
--   Establecer prioridades.
--   Facilitar o seguemento do progreso.
--   Evitar bloqueos durante o desenvolvemento.
+-   Documentar as fases principais do desenvolvemento.
+-   Reflectir o alcance acadado polo MVP.
+-   Conservar as decisións e fitos máis relevantes.
+-   Separar o traballo completado das posibles evolucións posteriores.
 
-**---**
+> Para consultar o estado funcional e técnico actual do proxecto, véxase
+> tamén `PROJECT_CONTEXT.md` e o `README.md` principal.
+
+------------------------------------------------------------------------
 
 # Current Status
 
-## Completed
+## Version
 
--   Idea do proxecto.
--   Nome definitivo.
--   Análise de requisitos.
--   Planificación inicial.
--   Modelo de datos inicial.
--   Arquitectura.
--   Fluxo de navegación.
--   Estrutura Figma.
--   Documentación técnica inicial.
--   Creación do repositorio GitHub.
--   Creación do proxecto Flutter.
--   Estrutura inicial de carpetas.
--   HomeScreen funcional.
--   DashboardScreen inicial.
--   Configuración inicial do Theme global.
--   Primeiros widgets reutilizables.
--   Navegación básica mediante `Navigator`.
--   Modelo de dominio `Garden`.
--   Listado inicial de hortas con datos ficticios.
--   Pantalla de detalle dunha horta.
--   Formulario validado para creación dunha horta.
--   Integración de Provider.
--   Primeiro ViewModel funcional (`GardensViewModel`).
--   Estado compartido das hortas.
--   Identificadores temporais para as hortas en memoria.
--   Consulta de hortas mediante identificador.
--   Edición de hortas.
--   Eliminación de hortas con confirmación.
--   CRUD completo de hortas en memoria.
--   Sincronización automática das Views mediante Provider.
--   Introdución do Repository Pattern.
--   Creación da abstracción `GardenRepository`.
--   Creación de `MemoryGardenRepository`.
--   Traslado do almacenamento temporal de hortas desde
-    `GardensViewModel` ao Repository.
--   Integración de `GardensViewModel` con `GardenRepository`.
--   Inxección de dependencias mediante o construtor.
--   Desacoplamento do ViewModel da implementación concreta de
-    persistencia.
--   CRUD de hortas delegado na capa Repository.
--   Conversión de `GardenRepository` a un contrato asíncrono.
--   Adaptación de `MemoryGardenRepository` ao contrato asíncrono.
--   Introdución de `Future`, `async` e `await` na arquitectura de datos.
--   Estado local de hortas en `GardensViewModel` sincronizado co
-    Repository.
--   Carga inicial de hortas mediante `loadGardens()`.
--   Inicialización da carga de datos desde Provider.
--   Adaptación dos fluxos CRUD ás operacións asíncronas.
--   Uso de `context.mounted` despois de operacións asíncronas.
--   Instalación das dependencias necesarias para SQLite multiplataforma.
--   Creación e apertura de `martola.db`.
--   Creación do esquema SQLite inicial.
--   Creación da táboa `gardens`.
--   Conversión `Garden ↔ Map<String, Object?>`.
--   Creación de `SQLiteGardenRepository`.
--   Implementación do CRUD completo de hortas en SQLite.
--   Integración de `SQLiteGardenRepository` coa arquitectura existente.
--   Substitución de `MemoryGardenRepository` por
-    `SQLiteGardenRepository` na composición da aplicación.
--   Persistencia de hortas verificada entre reinicios.
--   Creación do modelo `GardenPlant`.
--   Creación do modelo `PlantSpecies`.
--   Conversión `GardenPlant ↔ Map<String, Object?>`.
--   Conversión `PlantSpecies ↔ Map<String, Object?>`.
--   Evolución do esquema SQLite á versión 2.
--   Creación da táboa `plant_species`.
--   Creación da táboa `garden_plants`.
--   Introdución de claves foráneas.
--   Activación da integridade referencial mediante
-    `PRAGMA foreign_keys = ON`.
--   Implementación da primeira migración SQLite v1 → v2.
--   Verificación da conservación dos datos existentes durante a
-    migración.
--   Verificación de `ON DELETE CASCADE`.
--   Verificación de `ON DELETE RESTRICT`.
--   Creación de `GardenPlantRepository`.
--   Creación de `PlantSpeciesRepository`.
--   Implementación de `SQLitePlantSpeciesRepository`.
--   Implementación do CRUD SQLite de especies.
--   Implementación de `SQLiteGardenPlantRepository`.
--   Implementación do CRUD SQLite de plantas.
--   Consulta de plantas mediante `gardenId`.
--   Creación de `PlantSpeciesViewModel`.
--   Creación de `PlantsViewModel`.
--   Integración dos novos ViewModels mediante `MultiProvider`.
--   Carga do catálogo de especies mediante `loadSpecies()`.
--   Carga das plantas dunha horta mediante `loadPlants(gardenId)`.
--   Mantemento da horta activa mediante `_currentGardenId`.
--   Catálogo inicial local de especies.
--   Creación de `PlantListScreen`.
--   Creación de `AddPlantScreen`.
--   Creación de `PlantDetailsScreen`.
--   Creación de `EditPlantScreen`.
--   Selección de especie mediante `DropdownButtonFormField`.
--   Selección da data de plantación mediante `showDatePicker`.
--   Creación, consulta, edición e eliminación de plantas desde a
-    interface.
--   Resolución do nome da especie no detalle dunha planta.
--   CRUD completo do módulo de plantas integrado con SQLite.
--   Módulo de evolución de plantas completo con CRUD e SQLite.
--   Evolución do esquema SQLite á versión 3.
+`1.0.0`
+
+## Status
+
+**MVP finalizado --- TFC entregado**
+
+A versión académica de MARTOLA está finalizada. O proxecto pode
+continuar evolucionando posteriormente como proxecto persoal.
+
+## Completed for Version 1.0.0
+
+-   Definición do proxecto, requisitos e alcance.
+-   Deseño inicial da arquitectura e do modelo de datos.
+-   Creación do proxecto Flutter e do repositorio Git.
+-   Arquitectura MVVM simplificada + Repository Pattern.
+-   Xestión de estado mediante Provider.
+-   Persistencia local mediante SQLite.
+-   Migracións acumulativas do esquema ata a versión 6.
+-   CRUD de hortas.
+-   CRUD de plantas e catálogo local de especies.
+-   CRUD de rexistros de evolución das plantas.
 -   Xeocodificación de localidades mediante OpenWeather.
--   Coordenadas opcionais (`latitude` e `longitude`) asociadas ás
-    hortas.
--   Evolución do esquema SQLite á versión 4.
--   Migración v3 → v4.
--   Consulta meteorolóxica contextual por horta desde
-    `GardenDetailsScreen`.
--   Reutilización de `WeatherCard` fóra do Dashboard.
--   Corrección dos fluxos de creación e edición para manter coherentes
-    localidade e coordenadas.
--   Creación do modelo `GardenLayoutItem`.
--   Creación de `GardenLayoutRepository`.
--   Creación de `SqliteGardenLayoutRepository`.
--   Creación de `GardenLayoutViewModel`.
--   Evolución do esquema SQLite á versión 5.
--   Migración v4 → v5.
--   Creación da táboa `garden_layout_items`.
--   Creación de `LayoutDesignerScreen`.
--   Engadido e retirada de plantas do deseño.
--   Posicionamento libre mediante arrastre.
--   Coordenadas normalizadas independentes do tamaño do taboleiro.
--   Limitación do movemento ao interior do taboleiro.
--   Prevención de solapamento entre plantas.
--   Persistencia da disposición en SQLite.
--   Corrección da colocación inicial de novos elementos no Layout
-    Designer para evitar solapamentos.
--   Implementación funcional do módulo de tarefas.
--   Creación do modelo `Task`.
--   Creación de `TaskRepository` e implementación SQLite.
--   Creación de `TasksViewModel` e integración mediante Provider.
--   Creación e consulta de tarefas desde a interface.
--   Persistencia das tarefas en SQLite.
--   Evolución do esquema SQLite á versión 6.
--   Migración v5 → v6.
--   Primeira revisión responsive das pantallas principais.
--   Probas manuais con diferentes anchos de pantalla.
--   Identificación dos límites prácticos das `Row` en compoñentes do
-    Dashboard.
+-   Meteoroloxía actual contextualizada por horta.
+-   Layout Designer persistente.
+-   Xestión básica e persistente de tarefas.
+-   Adaptación responsive para móbil, tablet e escritorio.
+-   Validación manual do funcionamento nos tamaños obxectivo.
+-   Builds verificadas para Android e Windows.
+-   Documentación técnica do proxecto.
+-   Preparación e entrega do TFC.
+-   Publicación da versión `1.0.0`.
 
-## In Progress
+## Post-1.0 / Future Improvements
 
--   Aprendizaxe de Flutter e Dart.
--   Revisión e consolidación da interface.
--   Design System.
--   Testing e revisión final.
+Estas tarefas non forman parte dos requisitos do MVP entregado:
 
-## Pending
+-   Incorporar unha suite de probas automatizadas.
+-   Continuar refinando accesibilidade e usabilidade.
+-   Mellorar o Layout Designer con grid/snapping ou representacións
+    adicionais.
+-   Engadir histórico e predición meteorolóxica.
+-   Valorar provedores meteorolóxicos adicionais.
+-   Engadir fotografías aos rexistros de evolución.
+-   Incorporar alertas, notificacións e recorrencia ás tarefas.
+-   Engadir autenticación e contas de usuario.
+-   Incorporar sincronización cloud e copias de seguridade.
+-   Desenvolver unha versión web.
+-   Explorar funcionalidades avanzadas como estatísticas, sensores ou
+    recomendacións.
 
--   Refinamento responsive adicional se aparece algunha necesidade real
-    en tablet ou escritorio.
--   Refinamento da interface e consolidación do Design System.
--   Testing, revisión e optimización.
--   Documentación final e preparación da defensa.
--   Ampliacións meteorolóxicas opcionais: histórico persistente,
-    predición e posible integración de MeteoSIX.
--   Melloras opcionais do Layout Designer: grid/snapping, maior fluidez,
-    tamaños variables ou representación específica por especie.
-
-**---**
+------------------------------------------------------------------------
 
 # Phase 1 - Project Setup
 
 ## Objective
 
-Preparar o proxecto Flutter e a súa estrutura.
+Preparar o proxecto Flutter e a súa estrutura base.
 
-## Tasks
+## Completed
 
--   [x] Crear proxecto Flutter.
--   [x] Configurar Git.
--   [x] Crear repositorio GitHub.
--   [x] Definir estrutura de carpetas.
--   [x] Crear tema básico da aplicación.
--   [x] Crear navegación básica mediante `Navigator`.
+-   [x] Crear o proxecto Flutter.
+-   [x] Configurar Git e GitHub.
+-   [x] Definir a estrutura inicial de carpetas.
+-   [x] Crear o Theme global.
+-   [x] Implementar navegación mediante `Navigator`.
 -   [x] Configurar Provider.
+-   [x] Crear os primeiros widgets reutilizables.
 
-## Deliverable
+## Result
 
-Aplicación Flutter funcional cunha estrutura inicial organizada, tema
-global e navegación básica.
+Aplicación Flutter funcional cunha base organizada para continuar o
+desenvolvemento.
 
 **Estado:** completada.
 
-**---**
+------------------------------------------------------------------------
 
-# Phase 2 - Navigation and Screens
+# Phase 2 - Navigation and Base Screens
 
 ## Objective
 
-Construír a navegación principal e as pantallas base da aplicación.
+Construír o fluxo principal de navegación e as pantallas base.
 
-## Tasks
+## Completed
 
--   [x] HomeScreen.
--   [x] DashboardScreen.
--   [x] GardensScreen.
--   [x] GardenDetailsScreen.
--   [x] CreateGardenScreen.
--   [x] TasksScreen funcional.
--   [x] CreateTaskScreen funcional.
--   [x] PlantListScreen.
--   [x] PlantDetailsScreen.
--   [x] LayoutDesignerScreen.
--   [x] Completar os fluxos de navegación necesarios para o MVP.
+-   [x] `HomeScreen`.
+-   [x] `DashboardScreen`.
+-   [x] Listado e detalle de hortas.
+-   [x] Creación e edición de hortas.
+-   [x] Pantallas de plantas.
+-   [x] Pantallas de evolución.
+-   [x] Pantallas de tarefas.
+-   [x] `LayoutDesignerScreen`.
+-   [x] Fluxos de navegación necesarios para o MVP.
 
-## Deliverable
+## Result
 
-Navegación completa entre as pantallas principais.
+Navegación funcional entre os módulos principais.
 
-Nesta fase poden empregarse datos ficticios, sen necesidade de
-persistencia real.
+**Estado:** completada.
 
-**Estado:** completada para o MVP.
-
-**---**
+------------------------------------------------------------------------
 
 # Phase 3 - State Management
 
 ## Objective
 
-Introducir unha xestión de estado organizada e desacoplar os datos das
-pantallas.
+Separar o estado da interface e permitir que varias pantallas compartan
+datos de forma reactiva.
 
-## Tasks
+## Completed
 
--   [x] Configurar Provider.
--   [x] Crear o primeiro ViewModel (`GardensViewModel`).
--   [x] Mover o estado das hortas fóra das Views.
--   [x] Permitir que varias pantallas compartan o mesmo estado.
--   [x] Actualizar automaticamente a interface cando cambian os datos.
--   [x] Utilizar `ChangeNotifier` e `notifyListeners()`.
--   [x] Diferenciar o uso de `context.read`, `context.watch` e
-    `context.select`.
--   [x] Encapsular a colección de hortas.
--   [x] Establecer `GardensViewModel` como punto de acceso ao estado das
-    hortas desde as Views.
+-   [x] Integrar Provider.
+-   [x] Utilizar `ChangeNotifier`.
+-   [x] Crear `GardensViewModel`.
 -   [x] Crear `PlantSpeciesViewModel`.
 -   [x] Crear `PlantsViewModel`.
--   [x] Integrar os tres ViewModels mediante `MultiProvider`.
--   [x] Manter o catálogo de especies no estado compartido.
--   [x] Manter no `PlantsViewModel` as plantas da horta actualmente
-    cargada.
--   [x] Sincronizar as Views de plantas mediante `notifyListeners()`.
+-   [x] Crear `PlantEvolutionViewModel`.
 -   [x] Crear `GardenLayoutViewModel`.
--   [x] Integrar `GardenLayoutViewModel` mediante `MultiProvider`.
--   [x] Manter o estado contextual do deseño por `gardenId`.
--   [x] Actualizar localmente a posición durante o arrastre mediante
-    `notifyListeners()`.
 -   [x] Crear `TasksViewModel`.
--   [x] Integrar `TasksViewModel` mediante Provider.
--   [x] Manter sincronizada a colección de tarefas mediante
-    `notifyListeners()`.
+-   [x] Crear `WeatherViewModel`.
+-   [x] Crear `GeocodingViewModel`.
+-   [x] Integrar os ViewModels mediante `MultiProvider`.
+-   [x] Utilizar `context.read()`, `context.watch()` e
+    `context.select()` segundo as necesidades das Views.
+-   [x] Adaptar os fluxos de datos a operacións asíncronas mediante
+    `Future`, `async` e `await`.
 
-## Deliverable
+## Result
 
-Xestión de estado funcional mediante Provider seguindo o enfoque MVVM
-simplificado previsto para MARTOLA.
+Xestión de estado funcional seguindo o enfoque MVVM simplificado
+previsto para MARTOLA.
 
-**Estado:** completada para a infraestrutura inicial. Poderán engadirse
-novos ViewModels segundo se desenvolvan os restantes módulos.
+**Estado:** completada.
 
-**---**
+------------------------------------------------------------------------
 
 # Phase 4 - Repository Foundation
 
 ## Objective
 
-Introducir a capa Repository e separar a xestión do estado do acceso aos
-datos.
+Separar a xestión do estado do acceso ás fontes de datos.
 
-## Tasks
+## Completed
 
--   [x] Comprender a responsabilidade do Repository.
--   [x] Crear `GardenRepository`.
--   [x] Definir as operacións necesarias para o módulo de hortas.
--   [x] Crear `MemoryGardenRepository`.
--   [x] Conectar `GardensViewModel` con `GardenRepository`.
--   [x] Mover o almacenamento temporal desde `GardensViewModel` ao
-    Repository.
--   [x] Aplicar inxección de dependencias.
--   [x] Evitar que o ViewModel dependa directamente dunha implementación
-    concreta.
--   [x] Preparar a arquitectura para substituír o almacenamento temporal
-    en memoria pola persistencia local.
--   [x] Converter `GardenRepository` nun contrato asíncrono.
--   [x] Adaptar `MemoryGardenRepository` ao contrato asíncrono.
--   [x] Introducir `Future`, `async` e `await` na comunicación co
-    Repository.
--   [x] Manter no ViewModel o estado xa cargado para as Views.
--   [x] Implementar `loadGardens()`.
--   [x] Iniciar automaticamente a carga de datos ao crear
-    `GardensViewModel`.
+-   [x] Definir contratos Repository.
+-   [x] Crear `MemoryGardenRepository` como primeira implementación.
+-   [x] Aplicar inxección de dependencias mediante construtores.
+-   [x] Evitar dependencias directas dos ViewModels sobre
+    implementacións concretas.
+-   [x] Converter os contratos de acceso a datos a operacións
+    asíncronas.
+-   [x] Substituír progresivamente a persistencia temporal polas
+    implementacións SQLite.
+-   [x] Aplicar a mesma abstracción aos servizos meteorolóxicos e de
+    xeocodificación.
 
-## Deliverable
+## Result
 
-Separación funcional entre a xestión do estado e o acceso aos datos.
-
-Fluxo actual:
-
-    View       ↓     GardensViewModel       ↓ async     GardenRepository
-      ↑     MemoryGardenRepository       ↓     Memoria
-
-O ViewModel mantén o estado xa cargado para que as Views poidan
-consultalo de maneira síncrona.
-
-A arquitectura permite substituír `MemoryGardenRepository` por unha
-implementación baseada en SQLite sen modificar as Views.
+As Views e ViewModels quedan desacoplados da implementación concreta das
+fontes de datos.
 
 **Estado:** completada.
 
-**---**
+------------------------------------------------------------------------
 
-# Phase 5 - Database Foundation
+# Phase 5 - Database and Persistence
 
 ## Objective
 
-Integrar SQLite e establecer a capa básica de persistencia.
+Integrar SQLite e establecer unha capa de persistencia local
+multiplataforma.
 
-## Tasks
+## Completed
 
--   [x] Analizar a estratexia SQLite multiplataforma.
--   [x] Preparar o contrato asíncrono necesario para a persistencia.
 -   [x] Engadir `sqflite`.
 -   [x] Engadir `sqflite_common_ffi`.
 -   [x] Engadir `path`.
 -   [x] Engadir `path_provider`.
--   [x] Comprobar que a aplicación continúa arrancando coas novas
-    dependencias.
 -   [x] Crear `DatabaseService`.
--   [x] Preparar a selección da factoría SQLite segundo a plataforma.
--   [x] Implementar a apertura de `martola.db`.
--   [x] Manter e reutilizar a conexión coa base de datos.
+-   [x] Implementar a apertura e reutilización de `martola.db`.
+-   [x] Activar `PRAGMA foreign_keys = ON`.
 -   [x] Crear o esquema inicial.
--   [x] Crear a táboa `gardens`.
--   [x] Implementar operacións básicas de lectura e escritura.
--   [x] Crear `SQLiteGardenRepository`.
--   [x] Integrar a persistencia SQLite coa capa Repository.
--   [x] Substituír `MemoryGardenRepository` por `SQLiteGardenRepository`
-    na composición da aplicación.
--   [x] Verificar a persistencia entre reinicios da aplicación.
--   [x] Comprender o versionado do esquema SQLite.
--   [x] Comprender a función de `onCreate` e `onUpgrade`.
--   [x] Comprender o funcionamento das migracións acumulativas.
--   [x] Definir a estratexia para futuras migracións.
--   [x] Manter a base de datos na versión 1 mentres non exista un cambio
-    real de esquema.
--   [x] Evolucionar o esquema á versión 2.
--   [x] Implementar a primeira migración SQLite v1 → v2.
--   [x] Conservar os datos existentes durante a migración.
--   [x] Crear a táboa `plant_species`.
--   [x] Crear a táboa `garden_plants`.
--   [x] Introducir claves foráneas.
--   [x] Activar a integridade referencial mediante
-    `PRAGMA foreign_keys = ON`.
--   [x] Verificar `ON DELETE CASCADE`.
--   [x] Verificar `ON DELETE RESTRICT`.
--   [x] Crear `SQLitePlantSpeciesRepository`.
--   [x] Crear `SQLiteGardenPlantRepository`.
--   [x] Implementar CRUD SQLite de especies.
--   [x] Implementar CRUD SQLite de plantas.
--   [x] Consultar plantas mediante `gardenId`.
--   [x] Engadir un catálogo inicial local de especies cando a táboa está
-    baleira.
--   [x] Evolucionar o esquema á versión 3 para os rexistros de
-    evolución.
--   [x] Implementar a migración v2 → v3.
--   [x] Evolucionar o esquema á versión 4 para as coordenadas das
-    hortas.
--   [x] Implementar a migración v3 → v4.
--   [x] Evolucionar o esquema á versión 5 para o Layout Designer.
--   [x] Crear a táboa `garden_layout_items`.
--   [x] Implementar a migración v4 → v5.
--   [x] Verificar a persistencia das posicións do Layout Designer.
--   [x] Evolucionar o esquema á versión 6 para o módulo de tarefas.
--   [x] Crear a táboa `tasks`.
--   [x] Implementar a migración v5 → v6.
--   [x] Verificar a persistencia das tarefas.
+-   [x] Evolucionar o esquema ata a versión 6.
+-   [x] Implementar migracións acumulativas.
+-   [x] Verificar a conservación dos datos entre migracións.
+-   [x] Verificar a persistencia entre reinicios.
+-   [x] Aplicar `ON DELETE CASCADE`, `ON DELETE RESTRICT` e restricións
+    `UNIQUE` segundo o modelo.
 
-## Deliverable
-
-Base de datos local funcional e accesible mediante unha capa de
-persistencia organizada.
-
-## Current Progress
-
-A infraestrutura SQLite está operativa e o esquema evolucionou á versión
-6.
-
-O esquema actual inclúe:
+## Current Schema
 
 ``` text
 gardens
@@ -418,7 +222,7 @@ garden_layout_items
 tasks
 ```
 
-As migracións acumulativas implementadas son:
+## Implemented Migrations
 
 ``` text
 v1 → v2
@@ -428,257 +232,173 @@ v4 → v5
 v5 → v6
 ```
 
-As relacións entre táboas utilizan claves foráneas e a integridade
-referencial está activada mediante:
+## Result
 
-``` text
-PRAGMA foreign_keys = ON
-```
-
-O Layout Designer engade ademais `UNIQUE (garden_plant_id)` para impedir
-que unha mesma planta teña máis dunha posición simultánea no deseño.
-
-Comprobouse que as migracións conservan os datos existentes e que a
-persistencia continúa funcionando entre reinicios.
+Persistencia local funcional mediante SQLite e integrada coa capa
+Repository.
 
 **Estado:** completada.
 
-**---**
+------------------------------------------------------------------------
 
 # Phase 6 - Gardens Module
 
 ## Objective
 
-Implementar a xestión completa de hortas.
+Implementar a xestión completa de hortas e xardíns.
 
-## Implemented
+## Completed
 
--   [x] Crear modelo `Garden`.
--   [x] Mostrar unha lista inicial de hortas con datos ficticios.
--   [x] Crear `GardenListItem`.
--   [x] Seleccionar unha horta.
--   [x] Mostrar o detalle dunha horta.
--   [x] Crear formulario de nova horta.
--   [x] Validar os datos do formulario.
--   [x] Construír un obxecto `Garden` desde o formulario.
--   [x] Devolver un `Garden` entre rutas como primeira aproximación ao
-    fluxo de creación.
--   [x] Integrar o módulo con `GardensViewModel`.
--   [x] Incorporar novas hortas ao estado compartido.
--   [x] Substituír os datos ficticios do listado polo estado real en
-    memoria.
--   [x] Actualizar automaticamente o listado mediante Provider.
--   [x] Asignar identificadores temporais ás hortas.
--   [x] Recuperar unha horta mediante `getGardenById()`.
--   [x] Consultar o detalle mediante a identidade da horta.
--   [x] Crear `EditGardenScreen`.
--   [x] Editar unha horta.
--   [x] Conservar a identidade durante unha actualización.
--   [x] Eliminar unha horta.
--   [x] Solicitar confirmación antes da eliminación.
--   [x] Completar o CRUD de hortas en memoria.
--   [x] Crear `GardenRepository`.
--   [x] Crear `MemoryGardenRepository`.
--   [x] Integrar `GardensViewModel` con `GardenRepository`.
--   [x] Delegar o CRUD na capa Repository.
--   [x] Utilizar a identidade da horta nas operacións de actualización e
-    eliminación.
--   [x] Desacoplar o ViewModel da implementación concreta do Repository.
--   [x] Adaptar o CRUD de hortas a operacións asíncronas.
--   [x] Implementar a carga inicial mediante `loadGardens()`.
--   [x] Manter o estado cargado dentro de `GardensViewModel`.
--   [x] Adaptar creación, edición e eliminación ao uso de `await`.
--   [x] Crear `Garden.fromMap()`.
--   [x] Crear `Garden.toMap()`.
--   [x] Gardar unha horta en SQLite.
--   [x] Recuperar hortas desde SQLite.
--   [x] Recuperar unha horta concreta mediante o seu identificador.
--   [x] Actualizar hortas en SQLite.
--   [x] Eliminar hortas de SQLite.
--   [x] Utilizar identificadores xerados pola capa de persistencia.
--   [x] Verificar o CRUD completo contra SQLite.
--   [x] Verificar a persistencia entre reinicios.
+-   [x] Modelo `Garden`.
+-   [x] Conversión `Garden ↔ Map<String, Object?>`.
+-   [x] `GardenRepository`.
+-   [x] `SQLiteGardenRepository`.
+-   [x] `GardensViewModel`.
+-   [x] Listado de hortas.
+-   [x] Detalle dunha horta.
+-   [x] Creación.
+-   [x] Edición.
+-   [x] Eliminación con confirmación.
+-   [x] Persistencia SQLite.
+-   [x] Localización e coordenadas opcionais.
+-   [x] Integración posterior con xeocodificación e meteoroloxía.
 
-## Pending
+## Result
 
--   [ ] Revisar e refinar a interface do módulo.
+CRUD completo e persistente de hortas.
 
-## Deliverable
+**Estado:** completada para o MVP.
 
-Módulo de hortas completo con operacións de creación, consulta, edición
-e eliminación persistidas localmente.
+------------------------------------------------------------------------
 
-**Estado:** funcional a nivel de CRUD e persistencia. Pendentes
-refinamentos da interface e futuras ampliacións do modelo.
-
-**---**
-
-# Phase 7 - Plants Module
+# Phase 7 - Plants and Species Module
 
 ## Objective
 
 Implementar a xestión de plantas e especies asociadas ás hortas.
 
-## Tasks
+## Completed
 
-### Domain Model
+-   [x] Modelo `GardenPlant`.
+-   [x] Modelo `PlantSpecies`.
+-   [x] Táboas `garden_plants` e `plant_species`.
+-   [x] Relacións mediante claves foráneas.
+-   [x] `GardenPlantRepository`.
+-   [x] `PlantSpeciesRepository`.
+-   [x] Implementacións SQLite.
+-   [x] `PlantsViewModel`.
+-   [x] `PlantSpeciesViewModel`.
+-   [x] Catálogo inicial local de especies.
+-   [x] Listado de plantas dunha horta.
+-   [x] Creación de plantas.
+-   [x] Detalle de planta.
+-   [x] Edición.
+-   [x] Eliminación.
+-   [x] Selección de especie.
+-   [x] Selección da data de plantación.
 
--   [x] Crear modelo `GardenPlant`.
--   [x] Crear modelo `PlantSpecies`.
--   [x] Relacionar `GardenPlant` cunha horta mediante `gardenId`.
--   [x] Relacionar `GardenPlant` cunha especie mediante `speciesId`.
--   [x] Implementar conversión `GardenPlant ↔ Map<String, Object?>`.
--   [x] Implementar conversión `PlantSpecies ↔ Map<String, Object?>`.
--   [x] Definir a conversión de `DateTime` mediante ISO 8601.
+## Result
 
-### Database
+CRUD completo de plantas e catálogo local de especies integrado con
+SQLite.
 
--   [x] Crear táboa `plant_species`.
--   [x] Crear táboa `garden_plants`.
--   [x] Definir claves foráneas.
--   [x] Configurar `ON DELETE CASCADE` para a relación coa horta.
--   [x] Configurar `ON DELETE RESTRICT` para a relación coa especie.
--   [x] Integrar as novas táboas no esquema SQLite v2.
--   [x] Implementar a migración v1 → v2.
--   [x] Verificar a integridade referencial.
+**Estado:** completada para o MVP.
 
-### Repository
-
--   [x] Crear contrato `GardenPlantRepository`.
--   [x] Crear contrato `PlantSpeciesRepository`.
--   [x] Crear `SQLitePlantSpeciesRepository`.
--   [x] Crear `SQLiteGardenPlantRepository`.
--   [x] Implementar CRUD SQLite de especies.
--   [x] Implementar CRUD SQLite de plantas.
-
-### State Management
-
--   [x] Crear ViewModel para plantas.
--   [x] Cargar as plantas dunha horta.
--   [x] Integrar o ViewModel con Provider.
--   [x] Sincronizar as Views co estado das plantas.
-
-### Interface
-
--   [x] Crear `PlantListScreen`.
--   [x] Crear `PlantDetailsScreen`.
--   [x] Crear formulario de nova planta.
--   [x] Crear fluxo de edición.
--   [x] Crear fluxo de eliminación.
--   [x] Permitir seleccionar unha especie.
--   [x] Mostrar as plantas asociadas a unha horta.
-
-## Deliverable
-
-Módulo de plantas funcional, persistido mediante SQLite e integrado co
-módulo de hortas.
-
-**Estado:** completada a primeira versión funcional. CRUD, persistencia,
-ViewModel e interface están integrados.
-
-**---**
+------------------------------------------------------------------------
 
 # Phase 8 - Plant Evolution Module
 
 ## Objective
 
-Implementar o seguemento das plantas.
+Permitir o seguemento histórico da evolución das plantas.
 
-## Tasks
+## Completed
 
--   [x] Crear o modelo `PlantEvolutionRecord`.
--   [x] Crear a táboa `plant_evolution_records`.
--   [x] Evolucionar o esquema SQLite á versión 3.
--   [x] Implementar a migración v2 → v3.
--   [x] Relacionar os rexistros coa planta mediante `plantId`.
--   [x] Configurar `ON DELETE CASCADE`.
--   [x] Crear `PlantEvolutionRecordRepository`.
--   [x] Crear `SQLitePlantEvolutionRecordRepository`.
--   [x] Implementar CRUD persistente dos rexistros.
--   [x] Crear `PlantEvolutionViewModel`.
--   [x] Crear `PlantEvolutionListScreen`.
--   [x] Crear `AddPlantEvolutionRecordScreen`.
--   [x] Crear `PlantEvolutionDetailsScreen`.
--   [x] Crear `EditPlantEvolutionRecordScreen`.
--   [x] Crear, consultar, editar e eliminar rexistros desde a interface.
--   [x] Mostrar o historial de evolución dunha planta.
--   [x] Rexistrar medicións básicas.
--   [ ] Valorar a incorporación de fotografías como ampliación
-    posterior.
+-   [x] Modelo `PlantEvolutionRecord`.
+-   [x] Táboa `plant_evolution_records`.
+-   [x] Migración v2 → v3.
+-   [x] Relación coa planta mediante `plantId`.
+-   [x] `ON DELETE CASCADE`.
+-   [x] Repository e implementación SQLite.
+-   [x] `PlantEvolutionViewModel`.
+-   [x] Listado de rexistros.
+-   [x] Creación.
+-   [x] Detalle.
+-   [x] Edición.
+-   [x] Eliminación.
+-   [x] Rexistro de data, altura opcional e notas opcionais.
 
-## Deliverable
+## Future Improvement
 
-Seguemento da evolución dunha planta ao longo do tempo.
+-   [ ] Incorporar fotografías aos rexistros de evolución.
 
-**Estado:** funcional a nivel de CRUD, persistencia e interface básica.
-As fotografías quedan como posible ampliación posterior.
+## Result
+
+Seguemento persistente da evolución dunha planta ao longo do tempo.
+
+**Estado:** completada para o MVP.
 
 ------------------------------------------------------------------------
 
-# Phase 9 - Weather Module
+# Phase 9 - Weather and Geocoding
 
 ## Objective
 
-Integrar información meteorolóxica.
+Integrar información meteorolóxica real asociada á localización das
+hortas.
 
-## Tasks
+## Completed
 
-### Basic Weather Integration
+### Weather
 
 -   [x] Engadir o paquete `http`.
--   [x] Crear o modelo `WeatherData`.
+-   [x] Crear `WeatherData`.
 -   [x] Crear `WeatherService`.
 -   [x] Crear `WeatherException`.
--   [x] Crear o contrato `WeatherRepository`.
+-   [x] Crear `WeatherRepository`.
 -   [x] Crear `OpenWeatherRepository`.
 -   [x] Crear `WeatherViewModel`.
--   [x] Integrar `WeatherViewModel` mediante `MultiProvider`.
 -   [x] Conectar OpenWeather.
--   [x] Realizar peticións HTTP GET mediante latitude e lonxitude.
--   [x] Decodificar a resposta JSON.
--   [x] Transformar a resposta externa a `WeatherData`.
--   [x] Substituír os datos meteorolóxicos ficticios do Dashboard.
--   [x] Mostrar condicións meteorolóxicas actuais.
--   [x] Xestionar estados de carga, erro e datos.
--   [x] Evitar notificacións durante o primeiro `build()` mediante
-    `addPostFrameCallback`.
--   [x] Configurar a API key mediante `String.fromEnvironment`.
--   [x] Utilizar `--dart-define-from-file` durante o desenvolvemento.
--   [x] Excluír a clave real do repositorio.
+-   [x] Realizar peticións mediante latitude e lonxitude.
+-   [x] Decodificar e mapear a resposta externa.
+-   [x] Xestionar estados de carga, datos e erro.
+-   [x] Mostrar meteoroloxía contextual en `GardenDetailsScreen`.
+-   [x] Reutilizar `WeatherCard`.
 
-### Garden Location Integration
+### Geocoding
 
--   [x] Engadir `latitude` e `longitude` opcionais ao modelo `Garden`.
+-   [x] Engadir latitude e longitude opcionais a `Garden`.
 -   [x] Evolucionar SQLite á versión 4.
 -   [x] Implementar a migración v3 → v4.
--   [x] Crear o módulo de xeocodificación.
+-   [x] Crear `GeocodingRepository`.
+-   [x] Crear `OpenWeatherGeocodingRepository`.
+-   [x] Crear `GeocodingViewModel`.
 -   [x] Buscar localidades mediante OpenWeather Geocoding API.
--   [x] Permitir seleccionar unha localidade válida nos formularios.
--   [x] Gardar as coordenadas seleccionadas coa horta.
--   [x] Consultar a meteoroloxía dunha horta mediante as súas
-    coordenadas.
--   [x] Mostrar a información meteorolóxica en `GardenDetailsScreen`.
--   [x] Reutilizar `WeatherCard` como widget compartido.
--   [x] Invalidar coordenadas cando o nome gardado xa non corresponde
-    coa localización seleccionada.
--   [x] Limpar os resultados de xeocodificación entre formularios.
+-   [x] Permitir seleccionar unha localización válida.
+-   [x] Persistir nome e coordenadas coa horta.
+-   [x] Manter coherentes localización e coordenadas durante creación e
+    edición.
 
-### Pending Weather Extensions
+### API Key Management
 
--   [ ] Valorar MeteoSIX como segundo provedor meteorolóxico.
--   [ ] Gardar históricos meteorolóxicos.
--   [ ] Consultar rexistros meteorolóxicos persistidos.
--   [ ] Valorar predición meteorolóxica.
+-   [x] Obter `OPENWEATHER_API_KEY` mediante `String.fromEnvironment`.
+-   [x] Permitir `--dart-define-from-file`.
+-   [x] Excluír `config/secrets.json` do repositorio.
+-   [x] Manter `config/secrets.example.json` como referencia.
 
-## Deliverable
+## Future Improvements
 
-Integración meteorolóxica real asociada ás hortas mediante coordenadas,
-con xeocodificación de localidades e arquitectura preparada para futuras
-ampliacións.
+-   [ ] Histórico meteorolóxico persistente.
+-   [ ] Predición meteorolóxica.
+-   [ ] Valorar provedores adicionais como MeteoSIX.
+-   [ ] Selección de localización mediante mapa.
 
-**Estado:** integración meteorolóxica contextual por horta completada.
-Históricos, predición e posibles provedores adicionais quedan como
-ampliacións.
+## Result
+
+Meteoroloxía actual e xeocodificación integradas no fluxo real das
+hortas.
+
+**Estado:** completada para o MVP.
 
 ------------------------------------------------------------------------
 
@@ -686,287 +406,332 @@ ampliacións.
 
 ## Objective
 
-Implementar a representación visual e persistente da horta.
+Implementar unha representación visual e persistente da disposición das
+plantas dunha horta.
 
-## Tasks
+## Completed
 
-### Domain and Persistence
+-   [x] Modelo `GardenLayoutItem`.
+-   [x] Táboa `garden_layout_items`.
+-   [x] Migración v4 → v5.
+-   [x] `GardenLayoutRepository`.
+-   [x] `SqliteGardenLayoutRepository`.
+-   [x] `GardenLayoutViewModel`.
+-   [x] `LayoutDesignerScreen`.
+-   [x] Representación mediante `LayoutBuilder` e `Stack`.
+-   [x] Engadir e retirar plantas do deseño.
+-   [x] Coordenadas normalizadas.
+-   [x] Movemento mediante arrastre.
+-   [x] Restrición aos límites do taboleiro.
+-   [x] Prevención de solapamentos.
+-   [x] Persistencia das posicións.
+-   [x] Recuperación da disposición gardada.
+-   [x] Busca dunha posición inicial libre para novos elementos.
 
--   [x] Crear `GardenLayoutItem`.
--   [x] Crear a táboa `garden_layout_items`.
--   [x] Evolucionar SQLite á versión 5.
--   [x] Implementar a migración v4 → v5.
--   [x] Crear `GardenLayoutRepository`.
--   [x] Crear `SqliteGardenLayoutRepository`.
--   [x] Crear `GardenLayoutViewModel`.
--   [x] Integrar o ViewModel mediante Provider.
+## Future Improvements
 
-### Interface and Interaction
+-   [ ] Grid ou snapping.
+-   [ ] Maior refinamento da interacción de arrastre.
+-   [ ] Tamaños variables.
+-   [ ] Representación visual específica por especie.
 
--   [x] Crear `LayoutDesignerScreen`.
--   [x] Crear a área de deseño mediante `LayoutBuilder` e `Stack`.
--   [x] Mostrar as plantas colocadas no deseño.
--   [x] Mostrar no selector só as plantas aínda dispoñibles.
--   [x] Engadir plantas ao deseño.
--   [x] Retirar plantas do deseño sen eliminar a `GardenPlant`.
--   [x] Posicionar elementos mediante coordenadas normalizadas.
--   [x] Permitir movemento individual mediante arrastre.
--   [x] Manter os elementos dentro dos límites do taboleiro.
--   [x] Evitar o solapamento entre plantas.
--   [x] Actualizar a posición localmente durante o arrastre.
--   [x] Persistir a posición ao finalizar o arrastre.
--   [x] Recuperar a disposición gardada.
--   [x] Evitar que unha planta nova se coloque inicialmente sobre outra
-    xa existente.
--   [x] Verificar a persistencia entre navegacións e reinicios.
+## Result
 
-### Optional Improvements
-
--   [ ] Valorar grid ou snapping.
--   [ ] Mellorar a fluidez do arrastre se resulta necesario.
--   [ ] Valorar tamaños variables.
--   [ ] Valorar representación visual específica por especie.
-
-## Deliverable
-
-Primeira versión funcional e persistente do deseñador visual.
+Deseñador visual funcional e persistente.
 
 **Estado:** completada para o MVP.
 
-**---**
+------------------------------------------------------------------------
 
 # Phase 11 - Tasks Module
 
 ## Objective
 
-Implementar unha xestión básica e persistente de tarefas mantendo a
-mesma arquitectura do resto da aplicación.
+Implementar unha xestión básica e persistente de tarefas.
 
-## Tasks
+## Completed
 
--   [x] Crear o modelo `Task`.
--   [x] Crear o contrato `TaskRepository`.
--   [x] Crear a implementación SQLite do Repository.
--   [x] Crear `TasksViewModel`.
--   [x] Integrar o ViewModel mediante Provider.
--   [x] Crear `TasksScreen`.
--   [x] Crear `CreateTaskScreen`.
--   [x] Mostrar as tarefas pendentes.
--   [x] Crear novas tarefas desde a interface.
--   [x] Persistir as tarefas en SQLite.
--   [x] Evolucionar SQLite á versión 6.
--   [x] Implementar a migración v5 → v6.
+-   [x] Modelo `Task`.
+-   [x] `TaskRepository`.
+-   [x] Implementación SQLite.
+-   [x] `TasksViewModel`.
+-   [x] `TasksScreen`.
+-   [x] `CreateTaskScreen`.
+-   [x] Creación e consulta de tarefas.
+-   [x] Persistencia local.
+-   [x] Evolución de SQLite á versión 6.
+-   [x] Migración v5 → v6.
+-   [x] Resumo de tarefas pendentes no Dashboard.
 
-## Deliverable
+## Future Improvements
 
-Módulo básico de tarefas funcional e persistente, integrado coa
-arquitectura MVVM simplificada + Repository Pattern.
+-   [ ] Edición e funcionalidades avanzadas se se amplía o módulo.
+-   [ ] Alertas e notificacións.
+-   [ ] Recorrencia.
 
-**Estado:** completada para o alcance previsto.
+## Result
 
-**---**
+Módulo básico de tarefas integrado coa arquitectura do resto da
+aplicación.
 
-# Phase 12 - UI Improvement
+**Estado:** completada para o alcance do MVP.
 
-## Objective
+------------------------------------------------------------------------
 
-Mellorar a experiencia visual e consolidar o Design System.
-
-## Tasks
-
--   [x] Configuración inicial do Theme global.
--   [x] Creación dos primeiros widgets reutilizables.
--   [ ] Completar o Design System.
--   [ ] Refinar compoñentes.
--   [ ] Unificar estilos de formularios, Cards e botóns.
--   [x] Realizar unha primeira adaptación e validación para tablet.
--   [x] Realizar unha primeira adaptación e validación para escritorio.
--   [ ] Revisar accesibilidade e usabilidade.
--   [x] Probar manualmente diferentes anchos de pantalla.
--   [x] Revisar `Row`, `Column`, scroll e distribución dos compoñentes
-    principais.
--   [x] Identificar os overflows do Dashboard en anchos excepcionalmente
-    estreitos e valorar o seu impacto real.
-
-## Deliverable
-
-Interface consistente, usable e responsive.
-
-**---**
-
-# Phase 13 - Testing
+# Phase 12 - UI and Responsive Design
 
 ## Objective
 
-Validar o funcionamento.
+Construír unha interface consistente e adaptable aos tamaños obxectivo.
 
-## Tasks
+## Completed
 
--   [ ] Testes manuais.
--   [ ] Testes das validacións.
--   [ ] Testes de navegación.
--   [ ] Testes de persistencia.
--   [ ] Corrección de erros.
--   [ ] Optimización.
--   [ ] Validación en Android.
--   [ ] Validación en escritorio.
+-   [x] Theme global.
+-   [x] Widgets reutilizables.
+-   [x] Adaptación das pantallas principais.
+-   [x] Formularios con ancho controlado.
+-   [x] Uso de `Row` ou `Column` segundo o espazo dispoñible.
+-   [x] Listas adaptables a `GridView`.
+-   [x] Dashboard responsive.
+-   [x] Pantallas de detalle adaptables.
+-   [x] Layout Designer baseado en coordenadas normalizadas.
+-   [x] Probas manuais con diferentes anchos.
+-   [x] Validación práctica en móbil, tablet e escritorio.
+-   [x] Revisión de overflows nos tamaños obxectivo.
 
-## Deliverable
+## Future Improvements
 
-Versión candidata á entrega.
+-   [ ] Continuar refinando accesibilidade.
+-   [ ] Continuar refinando consistencia visual cando se engadan novas
+    funcionalidades.
+-   [ ] Revisar casos extremos de ancho se se amplían as plataformas
+    obxectivo.
 
-**---**
+## Result
 
-# Phase 14 - Documentation
+Interface usable e adaptable para o alcance definido do MVP.
+
+**Estado:** completada para a versión 1.0.0.
+
+------------------------------------------------------------------------
+
+# Phase 13 - Validation and Release
 
 ## Objective
 
-Completar a documentación final.
+Validar o MVP e preparar unha versión entregable.
 
-## Tasks
+## Completed
 
--   [ ] Actualizar documentación técnica.
--   [ ] Memoria.
--   [ ] Diagramas.
--   [ ] Capturas.
--   [ ] Conclusións.
--   [ ] Liñas futuras.
+-   [x] Probas manuais dos fluxos principais.
+-   [x] Validación das operacións CRUD.
+-   [x] Validación da navegación.
+-   [x] Validación da persistencia SQLite.
+-   [x] Verificación das migracións do esquema.
+-   [x] Validación da integración con OpenWeather.
+-   [x] Revisión e corrección de erros detectados durante o
+    desenvolvemento.
+-   [x] Validación práctica en Android.
+-   [x] Validación práctica en Windows.
+-   [x] Xeración de builds de entrega.
+-   [x] Publicación da versión `1.0.0`.
 
-## Deliverable
+## Not Included in Version 1.0.0
 
-Documentación final do TFC.
+-   [ ] Suite de tests automatizados.
 
-**---**
+## Result
 
-# Current Development Milestone
-
-## Session 20 - Tarefas, responsive e revisión do MVP
+MVP funcional preparado para entrega académica e distribución de
+demostración.
 
 **Estado:** completada.
 
-Tras completar o Layout Designer na sesión 19, realizouse unha sesión de
-peche e consolidación centrada en funcionalidades pequenas pendentes e
-na validación da interface.
+------------------------------------------------------------------------
 
-### Tasks
+# Phase 14 - Documentation and TFC Delivery
 
-Implementouse unha versión básica do módulo de tarefas reutilizando a
-arquitectura xa empregada no resto de MARTOLA:
+## Objective
 
--   Modelo `Task`.
--   `TaskRepository`.
--   Implementación SQLite.
--   `TasksViewModel`.
--   Integración mediante Provider.
--   `TasksScreen`.
--   `CreateTaskScreen`.
--   Creación e consulta de tarefas.
--   Persistencia local.
--   Evolución de SQLite á versión 6.
--   Migración v5 → v6.
+Completar a documentación necesaria para pechar o TFC.
 
-O alcance mantívose deliberadamente simple para non introducir
-complexidade innecesaria nesta fase do TFC.
+## Completed
 
-### Layout Designer
+-   [x] Documentación técnica.
+-   [x] Documentación da arquitectura.
+-   [x] Deseño da base de datos.
+-   [x] Diagramas.
+-   [x] Documentación da interface.
+-   [x] Roadmap de desenvolvemento.
+-   [x] Rexistro do proceso de aprendizaxe.
+-   [x] README do repositorio.
+-   [x] Preparación da memoria e material académico de entrega.
+-   [x] Preparación e entrega do TFC.
 
-Corrixiuse un caso límite detectado durante as probas: ao retirar unha
-planta do deseño e engadila posteriormente, a posición inicial podía
-coincidir coa doutra planta e bloquear o movemento de ambas.
+## Result
 
-A colocación inicial pasou a buscar unha posición dispoñible antes de
-inserir o novo elemento. Comprobouse posteriormente o movemento e a
-persistencia.
+Documentación suficiente para comprender o proxecto, as decisións
+técnicas e a súa evolución.
 
-### Responsive
+**Estado:** completada.
 
-Realizáronse probas manuais da interface con diferentes tamaños de ventá
-e anchos de dispositivo.
+------------------------------------------------------------------------
 
-Revisáronse especialmente:
+# Development Milestones
 
--   Dashboard.
--   Cards e `Row` internas.
--   Listados.
--   Formularios.
+## Milestone 1 - Foundation
+
+-   Definición do proxecto.
+-   Flutter e Dart.
+-   Navegación.
+-   Primeiras pantallas.
+-   Provider.
+-   Primeiro ViewModel.
+
+## Milestone 2 - Architecture and Persistence
+
+-   Repository Pattern.
+-   Operacións asíncronas.
+-   SQLite.
+-   `DatabaseService`.
+-   Primeiro Repository persistente.
+-   Migracións do esquema.
+
+## Milestone 3 - Core Domain
+
+-   Hortas.
+-   Especies.
+-   Plantas.
+-   Evolución das plantas.
+-   Integridade referencial.
+
+## Milestone 4 - External Services
+
+-   OpenWeather.
+-   Meteoroloxía real.
+-   Xeocodificación.
+-   Coordenadas persistidas.
+
+## Milestone 5 - Advanced MVP Features
+
 -   Layout Designer.
--   Comportamento en móbil, tablet e escritorio.
+-   Tarefas.
+-   SQLite v6.
+-   Responsive design.
 
-Detectouse que determinadas `Row` do Dashboard poden producir overflow
-en anchos extremadamente reducidos, aproximadamente por baixo dos
-tamaños habituais dun móbil actual. Decidiuse non introducir máis
-complexidade para resolver un caso que queda fóra do rango práctico
-previsto para o MVP.
+## Milestone 6 - Stabilization and Delivery
 
-A interface queda, polo tanto, validada para os tamaños obxectivo do
-proxecto, mantendo posibles refinamentos adicionais como melloras
-futuras.
-
-### Revisión de alcance
-
-As pantallas baleiras `SettingsScreen` e `WeatherScreen` deixan de
-formar parte do fluxo previsto. A configuración avanzada non é necesaria
-para o MVP e a meteoroloxía xa se integra de forma contextual dentro de
-`GardenDetailsScreen`.
-
-A autenticación de usuario mantense como funcionalidade futura e só se
-abordará se existe tempo antes da entrega.
-
-O seguinte bloque principal pasa a ser:
-
-``` text
-testing e revisión
-        ↓
-corrección de erros
-        ↓
-documentación final
-        ↓
-preparación da defensa
-```
+-   Probas manuais.
+-   Corrección de erros.
+-   Validación Android e Windows.
+-   Documentación final.
+-   Builds.
+-   Release `1.0.0`.
+-   Entrega do TFC.
 
 ------------------------------------------------------------------------
 
 # MVP Definition
 
-A primeira versión mínima viable de MARTOLA debe incluír:
+A versión 1.0.0 de MARTOLA inclúe:
 
 -   [x] Navegación funcional.
--   [x] Xestión de estado.
--   [x] SQLite.
--   [x] Xestión de hortas persistente.
--   [x] Xestión de plantas.
+-   [x] Xestión de estado mediante Provider.
+-   [x] Arquitectura MVVM simplificada + Repository Pattern.
+-   [x] Persistencia SQLite.
+-   [x] Xestión persistente de hortas.
+-   [x] Xestión de plantas e especies.
 -   [x] Rexistros de evolución.
+-   [x] Xeocodificación.
 -   [x] Meteoroloxía actual asociada á localización dunha horta.
 -   [x] Layout Designer persistente.
--   [x] Xestión básica de tarefas persistente.
+-   [x] Xestión básica de tarefas.
+-   [x] Interface adaptable.
+-   [x] Builds verificadas para Android e Windows.
+-   [x] Documentación técnica.
 
-O resto considerarase ampliación ou funcionalidade adicional segundo o
-tempo dispoñible.
+**Estado do MVP:** completado.
 
-**---**
+------------------------------------------------------------------------
 
-# Future Features
+# Future Evolution
 
-Funcionalidades opcionais:
+As seguintes funcionalidades quedan fóra da versión 1.0.0 e considéranse
+posibles ampliacións:
 
--   Login.
+## Quality
+
+-   Tests automatizados.
+-   Maior cobertura de validación.
+-   Melloras de accesibilidade.
+-   Refinamentos adicionais da interface.
+
+## Data and Cloud
+
+-   Autenticación.
 -   Sincronización cloud.
+-   Copias de seguridade e restauración.
 -   Compartición de hortas.
--   Notificacións.
--   Estatísticas avanzadas.
--   IA para recomendacións.
--   Integración con sensores.
 
-**---**
+## Weather
+
+-   Histórico meteorolóxico.
+-   Predición.
+-   Provedores adicionais.
+-   Selección de localización mediante mapa.
+
+## Plants and Layout
+
+-   Fotografías na evolución.
+-   Ampliación do catálogo de especies.
+-   Grid/snapping.
+-   Representación visual por especie.
+-   Tamaños variables.
+
+## Tasks
+
+-   Alertas.
+-   Notificacións.
+-   Recorrencia.
+-   Funcionalidades de planificación máis avanzadas.
+
+## Other Possibilities
+
+-   Versión web.
+-   Estatísticas avanzadas.
+-   Integración con sensores.
+-   Recomendacións asistidas.
+
+------------------------------------------------------------------------
 
 # Success Criteria
 
-O proxecto considerarase exitoso se:
+Os criterios definidos para o MVP considéranse cumpridos:
 
--   Funciona en Android.
--   Funciona en escritorio.
--   Permite xestionar hortas.
--   Permite xestionar plantas.
--   Almacena información localmente.
--   Mantén unha arquitectura organizada.
--   Presenta unha interface usable.
+-   [x] Funciona en Android.
+-   [x] Funciona en escritorio.
+-   [x] Permite xestionar hortas.
+-   [x] Permite xestionar plantas.
+-   [x] Permite rexistrar a evolución das plantas.
+-   [x] Integra meteoroloxía real.
+-   [x] Almacena información localmente.
+-   [x] Mantén unha arquitectura organizada.
+-   [x] Presenta unha interface usable e adaptable.
+-   [x] Inclúe funcionalidades adicionais de deseño da horta e tarefas.
+-   [x] Dispón de documentación técnica.
+-   [x] Alcanzou a versión `1.0.0`.
+
+------------------------------------------------------------------------
+
+# Final State
+
+``` text
+Version: 1.0.0
+Status: MVP finalizado — TFC entregado
+Academic completion: September 2026
+Last Updated: 2026-09-24
+```
+
+A partir da versión 1.0.0, o roadmap deixa de representar tarefas
+necesarias para completar o TFC. Calquera novo desenvolvemento
+considerarase evolución posterior de MARTOLA.

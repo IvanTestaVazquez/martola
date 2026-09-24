@@ -6,50 +6,88 @@
 
 **MARTOLA**
 
-**Modelo Avanzado de Rexistro e Tratamento de Organización de Leiras e Agricultura**
+**Modelo Avanzado de Rexistro e Tratamento de Organización de Leiras e
+Agricultura**
 
 ## Project Type
 
-- Traballo de Fin de Ciclo (TFC)
-- DAM Dual Intensiva
-- CIFP A Carballeira Marcos Valcárcel
+-   Proxecto de Desenvolvemento de Aplicacións Multiplataforma.
+-   Traballo de Fin de Ciclo (TFC).
+-   CFGS en Desenvolvemento de Aplicacións Multiplataforma (DAM) Dual
+    Intensiva.
+-   CIFP A Carballeira Marcos Valcárcel.
 
 ## Project Summary
 
-MARTOLA é unha aplicación multiplataforma desenvolvida con Flutter para a xestión de hortas e xardíns.
+MARTOLA é unha aplicación multiplataforma desenvolvida con Flutter e
+Dart para a xestión de hortas e xardíns.
 
-A aplicación permitirá:
+A versión 1.0.0 constitúe o MVP funcional presentado como proxecto final
+do ciclo. A aplicación permite centralizar a xestión de hortas, plantas
+e tarefas, realizar o seguimento da evolución das plantas, consultar
+información meteorolóxica asociada á localización de cada horta e
+organizar visualmente a disposición das plantas.
 
-- Crear, editar e eliminar hortas e xardíns.
-- Rexistrar, editar e eliminar plantas.
-- Manter un catálogo de especies vexetais.
-- Realizar seguemento da evolución das plantas mediante rexistros históricos.
-- Consultar información meteorolóxica.
-- Almacenar históricos climáticos.
-- Deseñar visualmente a distribución dunha horta.
-- Servir como ferramenta de apoio á planificación e mantemento de cultivos.
+A versión actual inclúe:
 
-O proxecto está pensado inicialmente para:
+-   Creación, edición e eliminación de hortas e xardíns.
+-   Rexistro, edición e eliminación de plantas.
+-   Catálogo local de especies vexetais.
+-   Seguimento da evolución das plantas mediante rexistros históricos.
+-   Consulta de meteoroloxía actual mediante OpenWeather.
+-   Xeocodificación de localizacións mediante OpenWeather.
+-   Xestión básica de tarefas.
+-   Deseñador visual da disposición das plantas dentro dunha horta.
+-   Persistencia local mediante SQLite.
+-   Interface adaptable a móbil, tablet e escritorio.
 
-- Android
-- Windows
-- Linux
-- Tablets
+O MVP dispón de builds verificadas para:
 
-Posible soporte futuro:
+-   Android.
+-   Windows.
 
-- Web
-- Sincronización cloud
+O desenvolvemento mantén unha orientación multiplataforma e contempla
+Linux como plataforma compatible co enfoque técnico empregado.
 
-iOS descártase inicialmente debido ás limitacións e custos asociados ao desenvolvemento para a plataforma Apple.
+Posibles ampliacións futuras:
 
----
+-   Web.
+-   Sincronización cloud entre dispositivos.
+-   Autenticación e contas de usuario.
+-   Funcionalidades meteorolóxicas avanzadas.
+-   Alertas e notificacións.
+-   Ampliación do catálogo de especies.
+
+iOS non forma parte do alcance inicial debido ás limitacións e custos
+asociados ao desenvolvemento e distribución na plataforma Apple.
+
+------------------------------------------------------------------------
+
+# Current Project Status
+
+## Version
+
+`1.0.0`
+
+## Status
+
+**MVP finalizado --- TFC entregado**
+
+A versión académica do proxecto está finalizada. MARTOLA pode continuar
+evolucionando posteriormente mediante novas funcionalidades, melloras
+técnicas e refinamentos da experiencia de usuario.
+
+## Last Updated
+
+2026-09-24
+
+------------------------------------------------------------------------
 
 # Project Documentation
 
 ## Documentation Structure
 
-```text
+``` text
 docs/
 ├── PROJECT_CONTEXT.md
 ├── UI_REFERENCE.md
@@ -62,83 +100,96 @@ docs/
 
 ## Purpose
 
-Esta documentación constitúe o sistema principal de seguemento e contexto do proxecto.
+Esta documentación constitúe o sistema principal de contexto técnico e
+histórico do proxecto.
 
-Todos os cambios relevantes deberán reflectirse nestes documentos para facilitar:
+Os documentos permiten:
 
-- Desenvolvemento.
-- Mantemento.
-- Elaboración da memoria final.
-- Recuperación de contexto.
-- Seguemento da evolución do proxecto.
+-   Comprender as decisións técnicas adoptadas.
+-   Consultar a arquitectura e o modelo de datos.
+-   Recuperar o contexto do desenvolvemento.
+-   Documentar a evolución do proxecto.
+-   Servir como apoio para o mantemento e futuras ampliacións.
+-   Conservar o proceso de aprendizaxe seguido durante o TFC.
 
----
+O estado actual do produto debe consultarse principalmente neste
+documento e no `README.md`. Os documentos de desenvolvemento e
+aprendizaxe poden conservar información histórica correspondente a fases
+anteriores do proxecto.
+
+------------------------------------------------------------------------
 
 # Technical Stack
 
-## Frontend
+## Application
 
-- Flutter
-- Dart
+-   Flutter.
+-   Dart.
 
 ## Architecture
 
-- MVVM simplificado
-- Repository Pattern
+-   MVVM simplificado.
+-   Repository Pattern.
 
 ## State Management
 
-- Provider
-- `ChangeNotifier`
-- `MultiProvider`
+-   Provider.
+-   `ChangeNotifier`.
+-   `MultiProvider`.
 
 ## Database
 
-- SQLite
-- `sqflite`
-- `sqflite_common_ffi`
-- `path`
-- `path_provider`
+-   SQLite.
+-   `sqflite`.
+-   `sqflite_common_ffi`.
+-   `path`.
+-   `path_provider`.
 
-A infraestrutura de persistencia está deseñada para soportar Android, Windows e Linux.
+A infraestrutura de persistencia está deseñada cun enfoque local-first e
+permite traballar en Android, Windows e Linux.
 
 ## HTTP / External APIs
 
-- Paquete `http`
-- OpenWeather API para condicións meteorolóxicas actuais e xeocodificación directa de localidades.
-- MeteoSIX prevista para información e predición meteorolóxica adicional.
+-   Paquete `http`.
+-   OpenWeather API para meteoroloxía actual.
+-   OpenWeather Geocoding API para xeocodificación directa de
+    localidades.
 
-A integración actual con OpenWeather está implementada e operativa.
+A integración con OpenWeather está implementada e operativa.
 
-As credenciais das APIs non se almacenan directamente no código fonte. Durante o desenvolvemento proporciónanse mediante `--dart-define` ou `--dart-define-from-file`.
+As credenciais das APIs non se almacenan directamente no código fonte.
+Durante o desenvolvemento proporciónanse mediante `--dart-define` ou
+`--dart-define-from-file`.
 
-## Design Tools
+## Design and Documentation Tools
 
-- Figma
-- draw.io
+-   Figma.
+-   draw.io.
 
 ## Version Control
 
-- Git
-- GitHub
+-   Git.
+-   GitHub.
 
----
+------------------------------------------------------------------------
 
 # Architecture
 
-## Folder Structure
+## Current Folder Structure
 
-```text
+A estrutura real principal de `lib/` organízase por responsabilidades:
+
+``` text
 lib/
-├── core/
 ├── models/
-├── views/
-├── viewmodels/
 ├── repositories/
+│   ├── memory/
+│   ├── open_weather/
+│   └── sqlite/
 ├── services/
-├── database/
+├── viewmodels/
+├── views/
 ├── widgets/
-├── utils/
 └── main.dart
 ```
 
@@ -146,7 +197,7 @@ lib/
 
 Para datos persistentes locais:
 
-```text
+``` text
 View
   ↓
 ViewModel
@@ -160,7 +211,7 @@ SQLite
 
 Para servizos externos:
 
-```text
+``` text
 View
   ↓
 ViewModel
@@ -174,23 +225,36 @@ External API
 
 ## Strategy
 
-Arquitectura MVVM simplificada orientada a:
+A arquitectura MVVM simplificada está orientada a:
 
-- Separación de responsabilidades.
-- Mantemento sinxelo.
-- Escalabilidade futura.
-- Curva de aprendizaxe moderada.
-- Independencia entre interface, estado, persistencia e fontes externas de datos.
+-   Separar responsabilidades.
+-   Manter independentes a interface, o estado e as fontes de datos.
+-   Facilitar o mantemento.
+-   Permitir substituír implementacións concretas mediante contratos de
+    Repository.
+-   Manter unha complexidade adecuada ao alcance do proxecto.
+-   Facilitar futuras ampliacións.
 
-## Current Implementation State
+## Current Implementation
 
-A arquitectura está aplicada actualmente aos módulos de hortas, plantas, especies, evolución das plantas, xeocodificación, meteoroloxía, deseño visual da distribución da horta e tarefas.
+A arquitectura aplícase aos módulos de:
 
-A composición principal realízase en `main.dart`, onde se crean e inxectan as implementacións concretas dos Repositories, Services e ViewModels mediante `MultiProvider`.
+-   Hortas.
+-   Plantas.
+-   Especies.
+-   Evolución das plantas.
+-   Meteoroloxía.
+-   Xeocodificación.
+-   Deseño visual da horta.
+-   Tarefas.
+
+A composición principal realízase en `main.dart`, onde se crean e
+inxectan as implementacións concretas de Repositories, Services e
+ViewModels mediante Provider.
 
 Para a persistencia local:
 
-```text
+``` text
 main.dart
    ↓
 DatabaseService
@@ -204,109 +268,81 @@ ChangeNotifierProvider / MultiProvider
 Views
 ```
 
-Para a xeocodificación e meteoroloxía:
+Para xeocodificación e meteoroloxía:
 
-```text
+``` text
 main.dart
-   ├── GeocodingService → OpenWeatherGeocodingRepository → GeocodingViewModel
-   └── WeatherService → OpenWeatherRepository → WeatherViewModel
-                    ↓
-       ChangeNotifierProvider / MultiProvider
-                    ↓
-                  Views
+   ├── GeocodingService
+   │      ↓
+   │   OpenWeatherGeocodingRepository
+   │      ↓
+   │   GeocodingViewModel
+   │
+   └── WeatherService
+          ↓
+       OpenWeatherRepository
+          ↓
+       WeatherViewModel
 ```
 
-O fluxo de localización e meteoroloxía por horta é:
+As Views acceden ao estado principalmente mediante:
 
-```text
-CreateGardenScreen
-   ↓
-GeocodingViewModel
-   ↓
-GeocodingRepository
-   ↓
-OpenWeatherGeocodingRepository
-   ↓
-GeocodingService
-   ↓
-OpenWeather Geocoding API
-   ↓
-Garden(location, latitude, longitude)
-   ↓
-SQLite
+-   `context.read()` para executar accións sen subscribirse aos cambios.
+-   `context.watch()` para observar cambios de estado.
+-   `context.select()` para observar só unha parte concreta do estado.
 
-GardenDetailsScreen
-   ↓
-WeatherViewModel
-   ↓
-WeatherRepository
-   ↓
-OpenWeatherRepository
-   ↓
-WeatherService
-   ↓
-OpenWeather API
-```
+Os ViewModels manteñen o estado de presentación e os Repositories
+abstraen a fonte concreta dos datos.
 
-Os ViewModels implementados son:
-
-- `GardensViewModel`
-- `PlantSpeciesViewModel`
-- `PlantsViewModel`
-- `PlantEvolutionViewModel`
-- `WeatherViewModel`
-- `GeocodingViewModel`
-- `GardenLayoutViewModel`
-
-As Views acceden ao estado mediante:
-
-- `context.read()` para executar accións sen subscribirse aos cambios.
-- `context.watch()` para observar un estado.
-- `context.select()` para observar só unha parte concreta.
-
-Os ViewModels manteñen estado de presentación xa cargado, mentres que os Repositories constitúen unha abstracción fronte á fonte concreta dos datos.
-
-Esta abstracción aplícase tanto á persistencia SQLite como ás APIs externas.
+Esta abstracción aplícase tanto á persistencia SQLite como ás APIs
+externas.
 
 ## Implemented Repositories
 
-Contratos:
+### Contracts
 
-- `GardenRepository`
-- `PlantSpeciesRepository`
-- `GardenPlantRepository`
-- `PlantEvolutionRecordRepository`
-- `WeatherRepository`
-- `GeocodingRepository`
-- `GardenLayoutRepository`
+-   `GardenRepository`.
+-   `PlantSpeciesRepository`.
+-   `GardenPlantRepository`.
+-   `PlantEvolutionRecordRepository`.
+-   `WeatherRepository`.
+-   `GeocodingRepository`.
+-   `GardenLayoutRepository`.
 
-Implementacións:
+### Implementations
 
-- `SQLiteGardenRepository`
-- `SQLitePlantSpeciesRepository`
-- `SQLiteGardenPlantRepository`
-- `SQLitePlantEvolutionRecordRepository`
-- `OpenWeatherRepository`
-- `OpenWeatherGeocodingRepository`
-- `SqliteGardenLayoutRepository`
+-   `SQLiteGardenRepository`.
+-   `SQLitePlantSpeciesRepository`.
+-   `SQLiteGardenPlantRepository`.
+-   `SQLitePlantEvolutionRecordRepository`.
+-   `OpenWeatherRepository`.
+-   `OpenWeatherGeocodingRepository`.
+-   `SqliteGardenLayoutRepository`.
 
-`MemoryGardenRepository` mantense como implementación alternativa útil para probas ou desenvolvemento.
+`MemoryGardenRepository` mantense como implementación alternativa útil
+para desenvolvemento ou probas.
 
-`WeatherRepository` permite que `WeatherViewModel` non dependa directamente de OpenWeather. Isto facilita substituír ou combinar no futuro diferentes provedores meteorolóxicos sen modificar o ViewModel.
+A abstracción de `WeatherRepository` evita que `WeatherViewModel`
+dependa directamente de OpenWeather e permite substituír ou combinar
+provedores no futuro.
 
----
+------------------------------------------------------------------------
 
 # Database Design
 
-## Current SQLite Version
+## Persistence
 
-```text
+A persistencia local está implementada mediante SQLite.
+
+O esquema evolucionou durante o desenvolvemento ata a:
+
+``` text
 version: 6
 ```
 
-Migracións implementadas e comprobadas:
+As migracións implementadas son acumulativas:
 
-```text
+``` text
 v1 → v2
 v2 → v3
 v3 → v4
@@ -314,11 +350,12 @@ v4 → v5
 v5 → v6
 ```
 
-As migracións son acumulativas e conservan os datos existentes.
+O obxectivo das migracións é conservar os datos existentes ao
+evolucionar o esquema.
 
 ## Current Physical Schema
 
-```text
+``` text
 gardens
 plant_species
 garden_plants
@@ -327,105 +364,53 @@ garden_layout_items
 tasks
 ```
 
-## Main Entities
+## Main Relationships
 
-### gardens
-
-Hortas ou xardíns creados na aplicación.
-
-### plant_species
-
-Información común das especies vexetais.
-
-### garden_plants
-
-Plantas concretas rexistradas dentro dunha horta.
-
-### plant_evolution_records
-
-Histórico de evolución dunha planta concreta.
-
-Campos actualmente implementados:
-
-- `id`
-- `plant_id`
-- `date`
-- `height`
-- `notes`
-
-`height` e `notes` son opcionais.
-
-### garden_layout_items
-
-Elementos que representan a posición dunha planta dentro do deseño visual dunha horta.
-
-Campos implementados:
-
-- `id`
-- `garden_id`
-- `garden_plant_id`
-- `x_position`
-- `y_position`
-
-As posicións almacénanse como valores normalizados independentes do tamaño real da pantalla. `garden_plant_id` é único, polo que unha planta só pode ocupar unha posición no deseño dunha horta.
-
-### Future Entities
-
-Previstas no deseño global, pero aínda non implementadas fisicamente:
-
-- `users`
-- `weather_records`
-
-## Current Relationships
-
-```text
+``` text
 gardens 1:N garden_plants
 plant_species 1:N garden_plants
 garden_plants 1:N plant_evolution_records
 gardens 1:N garden_layout_items
 garden_plants 1:0..1 garden_layout_items
-
-As tarefas constitúen rexistros independentes de apoio á planificación no MVP actual.
-tasks
 ```
 
-Integridade referencial:
+As tarefas constitúen rexistros independentes de apoio á planificación
+no MVP actual.
 
-- `garden_plants.garden_id → gardens.id` con `ON DELETE CASCADE`.
-- `garden_plants.species_id → plant_species.id` con `ON DELETE RESTRICT`.
-- `plant_evolution_records.plant_id → garden_plants.id` con `ON DELETE CASCADE`.
-- `garden_layout_items.garden_id → gardens.id` con `ON DELETE CASCADE`.
-- `garden_layout_items.garden_plant_id → garden_plants.id` con `ON DELETE CASCADE`.
-- `garden_layout_items.garden_plant_id` ten restrición `UNIQUE`.
+## Referential Integrity
+
+-   `garden_plants.garden_id → gardens.id` con `ON DELETE CASCADE`.
+-   `garden_plants.species_id → plant_species.id` con
+    `ON DELETE RESTRICT`.
+-   `plant_evolution_records.plant_id → garden_plants.id` con
+    `ON DELETE CASCADE`.
+-   `garden_layout_items.garden_id → gardens.id` con
+    `ON DELETE CASCADE`.
+-   `garden_layout_items.garden_plant_id → garden_plants.id` con
+    `ON DELETE CASCADE`.
+-   `garden_layout_items.garden_plant_id` dispón de restrición `UNIQUE`.
 
 As claves foráneas actívanse mediante:
 
-```sql
+``` sql
 PRAGMA foreign_keys = ON
 ```
 
 ## Persistence Decisions
 
-- Os identificadores do dominio mantéñense como `String`, aínda que SQLite utiliza `INTEGER`.
-- A conversión realízase na fronteira coa persistencia.
-- Os `DateTime` almacénanse como `TEXT` en formato ISO 8601.
-- Os valores decimais, como superficie ou altura, almacénanse como `REAL`.
-- Os campos opcionais poden persistirse como `NULL`.
+-   Os identificadores do dominio mantéñense como `String`, aínda que
+    SQLite utiliza `INTEGER`.
+-   A conversión realízase na fronteira coa persistencia.
+-   Os `DateTime` almacénanse como `TEXT` en formato ISO 8601.
+-   Os valores decimais almacénanse como `REAL`.
+-   Os campos opcionais poden persistirse como `NULL`.
 
-## Garden Location and Coordinates
+O deseño completo das entidades, táboas, relacións e decisións de
+persistencia está documentado en:
 
-`Garden` xa permite asociar cada horta a coordenadas xeográficas mediante:
+`docs/DATABASE_DESIGN.md`
 
-- `latitude` opcional.
-- `longitude` opcional.
-
-Os campos persístense na táboa `gardens` como valores `REAL` anulables. A ampliación incorporouse mediante a migración SQLite v3 → v4, conservando os datos existentes.
-
-A localización pode buscarse por texto mediante a API de xeocodificación directa de OpenWeather. O usuario selecciona unha das coincidencias devoltas e MARTOLA garda o nome da localización seleccionada xunto coas súas coordenadas.
-
-A selección mediante mapa mantense como mellora futura. As coordenadas son a referencia xeográfica utilizada para consultar a meteoroloxía específica de cada horta.
-
----
+------------------------------------------------------------------------
 
 # Implemented Functional Modules
 
@@ -433,374 +418,174 @@ A selección mediante mapa mantense como mellora futura. As coordenadas son a re
 
 CRUD completo desde a interface:
 
-- Crear horta.
-- Listar hortas.
-- Consultar detalle.
-- Editar horta.
-- Eliminar horta.
-- Persistencia SQLite.
-- Recuperación dos datos entre reinicios.
+-   Crear horta.
+-   Listar hortas.
+-   Consultar detalle.
+-   Editar horta.
+-   Eliminar horta.
+-   Persistir os datos en SQLite.
+-   Recuperar os datos entre reinicios.
 
-Fluxo:
-
-```text
-Views
-  ↓
-GardensViewModel
-  ↓
-GardenRepository
-  ↓
-SQLiteGardenRepository
-  ↓
-DatabaseService
-  ↓
-SQLite
-```
+Cada horta pode almacenar unha localización e coordenadas xeográficas
+opcionais utilizadas posteriormente para consultar a meteoroloxía.
 
 ## Plant Species
 
 Implementado:
 
-- Modelo `PlantSpecies`.
-- `PlantSpeciesRepository`.
-- `SQLitePlantSpeciesRepository`.
-- `PlantSpeciesViewModel`.
-- Catálogo inicial local de especies.
-- Inserción do catálogo só cando `plant_species` está baleira.
-- Uso do catálogo desde os formularios mediante selector de especies.
+-   Modelo `PlantSpecies`.
+-   Repository e implementación SQLite.
+-   `PlantSpeciesViewModel`.
+-   Catálogo inicial local de especies.
+-   Inserción do catálogo cando a táboa está baleira.
+-   Selección de especies desde os formularios.
 
-O catálogo local é unha solución provisional para o MVP e poderá substituírse ou ampliarse no futuro.
+O catálogo local resolve as necesidades do MVP e pode ampliarse ou
+substituírse no futuro.
 
 ## Plants
 
 CRUD completo desde a interface:
 
-- Listar plantas dunha horta.
-- Crear planta.
-- Consultar detalle.
-- Resolver o nome da especie asociada.
-- Editar planta.
-- Eliminar planta.
-- Persistencia SQLite.
-- Actualización reactiva das Views.
-
-`PlantsViewModel` conserva `_currentGardenId` e mantén unicamente as plantas correspondentes á horta actualmente cargada.
-
-Fluxo principal:
-
-```text
-GardenDetailsScreen
-  ↓
-PlantListScreen
-  ↓
-PlantDetailsScreen
-```
-
-Pantallas implementadas:
-
-- `PlantListScreen`
-- `AddPlantScreen`
-- `PlantDetailsScreen`
-- `EditPlantScreen`
+-   Listar plantas dunha horta.
+-   Crear planta.
+-   Consultar detalle.
+-   Resolver a especie asociada.
+-   Editar planta.
+-   Eliminar planta.
+-   Persistir os datos en SQLite.
+-   Actualizar as Views de forma reactiva.
 
 ## Plant Evolution
 
-O módulo de evolución está implementado cun CRUD completo desde a interface.
+CRUD completo de rexistros de evolución dunha planta.
 
-Modelo:
+Cada rexistro permite almacenar:
 
-- `PlantEvolutionRecord`
+-   Data.
+-   Altura opcional.
+-   Notas opcionais.
 
-Campos:
-
-- `id`
-- `plantId`
-- `date`
-- `height` opcional
-- `notes` opcionais
-
-Infraestrutura:
-
-- `PlantEvolutionRecordRepository`
-- `SQLitePlantEvolutionRecordRepository`
-- `PlantEvolutionViewModel`
-
-Pantallas:
-
-- `PlantEvolutionListScreen`
-- `AddPlantEvolutionRecordScreen`
-- `PlantEvolutionDetailsScreen`
-- `EditPlantEvolutionRecordScreen`
-
-Funcionalidades:
-
-- Cargar os rexistros dunha planta.
-- Crear un rexistro.
-- Consultar o detalle.
-- Editar un rexistro.
-- Eliminar un rexistro.
-- Validar altura opcional.
-- Gardar altura e notas como `NULL` cando non se proporcionan.
-- Seleccionar a data mediante `showDatePicker`.
-- Actualizar automaticamente as Views mediante `notifyListeners()`.
-
-`PlantEvolutionViewModel` conserva `_currentPlantId`, polo que os formularios de creación non necesitan xestionar directamente a relación coa planta activa.
-
-Fluxo:
-
-```text
-PlantDetailsScreen
-  ↓
-PlantEvolutionListScreen
-  ↓
-PlantEvolutionDetailsScreen
-```
-
-Fluxo de datos:
-
-```text
-View
-  ↓
-PlantEvolutionViewModel
-  ↓
-PlantEvolutionRecordRepository
-  ↓
-SQLitePlantEvolutionRecordRepository
-  ↓
-DatabaseService
-  ↓
-SQLite
-```
-
-O CRUD foi comprobado tanto directamente contra o Repository/SQLite como desde a interface.
-
+Inclúe creación, consulta, edición e eliminación, selección de data e
+actualización reactiva mediante Provider.
 
 ## Garden Layout
 
-O módulo de deseño visual da horta dispón xa dun primeiro MVP funcional.
+O deseñador visual permite:
 
-Modelo:
+-   Engadir ao deseño plantas pertencentes á horta.
+-   Evitar que unha planta apareza dúas veces.
+-   Representar as plantas sobre un taboleiro.
+-   Arrastrar os elementos.
+-   Evitar solapamentos.
+-   Manter os elementos dentro dos límites do taboleiro.
+-   Gardar posicións mediante coordenadas normalizadas.
+-   Persistir a posición final en SQLite.
+-   Recuperar as posicións ao volver abrir a pantalla.
+-   Retirar unha planta do deseño sen eliminala da horta.
+-   Procurar automaticamente unha posición inicial libre.
 
-- `GardenLayoutItem`
-
-Infraestrutura:
-
-- `GardenLayoutRepository`
-- `SqliteGardenLayoutRepository`
-- `GardenLayoutViewModel`
-- Táboa SQLite `garden_layout_items` incorporada na versión 5.
-
-Funcionalidades implementadas:
-
-- Cargar os elementos do deseño dunha horta.
-- Engadir ao deseño plantas que pertencen á horta.
-- Evitar que unha mesma planta se engada dúas veces mediante `UNIQUE (garden_plant_id)`.
-- Representar cada planta nun `Stack` mediante `Positioned`.
-- Gardar `xPosition` e `yPosition` como coordenadas normalizadas.
-- Arrastrar individualmente os elementos.
-- Manter cada elemento completamente dentro dos límites do taboleiro.
-- Evitar solapamentos durante o arrastre.
-- Actualizar a posición en memoria durante `onPanUpdate` para non escribir continuamente en SQLite.
-- Persistir a posición final mediante `onPanEnd`.
-- Identificar visualmente os elementos mediante o nome personalizado da planta.
-- Retirar unha planta do deseño mediante pulsación longa e confirmación, sen eliminar a planta da horta.
-- Recuperar as posicións persistidas ao volver entrar na pantalla ou reiniciar a aplicación.
-
-A colocación inicial automática procura unha posición libre antes de engadir unha nova planta ao taboleiro, evitando que un elemento novo apareza superposto a outro xa existente. A mellora da fluidez do arrastre e posibles mecanismos de grid/snapping quedan como refinamentos posteriores.
-
-Fluxo:
-
-```text
-LayoutDesignerScreen
-  ↓
-GardenLayoutViewModel
-  ↓
-GardenLayoutRepository
-  ↓
-SqliteGardenLayoutRepository
-  ↓
-DatabaseService
-  ↓
-SQLite
-```
-
----
+As coordenadas normalizadas permiten adaptar o deseño ao tamaño
+dispoñible da pantalla.
 
 ## Tasks
 
-O MVP incorpora un módulo básico de tarefas para apoiar a planificación do traballo. Mantense deliberadamente sinxelo para non ampliar innecesariamente o alcance do TFC.
+O MVP incorpora un módulo básico de tarefas para apoiar a planificación.
 
-Funcionalidades actuais:
+Funcionalidades:
 
-- Listar tarefas.
-- Crear novas tarefas.
-- Manter os datos mediante persistencia local en SQLite.
-- Actualizar a interface de forma reactiva mediante Provider.
-- Mostrar no Dashboard un resumo das tarefas pendentes.
+-   Listar tarefas.
+-   Crear tarefas.
+-   Persistencia local mediante SQLite.
+-   Actualización reactiva mediante Provider.
+-   Resumo de tarefas pendentes no Dashboard.
 
-Pantallas principais:
-
-- `TasksScreen`
-- `CreateTaskScreen`
-
-O módulo segue a mesma separación de responsabilidades do resto da aplicación: View → ViewModel → Repository → SQLite. Funcionalidades máis avanzadas como alertas, notificacións ou recorrencia quedan fóra do MVP actual.
-
----
+Alertas, notificacións e recorrencia quedan como posibles ampliacións
+futuras.
 
 ## Weather
 
-O módulo meteorolóxico básico está implementado e conectado con datos reais de OpenWeather.
+O módulo meteorolóxico está conectado con datos reais de OpenWeather.
 
-Modelo:
+A información procesada inclúe:
 
-- `WeatherData`
+-   Temperatura.
+-   Humidade.
+-   Descrición meteorolóxica.
+-   Velocidade do vento.
+-   Localidade.
 
-A información meteorolóxica actualmente procesada inclúe:
+Infraestrutura principal:
 
-- Temperatura.
-- Humidade.
-- Descrición meteorolóxica.
-- Velocidade do vento.
-- Localidade.
+-   `WeatherData`.
+-   `WeatherService`.
+-   `WeatherException`.
+-   `WeatherRepository`.
+-   `OpenWeatherRepository`.
+-   `WeatherViewModel`.
 
-Infraestrutura:
+`WeatherViewModel` representa os estados principais:
 
-- `WeatherService`
-- `WeatherException`
-- `WeatherRepository`
-- `OpenWeatherRepository`
-- `WeatherViewModel`
-
-Fluxo:
-
-```text
-GardenDetailsScreen
-  ↓
-WeatherViewModel
-  ↓
-WeatherRepository
-  ↓
-OpenWeatherRepository
-  ↓
-WeatherService
-  ↓
-OpenWeather API
-```
-
-`WeatherService` é responsable de:
-
-- Construír a URI de OpenWeather.
-- Realizar a petición HTTP GET.
-- Procesar a resposta JSON.
-- Converter os datos mediante `WeatherData.fromJson()`.
-- Interpretar erros HTTP.
-- Detectar problemas de conexión.
-- Controlar o timeout das peticións.
-- Lanzar `WeatherException` cando a operación non pode completarse.
-
-`WeatherViewModel` representa os estados principais da operación:
-
-```text
+``` text
 loading
 data
 error
 ```
 
-Mantén:
-
-- `WeatherData? _weatherData`
-- `bool _isLoading`
-- `String? _errorMessage`
-
-`GardenDetailsScreen` reacciona a estes estados mostrando:
-
-- Mensaxe específica cando a horta non ten coordenadas asociadas.
-- `CircularProgressIndicator` durante a carga.
-- Mensaxe de erro cando a petición falla.
-- `WeatherCard` cando existen datos.
-
-A carga realízase despois do frame mediante `WidgetsBinding.instance.addPostFrameCallback()` cando a horta dispón de latitude e longitude, evitando notificacións durante o proceso de construción da interface.
-
-`WeatherCard` trasladouse a `lib/widgets/` ao converterse nun compoñente reutilizable e non exclusivo do Dashboard.
-
-A consulta meteorolóxica utiliza xa as coordenadas reais persistidas de cada horta; eliminouse a dependencia funcional das coordenadas fixas de Ourense.
-
----
-
+A consulta utiliza as coordenadas reais persistidas de cada horta.
 
 ## Geocoding
 
-O módulo de xeocodificación directa está implementado e conectado coa API de OpenWeather.
+O módulo de xeocodificación directa está conectado coa API de
+OpenWeather.
 
-Modelo:
+A información procesada inclúe:
 
-- `GeocodingResult`
+-   Nome da localización.
+-   Latitude.
+-   Longitude.
+-   Estado ou rexión cando está dispoñible.
+-   País cando está dispoñible.
 
-Datos procesados:
+`CreateGardenScreen` permite buscar unha localización, mostrar os
+resultados e seleccionar unha coincidencia. A localización e as
+coordenadas seleccionadas persístense posteriormente no modelo `Garden`.
 
-- Nome da localización.
-- Latitude.
-- Longitude.
-- Estado/rexión cando está dispoñible.
-- País cando está dispoñible.
-
-Infraestrutura:
-
-- `GeocodingService`
-- `GeocodingException`
-- `GeocodingRepository`
-- `OpenWeatherGeocodingRepository`
-- `GeocodingViewModel`
-
-`CreateGardenScreen` permite introducir unha localización, realizar a busca, representar os estados de carga/erro/sen resultados e seleccionar unha coincidencia. A selección actualiza a localización do formulario e permite persistir `latitude` e `longitude` no `Garden`.
-
-Fluxo:
-
-```text
-CreateGardenScreen
-  ↓
-GeocodingViewModel
-  ↓
-GeocodingRepository
-  ↓
-OpenWeatherGeocodingRepository
-  ↓
-GeocodingService
-  ↓
-OpenWeather Geocoding API
-```
+------------------------------------------------------------------------
 
 # API Configuration and Secrets
 
-As claves de APIs non se escriben directamente no código fonte.
+As claves de APIs non se almacenan directamente no código fonte.
 
-Durante o desenvolvemento poden proporcionarse mediante:
+Poden proporcionarse mediante:
 
-```text
+``` text
 --dart-define
 ```
 
-ou mediante:
+ou:
 
-```text
+``` text
 --dart-define-from-file
 ```
 
-Estrutura actual:
+A configuración local utiliza:
 
-```text
+``` text
 config/
 ├── secrets.json
 └── secrets.example.json
 ```
 
-`secrets.json` contén as claves reais do entorno local e está excluído do control de versións mediante `.gitignore`.
+`secrets.json` contén a configuración local e está excluído do control
+de versións mediante `.gitignore`.
 
-`secrets.example.json` non contén credenciais reais e pode versionarse para documentar as variables necesarias.
+`secrets.example.json` pode versionarse porque non contén credenciais
+reais e documenta as variables necesarias.
 
-Configuración actual:
+Configuración esperada:
 
-```json
+``` json
 {
   "OPENWEATHER_API_KEY": ""
 }
@@ -808,497 +593,225 @@ Configuración actual:
 
 O código accede á clave mediante:
 
-```dart
+``` dart
 const apiKey = String.fromEnvironment(
   'OPENWEATHER_API_KEY',
 );
 ```
 
-Exemplo de execución durante o desenvolvemento:
+Exemplo de execución:
 
-```text
+``` text
 flutter run -d windows --dart-define-from-file=config/secrets.json
 ```
 
-Este mecanismo evita subir accidentalmente as claves ao repositorio.
+Este mecanismo evita almacenar a clave directamente no código ou subila
+accidentalmente xunto cos ficheiros locais de configuración.
 
-Non obstante, unha clave incorporada nunha aplicación cliente compilada non debe considerarse un segredo completamente protexido. Se no futuro MARTOLA necesitase credenciais que non puidesen ser expostas ao cliente, sería necesario utilizar un backend que almacenase esas credenciais.
+Unha clave incorporada nunha aplicación cliente compilada non debe
+considerarse un segredo completamente protexido. Se MARTOLA necesitase
+no futuro credenciais que non puidesen ser expostas ao cliente, sería
+necesario empregar un backend para custodialas.
 
----
+------------------------------------------------------------------------
 
 # Navigation Flow
 
-Fluxo funcional actualmente relevante:
+Fluxo funcional principal:
 
-```text
+``` text
 Inicio
   ↓
 Dashboard
-  ├── Tarefas → Lista / Crear tarefa
-  ↓
-Lista de Hortas
-  ├── Crear horta → Buscar/seleccionar localización → Coordenadas
-  ↓
-Detalle dunha Horta
-  ├── Meteoroloxía actual da horta
-  ↓
-Lista de Plantas
-  ↓
-Detalle dunha Planta
-  ↓
-Evolución
-  ↓
-Lista de Rexistros
-  ↓
-Detalle do Rexistro
+  ├── Tarefas
+  │     ├── Lista
+  │     └── Crear tarefa
+  │
+  └── Hortas
+        ↓
+     Lista de Hortas
+        ├── Crear horta
+        │     └── Buscar e seleccionar localización
+        │
+        ↓
+     Detalle da Horta
+        ├── Meteoroloxía
+        ├── Plantas
+        │     ↓
+        │  Detalle da Planta
+        │     ↓
+        │  Evolución
+        │     ↓
+        │  Rexistros
+        │
+        └── Deseño da Horta
 ```
 
-Operacións asociadas:
+Operacións CRUD están dispoñibles nos módulos principais de hortas,
+plantas e evolución.
 
-```text
-Horta
-├── Crear
-├── Editar
-└── Eliminar
-
-Planta
-├── Crear
-├── Editar
-└── Eliminar
-
-Evolución
-├── Crear rexistro
-├── Editar rexistro
-└── Eliminar rexistro
-
-Meteoroloxía
-└── Consultar condicións actuais
-
-Deseño da horta
-├── Engadir planta ao deseño nun oco libre
-├── Mover e persistir posición
-└── Retirar planta do deseño
-
-Tarefas
-├── Listar tarefas
-└── Crear tarefa
-```
-
-Funcionalidades futuras previstas no fluxo:
-
-- Selección de localización mediante mapa.
-- Predición meteorolóxica.
-- Histórico climático.
-- Autenticación de usuario, como ampliación opcional se o tempo dispoñible o permite.
-- Configuración avanzada da aplicación, fóra do alcance actual do MVP.
-- Alertas e notificacións asociadas ás tarefas, como ampliación futura.
-
----
+------------------------------------------------------------------------
 
 # Responsive Design
 
+MARTOLA emprega unha interface adaptable para móbil, tablet e escritorio
+mantendo un fluxo funcional común.
+
 ## Mobile
 
-A interface está adaptada para navegación principalmente secuencial e vertical. Como referencia práctica de probas establécese un ancho mínimo aproximado de 360 px lóxicos.
+-   Navegación principalmente secuencial e vertical.
+-   Referencia práctica de probas arredor de 360--400 px lóxicos.
+-   Formularios e controis adaptados a anchos reducidos.
 
 ## Tablet
 
-As pantallas aproveitan o espazo dispoñible mediante cambios de composición e, nas listas principais, mediante distribucións en varias columnas cando o ancho o permite.
+-   Aproveitamento do espazo dispoñible mediante cambios de composición.
+-   Uso de varias columnas cando o ancho o permite.
 
 ## Desktop
 
-O contido limita o ancho cando convén para evitar formularios excesivamente estirados e aproveita o espazo horizontal mediante layouts máis amplos e grids.
+-   Limitación do ancho de contido cando é necesario.
+-   Aproveitamento do espazo horizontal mediante layouts máis amplos e
+    grids.
+-   Soporte para redimensionado continuo da ventá.
 
-## Current responsive implementation
+## Implemented Responsive Behaviour
 
-A revisión responsive principal do MVP está realizada. Implementáronse e comprobaron, entre outros:
+Entre outros:
 
-- `HomeScreen` con contido centrado e ancho máximo controlado.
-- Formularios de hortas, plantas e evolución con ancho limitado e composición adaptable.
-- Cambio entre `Row` e `Column` nos controis que o requiren cando diminúe o ancho.
-- Listas adaptables a `GridView` en pantallas amplas.
-- Pantallas de detalle con distribución adaptable.
-- Dashboard e tarxetas principais comprobados en diferentes anchos.
-- `LayoutDesignerScreen` con coordenadas normalizadas e taboleiro adaptable ao espazo dispoñible.
+-   `HomeScreen` con contido centrado e ancho máximo controlado.
+-   Formularios con ancho limitado e composición adaptable.
+-   Cambio entre `Row` e `Column` segundo o espazo dispoñible.
+-   Listas adaptables a `GridView`.
+-   Pantallas de detalle adaptables.
+-   Dashboard adaptado a diferentes anchos.
+-   `LayoutDesignerScreen` baseado en coordenadas normalizadas.
 
-As probas manuais toman como referencias aproximadas 360–400 px para móbil, arredor de 700 px para tablet/transición e 1200 px para escritorio, comprobando tamén o comportamento continuo ao redimensionar a ventá.
+------------------------------------------------------------------------
 
----
+# Interface and Design
 
-# Figma Structure
+O deseño inicial e os wireframes utilizáronse como referencia durante o
+desenvolvemento mediante Figma.
 
-Debido ás limitacións da versión gratuíta de Figma, o proxecto estrutúrase en tres páxinas:
+A interface final prioriza:
 
-## Page 1 — `00_System_&_Wireframes`
+-   Claridade.
+-   Consistencia.
+-   Reutilización de compoñentes.
+-   Adaptación a diferentes tamaños de pantalla.
+-   Navegación coherente entre plataformas.
 
-- Design System
-- Assets
-- Wireframes
+A implementación final evolucionou durante o desenvolvemento a partir
+dos wireframes iniciais, polo que o código e o estado actual da
+aplicación constitúen a referencia definitiva do produto.
 
-## Page 2 — `01_Mobile_UI`
+A documentación específica de interface e fluxo pode consultarse en:
 
-- Mockups finais para móbil
+`docs/UI_REFERENCE.md`
 
-## Page 3 — `02_Desktop_&_Prototype`
+------------------------------------------------------------------------
 
-- Mockups de escritorio
-- Prototipo navegable
+# Scope of Version 1.0.0
 
----
+MARTOLA 1.0.0 segue unha estratexia **local-first**.
 
-# Design System
+Os datos propios do usuario almacénanse localmente mediante SQLite. Os
+servizos externos utilízanse para obter información complementaria, como
+meteoroloxía e xeocodificación.
 
-## Current Status
+## Included in the MVP
 
-Pendente de definición final.
+-   Xestión de hortas.
+-   Xestión de plantas.
+-   Catálogo local de especies.
+-   Seguimento da evolución das plantas.
+-   Meteoroloxía actual por horta.
+-   Xeocodificación.
+-   Deseñador visual da horta.
+-   Xestión básica de tarefas.
+-   Persistencia SQLite.
+-   Interface responsive/adaptable.
+-   Builds verificadas para Android e Windows.
 
-Durante a fase de deseño definiranse:
+## Outside the Scope of Version 1.0.0
 
-- Paleta de cores.
-- Tipografías.
-- Sistema de espazado.
-- Compoñentes reutilizables.
-- Comportamento responsive.
-- Iconografía.
+Non se implementaron nesta versión:
 
-A prioridade actual continúa sendo completar e estabilizar a funcionalidade antes do refinamento visual definitivo.
+-   Autenticación de usuarios.
+-   Sincronización cloud entre dispositivos.
+-   Backend propio.
+-   Histórico climático persistido.
+-   Predición meteorolóxica avanzada.
+-   Selección de localización mediante mapa.
+-   Alertas e notificacións.
+-   Versión web de produción.
+-   Suite de probas automatizadas.
 
----
+A exclusión destas funcionalidades responde ao control do alcance do TFC
+e non impide a súa incorporación en versións posteriores.
 
-# Current Version
+------------------------------------------------------------------------
 
-## Version
+# Future Evolution
 
-`1.0.0`
+Posibles liñas de evolución:
 
-## Status
+-   Incorporar probas automatizadas.
+-   Engadir sincronización cloud.
+-   Incorporar autenticación e contas de usuario.
+-   Implementar copias de seguridade e restauración.
+-   Engadir histórico e predición meteorolóxica.
+-   Incorporar selección de localización mediante mapa.
+-   Engadir alertas, notificacións e recorrencia ás tarefas.
+-   Ampliar o catálogo de especies.
+-   Mellorar e ampliar o deseñador visual.
+-   Incorporar unha versión web.
+-   Continuar refinando a experiencia de usuario e a accesibilidade.
 
-🟢 MVP finalizado — TFC entregado
+Estas ampliacións non forman parte dos requisitos do MVP 1.0.0.
 
-## Last Updated
+------------------------------------------------------------------------
 
-2026-09-24
+# Academic Context
 
-## Current Phase
+MARTOLA foi desenvolvido como Proxecto de Desenvolvemento de Aplicacións
+Multiplataforma no CIFP A Carballeira Marcos Valcárcel durante o curso
+2025/2026.
 
-A infraestrutura local principal do MVP está operativa mediante SQLite v6.
+O proxecto forma parte do CFGS en Desenvolvemento de Aplicacións
+Multiplataforma, finalizado en setembro de 2026.
 
-Están implementados de extremo a extremo:
+O obxectivo académico foi aplicar de forma integrada coñecementos de
+programación, bases de datos, deseño de interfaces, arquitectura de
+software, consumo de servizos externos e desenvolvemento
+multiplataforma.
 
-- CRUD de hortas.
-- Catálogo local de especies.
-- CRUD de plantas.
-- CRUD de rexistros de evolución.
-- Xeocodificación de localidades mediante OpenWeather.
-- Consulta meteorolóxica actual específica por horta mediante OpenWeather.
-- Primeiro MVP funcional do deseño visual da distribución da horta.
-- Módulo básico de tarefas con persistencia local.
-- Adaptación responsive principal das pantallas do MVP.
+------------------------------------------------------------------------
 
-A persistencia foi comprobada entre reinicios e as relacións entre hortas, plantas, especies e evolución están implementadas mediante claves foráneas.
+# Related Documentation
 
-A aplicación tamén dispón xa dunha primeira integración cun servizo externo mediante HTTP, Repository Pattern e xestión reactiva dos estados de rede.
+-   `README.md` --- Presentación xeral, funcionalidades, instalación e
+    uso.
+-   `docs/ARCHITECTURE.md` --- Arquitectura e decisións técnicas.
+-   `docs/DATABASE_DESIGN.md` --- Modelo de datos e esquema físico.
+-   `docs/UI_REFERENCE.md` --- Interface e fluxo de navegación.
+-   `docs/ROADMAP.md` --- Evolución e planificación do proxecto.
+-   `docs/DEVELOPMENT_GUIDE.md` --- Guía e rexistro do proceso de
+    desenvolvemento.
+-   `docs/LEARNING_NOTES.md` --- Notas e conceptos de aprendizaxe.
 
----
+------------------------------------------------------------------------
 
-# Current Progress
+# Final State
 
-## Analysis & Planning
-
-- ✅ Descrición inicial do proxecto
-- ✅ Análise de requisitos
-- ✅ Planificación inicial
-- ✅ Estrutura da memoria final
-
-## Design
-
-- ✅ Fluxo de navegación
-- ✅ Estrutura Figma definida
-- ✅ Wireframes definidos
-- ⏳ Design System
-- ⬜ Mockups finais
-
-## Architecture
-
-- ✅ MVVM simplificado
-- ✅ Repository Pattern
-- ✅ Estrutura de carpetas
-- ✅ Provider / MultiProvider
-- ✅ Inxección de dependencias desde `main.dart`
-- ✅ Contratos Repository asíncronos
-- ✅ ViewModels desacoplados das fontes concretas de datos
-- ✅ `GardensViewModel`
-- ✅ `PlantSpeciesViewModel`
-- ✅ `PlantsViewModel`
-- ✅ `PlantEvolutionViewModel`
-- ✅ `WeatherViewModel`
-- ✅ `GeocodingViewModel`
-- ✅ Repositories SQLite para hortas, especies, plantas e evolución
-- ✅ Repository para acceso á API meteorolóxica
-- ✅ Repository para xeocodificación directa
-- ✅ Repository para deseño visual da horta
-- ✅ Services dedicados á comunicación HTTP con OpenWeather
-
-## Database
-
-- ✅ SQLite multiplataforma
-- ✅ `DatabaseService`
-- ✅ `martola.db`
-- ✅ Versionado do esquema
-- ✅ Migración v1 → v2
-- ✅ Migración v2 → v3
-- ✅ Migración v3 → v4
-- ✅ Migración v4 → v5
-- ✅ Migración v5 → v6
-- ✅ Conservación dos datos existentes
-- ✅ `gardens`
-- ✅ `plant_species`
-- ✅ `garden_plants`
-- ✅ `plant_evolution_records`
-- ✅ `garden_layout_items`
-- ✅ `tasks`
-- ✅ Claves foráneas
-- ✅ `ON DELETE CASCADE`
-- ✅ `ON DELETE RESTRICT`
-- ✅ Datas ISO 8601
-- ✅ Valores opcionais `NULL`
-- ✅ Catálogo inicial de especies
-- ✅ Coordenadas opcionais `latitude` / `longitude` en `gardens`
-
-## Development
-
-- ✅ Home e Dashboard iniciais
-- ✅ CRUD completo de hortas
-- ✅ Persistencia real das hortas
-- ✅ Módulo de especies
-- ✅ CRUD completo de plantas
-- ✅ Navegación Horta → Plantas → Detalle
-- ✅ CRUD completo de evolución
-- ✅ Navegación Planta → Evolución → Detalle
-- ✅ Formularios con validación
-- ✅ `TextEditingController`
-- ✅ `showDatePicker`
-- ✅ Conversión segura de datos de formulario
-- ✅ Uso de `context.mounted` tras operacións asíncronas
-- ✅ Actualización reactiva mediante Provider
-- ✅ Petición HTTP GET real
-- ✅ Deserialización JSON
-- ✅ Modelo `WeatherData`
-- ✅ Integración OpenWeather
-- ✅ `WeatherService`
-- ✅ `WeatherRepository`
-- ✅ `OpenWeatherRepository`
-- ✅ `WeatherViewModel`
-- ✅ Estados `loading / data / error`
-- ✅ Tratamento de erros HTTP
-- ✅ Tratamento de fallo de conexión
-- ✅ Timeout das peticións meteorolóxicas
-- ✅ Modelo `GeocodingResult`
-- ✅ `GeocodingService` / `GeocodingRepository` / `GeocodingViewModel`
-- ✅ Busca e selección de localización en `CreateGardenScreen`
-- ✅ Persistencia de latitude e longitude por horta
-- ✅ Meteoroloxía real específica por horta en `GardenDetailsScreen`
-- ✅ `WeatherCard` reutilizable en `lib/widgets/`
-- ✅ Configuración da API key fóra do código fonte
-- ✅ Modelo `GardenLayoutItem`
-- ✅ `GardenLayoutRepository` / `SqliteGardenLayoutRepository` / `GardenLayoutViewModel`
-- ✅ `LayoutDesignerScreen`
-- ✅ Coordenadas normalizadas para o deseño responsive
-- ✅ Drag individual con límites e prevención de solapamentos
-- ✅ Persistencia da posición final ao rematar o arrastre
-- ✅ Engadir e retirar plantas do deseño
-- ✅ Colocación inicial nun oco libre para evitar superposicións ao engadir elementos
-- ✅ Módulo básico de tarefas con persistencia SQLite
-- ✅ Listaxe e creación de tarefas desde a interface
-- ✅ Integración das tarefas no Dashboard
-- ✅ Revisión responsive principal do MVP
-- ✅ Layouts adaptables mediante `LayoutBuilder`, límites de ancho, `Row`/`Column` e listas/grids segundo o espazo dispoñible
-
-## Documentation
-
-- ✅ `PROJECT_CONTEXT.md`
-- ✅ `UI_REFERENCE.md`
-- ✅ `ARCHITECTURE.md`
-- ✅ `DATABASE_DESIGN.md`
-- ✅ `ROADMAP.md`
-- ✅ `DEVELOPMENT_GUIDE.md`
-- ✅ `LEARNING_NOTES.md`
-
----
-
-# Important Technical Decisions
-
-- Arquitectura Local First.
-- SQLite antes que Firebase ou sincronización cloud.
-- MVVM simplificado para manter unha complexidade asumible.
-- Repository Pattern para desacoplar o dominio das fontes concretas de datos.
-- Provider para distribuír e observar o estado compartido.
-- `main.dart` como punto de composición e inxección de dependencias.
-- As Views non acceden directamente á base de datos nin ás APIs externas.
-- Os ViewModels dependen dos contratos Repository, non das implementacións concretas.
-- Os modelos de dominio mantéñense independentes da interface.
-- Os modelos poden implementar `toMap()` e `fromMap()` para a fronteira coa persistencia.
-- Os identificadores poden ser `String` no dominio e `INTEGER` en SQLite.
-- Os `DateTime` almacénanse como `TEXT` ISO 8601.
-- Os campos opcionais persístense como `NULL` cando non existe un valor.
-- As migracións SQLite son acumulativas mediante comprobacións de `oldVersion`.
-- As claves foráneas actívanse explicitamente con `PRAGMA foreign_keys = ON`.
-- A eliminación dunha horta elimina as súas plantas mediante `ON DELETE CASCADE`.
-- A eliminación dunha planta elimina os seus rexistros de evolución e o seu elemento de layout mediante `ON DELETE CASCADE`.
-- Unha especie utilizada por unha planta está protexida mediante `ON DELETE RESTRICT`.
-- `PlantSpeciesRepository`, `GardenPlantRepository`, `PlantEvolutionRecordRepository`, `GardenLayoutRepository`, `WeatherRepository` e `GeocodingRepository` mantéñense separados por responsabilidade.
-- `PlantsViewModel` conserva o contexto da horta activa mediante `_currentGardenId`.
-- `PlantEvolutionViewModel` conserva o contexto da planta activa mediante `_currentPlantId`.
-- Os formularios manteñen o estado temporal na propia View mediante `StatefulWidget` e `setState()`.
-- Os `TextEditingController` créanse e libéranse no ciclo de vida do `State`.
-- Os formularios utilizan `Form`, `GlobalKey<FormState>` e validadores.
-- Os campos opcionais baleiros convértense a `null` cando esa é a semántica do dominio.
-- `context.read()` úsase para accións, `context.watch()` para observar estado e `context.select()` para observar partes concretas.
-- As entidades persistidas actualízanse preferentemente mediante o seu identificador.
-- As pantallas de detalle consultan a versión actual da entidade desde o ViewModel cando necesitan permanecer sincronizadas.
-- Os widgets de presentación comunican accións mediante callbacks cando convén desacoplalos da navegación.
-- As novas funcionalidades desenvólvense incrementalmente: dominio → infraestrutura → ViewModel → interface → proba.
-- Os servizos externos encapsúlanse en clases `Service` específicas.
-- Os Repositories abstraen o ViewModel do provedor externo concreto.
-- `WeatherViewModel` non coñece OpenWeather directamente; depende de `WeatherRepository`.
-- `OpenWeatherRepository` implementa actualmente o contrato meteorolóxico utilizando `WeatherService`.
-- `OpenWeatherGeocodingRepository` implementa o contrato de xeocodificación utilizando `GeocodingService`.
-- A localización xeográfica dunha horta represéntase mediante texto máis coordenadas opcionais; as coordenadas son a referencia utilizada para a meteoroloxía.
-- A xeocodificación devolve varias coincidencias e a selección final corresponde ao usuario.
-- As respostas JSON externas convértense a modelos propios antes de chegar á interface.
-- O estado dunha operación de rede represéntase explicitamente mediante carga, datos e erro.
-- `notifyListeners()` permite que a interface reaccione aos cambios dese estado.
-- As operacións que notifican cambios non deben iniciarse durante o primeiro `build`; cando é necesario utilízase `addPostFrameCallback()`.
-- Os erros técnicos das APIs detéctanse no Service.
-- `WeatherException` permite propagar erros meteorolóxicos cara ás capas superiores.
-- As peticións externas dispoñen dun timeout para evitar esperas indefinidas.
-- As claves de APIs non se escriben directamente no código nin se versionan.
-- `secrets.json` está excluído mediante `.gitignore`.
-- `secrets.example.json` documenta as variables necesarias sen conter credenciais.
-- `String.fromEnvironment()` permite recuperar os valores proporcionados durante a execución ou compilación.
-- As claves incorporadas nun cliente compilado non se consideran segredos completamente protexidos; un backend sería necesario para credenciais que deban permanecer realmente privadas.
-- As posicións do Layout Designer almacénanse normalizadas para manter a distribución independente das dimensións reais da pantalla.
-- Durante o drag do layout, a posición actualízase primeiro en memoria e persístese en SQLite ao finalizar o xesto.
-- Os elementos do layout non poden saír do taboleiro nin solaparse durante o arrastre.
-- Flutter e a funcionalidade teñen prioridade fronte ao refinamento visual nesta fase.
-- O deseño responsive aplícase de forma progresiva e a revisión principal do MVP xa foi realizada.
-- A documentación técnica mantense sincronizada co estado real do proxecto.
-
----
-
-# Current Milestone
-
-## Achieved
-
-A infraestrutura relacional principal do MVP está implementada ata SQLite v6.
-
-Actualmente funciona:
-
-```text
-Garden
- 1
- │
- N
-GardenPlant
-
-GardenPlant
- N
- │
- 1
-PlantSpecies
-
-GardenPlant
- 1
- │
- N
-PlantEvolutionRecord
+``` text
+Version: 1.0.0
+Status: MVP finalizado — TFC entregado
+Academic completion: September 2026
+Last Updated: 2026-09-24
 ```
 
-Os módulos de hortas, plantas e evolución dispoñen de CRUD persistente completo desde a interface.
-
-O módulo de evolución, completado na sesión 16, pechou o bloque principal de seguemento manual das plantas previsto para o MVP.
-
-Na sesión 17 completouse o primeiro módulo baseado nunha API externa.
-
-Na sesión 18 completouse a asociación entre localización, coordenadas e meteoroloxía por horta. A integración permite actualmente:
-
-```text
-CreateGardenScreen
-   ↓
-GeocodingViewModel
-   ↓
-OpenWeather Geocoding API
-   ↓
-Garden(location, latitude, longitude)
-   ↓
-SQLite v4
-   ↓
-GardenDetailsScreen
-   ↓
-WeatherViewModel
-   ↓
-OpenWeather Weather API
-```
-
-A aplicación busca localidades reais, permite seleccionar unha coincidencia, persiste as coordenadas e utiliza esas coordenadas para obter as condicións meteorolóxicas da horta concreta.
-
-Na sesión 19 implementouse o primeiro MVP funcional do deseño visual da horta. Incorporouse SQLite v5 coa táboa `garden_layout_items`, o modelo `GardenLayoutItem`, o Repository correspondente, `GardenLayoutViewModel` e `LayoutDesignerScreen`. As plantas poden engadirse ao taboleiro, moverse individualmente mediante drag, manterse dentro dos límites, evitar solapamentos, persistir a súa posición normalizada e retirarse do deseño sen eliminarse da horta.
-
-Na sesión posterior completouse a revisión responsive principal das pantallas do MVP, reforzouse o Layout Designer para procurar un oco libre ao engadir unha planta e incorporouse un módulo básico de tarefas con persistencia local. As pantallas baleiras de configuración e meteoroloxía independente elimináronse ao non seren necesarias no alcance actual; a meteoroloxía permanece contextualizada no detalle de cada horta. A autenticación queda como posible ampliación posterior, unha vez pechados os obxectivos actuais e só se o tempo dispoñible o permite.
-
-Tamén quedaron implementados o tratamento básico de erros HTTP, conexión e timeout, así como a xestión local das credenciais mediante `dart-define`.
-
-## Next Development Step
-
-O seguinte paso deberá decidirse segundo `ROADMAP.md`, mantendo o desenvolvemento incremental e evitando ampliar innecesariamente o alcance do MVP.
-
-Tras completar o primeiro MVP do Layout Designer, o módulo básico de tarefas e a revisión responsive principal, o seguinte paso debe priorizar estabilización, probas e documentación segundo `ROADMAP.md`. Dentro do bloque meteorolóxico quedan como posibles ampliacións:
-
-- Incorporar selección de localización mediante mapa.
-- Decidir se o Dashboard debe recuperar no futuro algún resumo meteorolóxico cando existan varias hortas.
-- Valorar unha horta principal só se resulta necesaria para esa experiencia.
-- Integrar MeteoSIX, cuxas credenciais xa están dispoñibles, cando o roadmap determine que é o seguinte paso máis eficiente.
-- Incorporar predición meteorolóxica.
-- Desenvolver o histórico climático.
-
-Outros bloques principais aínda previstos:
-
-- Revisión e refinamento do deseño visual da distribución da horta.
-- Mellorar a fluidez do arrastre se resulta necesario tras as probas finais.
-- Valorar grid/snapping como mellora posterior.
-- Probas finais do responsive design e corrección de incidencias puntuais.
-- Probas.
-- Refinamento da interface.
-- Preparación progresiva da memoria final.
-
----
-
-# Future Improvements
-
-- Sincronización cloud.
-- Autenticación de usuario, como bloque opcional posterior ao peche dos obxectivos actuais.
-- Notificacións.
-- Sensores ambientais.
-- IA para recomendacións.
-- Compartición de hortas.
-- Backup cloud.
-- Estatísticas avanzadas.
-- Exportación de información histórica das plantas.
-- Ampliación ou integración externa do catálogo de especies.
-- Selección de localización mediante mapa.
-- Melloras visuais da meteoroloxía, como iconas dinámicas segundo as condicións.
-- Integración de múltiples provedores meteorolóxicos.
-
----
-
-# Notes
-
-Este documento considérase a fonte principal de contexto do proxecto MARTOLA.
-
-Calquera cambio relevante na arquitectura, navegación, base de datos ou planificación deberá reflectirse neste ficheiro e na documentación asociada.
-
-O desenvolvemento realízase seguindo unha aprendizaxe progresiva de Flutter e Dart. Cada funcionalidade impleméntase unha vez comprendidos os principios técnicos que a sustentan.
-
-A prioridade é construír unha primeira versión funcional, coherente e mantible antes de introducir funcionalidades avanzadas ou melloras estéticas.
-
-A documentación debe manterse sincronizada co estado real do código e servir como base para a elaboración da memoria final.
+MARTOLA 1.0.0 representa o resultado funcional do TFC. A partir desta
+versión, calquera desenvolvemento adicional considerarase evolución
+posterior do produto.
