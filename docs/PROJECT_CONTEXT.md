@@ -969,15 +969,15 @@ A prioridade actual continúa sendo completar e estabilizar a funcionalidade ant
 
 ## Version
 
-`0.1.0-alpha`
+`1.0.0`
 
 ## Status
 
-🟢 En desenvolvemento activo
+🟢 MVP finalizado — TFC entregado
 
 ## Last Updated
 
-2026-08-22
+2026-09-24
 
 ## Current Phase
 
