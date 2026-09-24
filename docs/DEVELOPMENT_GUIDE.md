@@ -1,3 +1,12 @@
+> [!NOTE]
+> Este documento conserva o rexistro histórico do proceso de desenvolvemento
+> e aprendizaxe de MARTOLA, polo que algunhas seccións reflicten estados
+> intermedios do proxecto.
+>
+> O estado actual da aplicación corresponde á versión 1.0.0, co MVP e o TFC
+> finalizados. Para consultar o estado actual, véxanse `PROJECT_CONTEXT.md`,
+> `ROADMAP.md` e o `README.md` principal.
+> 
 # DEVELOPMENT_GUIDE.md
 
 # MARTOLA - Development Guide
