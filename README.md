@@ -27,10 +27,22 @@ Actualmente están implementados:
 -   Xestión de estado mediante Provider.
 -   Interface adaptada a diferentes tamaños de pantalla.
 
-O núcleo funcional do proxecto está completado. A revisión técnica final
-realizouse correctamente, incluíndo análise estática do código e
-compilacións Release verificadas para Windows e Android. O traballo
-restante céntrase na documentación, preparación da entrega e defensa.
+O núcleo funcional do proxecto está completado e a versión 1.0.0 foi
+presentada como TFC. A revisión técnica final realizouse correctamente,
+incluíndo análise estática do código e compilacións Release verificadas
+para Windows e Android.
+
+A partir desta versión, MARTOLA pode continuar evolucionando como
+proxecto persoal mediante novas funcionalidades e melloras técnicas.
+
+## Capturas
+
+As capturas da interface incorporaranse ao repositorio como material de
+presentación da versión 1.0.0.
+
+> Recomendación para o portfolio: incluír unha selección breve do
+> Dashboard, detalle dunha horta con meteoroloxía, xestión de plantas e
+> Layout Designer.
 
 ## Tecnoloxías
 
@@ -315,6 +327,7 @@ A compilación Linux queda pendente de verificación nun ambiente Linux.
 Unha vez completado o alcance principal do TFC, MARTOLA podería
 ampliarse con funcionalidades como:
 
+-   probas automatizadas;
 -   autenticación de usuarios;
 -   sincronización cloud;
 -   histórico meteorolóxico persistente;
@@ -327,13 +340,15 @@ actual.
 
 ## Descarga
 
-A versión distribuíble de **MARTOLA v1.0.0** está dispoñible na
-[sección Releases do repositorio](https://github.com/IvanTestaVazquez/martola/releases/tag/v1.0.0).
+A versión distribuíble de **MARTOLA v1.0.0** está dispoñible na [sección
+Releases do
+repositorio](https://github.com/IvanTestaVazquez/martola/releases/tag/v1.0.0).
 
 A release inclúe:
 
-- Aplicación para Windows x64.
-- APK para Android.
-- Vídeo de demostración do funcionamento da aplicación.
+-   Aplicación para Windows x64.
+-   APK para Android.
+-   Vídeo de demostración do funcionamento da aplicación.
 
-> A compilación para Linux está contemplada polo proxecto, pero non foi verificada nesta versión.
+> A compilación para Linux está contemplada polo proxecto, pero non foi
+> verificada nesta versión.
