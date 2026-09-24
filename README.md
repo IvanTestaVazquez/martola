@@ -37,12 +37,46 @@ proxecto persoal mediante novas funcionalidades e melloras técnicas.
 
 ## Capturas
 
-As capturas da interface incorporaranse ao repositorio como material de
-presentación da versión 1.0.0.
+MARTOLA conta cunha interface adaptable a diferentes tamaños de pantalla, mantendo o mesmo fluxo de navegación en escritorio e dispositivos móbiles.
 
-> Recomendación para o portfolio: incluír unha selección breve do
-> Dashboard, detalle dunha horta con meteoroloxía, xestión de plantas e
-> Layout Designer.
+<table>
+  <tr>
+    <td width="72%">
+      <img src="docs/images/dashboard.png" alt="Panel principal de MARTOLA">
+    </td>
+    <td width="28%">
+      <img src="docs/images/responsive.png" alt="Interface responsive de MARTOLA">
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Panel principal — escritorio</strong></td>
+    <td align="center"><strong>Interface responsive</strong></td>
+  </tr>
+</table>
+
+### Xestión de hortas e meteoroloxía
+
+Desde o detalle dunha horta pódense consultar os seus datos, acceder ás plantas e ao deseño da disposición, así como obter información meteorolóxica asociada á súa localización.
+
+<p align="center">
+  <img src="docs/images/garden_detail.png" alt="Detalle dunha horta con información meteorolóxica" width="850">
+</p>
+
+### Seguimento da evolución das plantas
+
+Cada planta pode manter un histórico de rexistros con datos como a data, a altura e observacións sobre a súa evolución.
+
+<p align="center">
+  <img src="docs/images/plant_evolution.png" alt="Rexistros de evolución dunha planta" width="850">
+</p>
+
+### Deseño visual da horta
+
+O Layout Designer permite representar visualmente a disposición das plantas dentro dunha horta e modificar a súa posición.
+
+<p align="center">
+  <img src="docs/images/layout_designer.png" alt="Deseño visual da disposición das plantas" width="850">
+</p>
 
 ## Tecnoloxías
 
