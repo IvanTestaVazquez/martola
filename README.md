@@ -209,10 +209,10 @@ martola/
 ├── diagrams/
 │   ├── diagrama_er_hortas.mmd
 │   ├── diagrama_er_hortas.png
-│   ├── martola_er_v6.svg
-│   ├── martola_er_v6.png
-│   ├── martola_architecture.svg
-│   └── martola_architecture.png
+│   ├── MARTOLA_ER_v6.svg
+│   ├── MARTOLA_ER_v6.png
+│   ├── MARTOLA_arquitectura.svg
+│   └── MARTOLA_arquitectura.png
 └── README.md
 ```
 
